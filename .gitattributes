@@ -1,0 +1,2 @@
+# 对所有文本文件强制使用 CRLF
+* text eol=crlf
