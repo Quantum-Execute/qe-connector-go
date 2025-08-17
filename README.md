@@ -213,44 +213,6 @@ if err != nil {
 if result.Success {
     log.Printf("主订单创建成功，ID: %s", result.MasterOrderId)
 }
-
-// VWAP 订单示例 - 根据市场成交量分布执行
-result, err := client.NewCreateMasterOrderService().
-    Algorithm("VWAP").
-    AlgorithmType("VOLUME_WEIGHTED").
-    Exchange("binance").
-    Symbol("ETHUSDT").
-    MarketType("SPOT").
-    Side("SELL").
-    ApiKeyId("your-api-key-id").
-    TotalQuantity(5.0).               // 卖出 5 ETH
-    StrategyType("AGGRESSIVE").       // 激进策略
-    StartTime("2024-01-01T09:00:00Z").
-    EndTime("2024-01-01T17:00:00Z").
-    MakerRateLimit(0.3).              // 最少 30% Maker 订单
-    PovLimit(0.1).                    // 最多占市场成交量的 10%
-    LimitPriceString("3000").         // 最低卖价 $3000
-    Notes("VWAP 卖出 ETH").
-    Do(context.Background())
-
-// 期货订单示例
-result, err := client.NewCreateMasterOrderService().
-    Algorithm("TWAP").
-    AlgorithmType("TIME_WEIGHTED").
-    Exchange("binance").
-    Symbol("BTCUSDT").
-    MarketType("FUTURES").
-    Side("BUY").
-    ApiKeyId("your-api-key-id").
-    TotalQuantity(0.1).               // 0.1 BTC
-    MarginType("CROSS").              // 全仓模式
-    ReduceOnly(false).                // 非只减仓
-    WorstPrice(55000).                // 最差价格限制
-    UpTolerance("0.001").             // 向上容差 0.1%
-    LowTolerance("0.001").            // 向下容差 0.1%
-    StrictUpBound(false).             // 不严格限制上界
-    ExecutionDuration("3600").        // 1 小时
-    Do(context.Background())
 ```
 
 #### 查询主订单列表
