@@ -57,27 +57,33 @@ func main() {
 查询当前用户绑定的所有交易所 API 账户。
 
 **请求参数：**
-- `page` (int32) - 页码，可选
-- `pageSize` (int32) - 每页数量，可选
-- `exchange` (string) - 交易所名称筛选，可选
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| page | int32 | 否 | 页码 |
+| pageSize | int32 | 否 | 每页数量 |
+| exchange | string | 否 | 交易所名称筛选 |
 
 **响应字段：**
-- `items` - API 列表，包含以下字段：
-  - `id` - API 记录的唯一标识
-  - `createdAt` - API 添加时间
-  - `accountName` - 账户名称（如：账户1、账户2）
-  - `exchange` - 交易所名称（如：Binance、OKX、Bybit）
-  - `apiKey` - 交易所 API Key（部分隐藏）
-  - `verificationMethod` - API 验证方式（如：OAuth、API）
-  - `balance` - 账户余额（美元）
-  - `status` - API 状态：正常、异常（不可用）
-  - `isValid` - API 是否有效
-  - `isTradingEnabled` - 是否开启交易权限
-  - `isDefault` - 是否为该交易所的默认账户
-  - `isPm` - 是否为 Pm 账户
-- `total` - API 总数
-- `page` - 当前页码
-- `pageSize` - 每页显示数量
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| items | array | API 列表 |
+| ├─ id | string | API 记录的唯一标识 |
+| ├─ createdAt | string | API 添加时间 |
+| ├─ accountName | string | 账户名称（如：账户1、账户2） |
+| ├─ exchange | string | 交易所名称（如：Binance、OKX、Bybit） |
+| ├─ apiKey | string | 交易所 API Key（部分隐藏） |
+| ├─ verificationMethod | string | API 验证方式（如：OAuth、API） |
+| ├─ balance | float64 | 账户余额（美元） |
+| ├─ status | string | API 状态：正常、异常（不可用） |
+| ├─ isValid | bool | API 是否有效 |
+| ├─ isTradingEnabled | bool | 是否开启交易权限 |
+| ├─ isDefault | bool | 是否为该交易所的默认账户 |
+| ├─ isPm | bool | 是否为 Pm 账户 |
+| total | int32 | API 总数 |
+| page | int32 | 当前页码 |
+| pageSize | int32 | 每页显示数量 |
 
 **示例代码：**
 
@@ -114,55 +120,47 @@ for _, api := range result.Items {
 
 **请求参数：**
 
-**基础参数（必填）：**
-- `algorithm` (string) - 交易算法，可选值：`TWAP`、`VWAP`、`POV`，必填
-- `exchange` (string) - 交易所名称，可选值：`Binance`，必填
-- `symbol` (string) - 交易对符号（如：BTCUSDT），必填
-- `marketType` (string) - 市场类型，可选值：`SPOT`（现货）、`PERP`（合约），必填
-- `side` (string) - 买卖方向，可选值：`buy`（买入）、`sell`（卖出），必填
-- `apiKeyId` (string) - 指定使用的 API 密钥 ID，必填
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| **基础参数** |
+| algorithm | string | 是 | 交易算法，可选值：TWAP、VWAP、POV |
+| exchange | string | 是 | 交易所名称，可选值：Binance |
+| symbol | string | 是 | 交易对符号（如：BTCUSDT） |
+| marketType | string | 是 | 市场类型，可选值：SPOT（现货）、PERP（合约） |
+| side | string | 是 | 买卖方向，可选值：buy（买入）、sell（卖出） |
+| apiKeyId | string | 是 | 指定使用的 API 密钥 ID |
+| **数量参数（二选一）** |
+| totalQuantity | string | 否* | 要交易的总数量，支持字符串表示以避免精度问题，与 orderNotional 二选一，范围：>0 |
+| orderNotional | string | 否* | 按价值下单时的金额，以计价币种为单位（如ETHUSDT为USDT数量），与 totalQuantity 二选一，范围：>0 |
+| **时间参数** |
+| startTime | string | 否 | 开始执行时间（ISO 8601格式） |
+| executionDuration | int | 否** | 订单的有效时间（分钟），TWAP-1 时必填，范围：>1 |
+| **TWAP/VWAP 算法参数** |
+| mustComplete | bool | 否 | 是否一定要在duration之内执行完，选false则不会追进度，默认：true |
+| makerRateLimit | string | 否 | 要求maker占比超过该值（优先级低于mustcomplete），范围：0-1，默认："0" |
+| povLimit | string | 否 | 占市场成交量比例限制，优先级低于mustcomplete，范围：0-1，默认："0.8" |
+| limitPrice | string | 否 | 最高/低允许交易的价格，买的话就是最高价，卖就是最低价，超出范围停止交易，填"-1"不限制，范围：>0，默认："-1" |
+| upTolerance | string | 否 | 允许超出schedule的容忍度，比如0.1就是执行过程中允许比目标进度超出母单数量的10%，范围：>0且<1，默认：-1 |
+| lowTolerance | string | 否 | 允许落后schedule的容忍度，范围：>0且<1，默认：-1 |
+| strictUpBound | bool | 否 | 是否追求严格小于uptolerance，开启后可能会把很小的母单也拆的很细，不建议开启，默认：false |
+| tailOrderProtection | bool | 否 | 尾单必须taker扫完，如果false则允许省一点，小于交易所最小发单量，默认：true |
+| **POV 算法参数** |
+| povMinLimit | string | 否 | 占市场成交量比例下限，范围：小于max(POVLimit-0.01,0)，默认："0" |
+| **其他参数** |
+| reduceOnly | bool | 否 | 合约交易时是否仅减仓，默认：false |
+| marginType | string | 否 | 合约交易保证金类型，可选值：U（U本位） |
+| notes | string | 否 | 订单备注 |
 
-**数量参数（二选一）：**
-- `totalQuantity` (string) - 要交易的总数量，支持字符串表示以避免精度问题，与 orderNotional 二选一，范围：>0
-- `orderNotional` (string) - 按价值下单时的金额，以计价币种为单位（如ETHUSDT为USDT数量），与 totalQuantity 二选一，范围：>0
-
-**时间参数：**
-- `startTime` (string) - 开始执行时间（ISO 8601格式），可选
-- `endTime` (string) - 结束时间（ISO 8601格式），TWAP-2 时必填
-- `executionDuration` (int) - 订单的有效时间（分钟），TWAP-1 时必填，范围：>10
-
-**算法特定参数：**
-
-**TWAP/VWAP 算法参数：**
-- `mustComplete` (bool) - 是否一定要在duration之内执行完，选false则不会追进度，默认：true
-- `makerRateLimit` (string) - 要求maker占比超过该值（优先级低于mustcomplete），范围：0-1，默认："0"
-- `povLimit` (string) - 占市场成交量比例限制，优先级低于mustcomplete，范围：0-1，默认："0.8"
-- `limitPrice` (string) - 最高/低允许交易的价格，买的话就是最高价，卖就是最低价，超出范围停止交易，填"-1"不限制，范围：>0，默认："-1"
-- `upTolerance` (string) - 允许超出schedule的容忍度，比如0.1就是执行过程中允许比目标进度超出母单数量的10%，范围：>0且<1，默认：-1
-- `lowTolerance` (string) - 允许落后schedule的容忍度，范围：>0且<1，默认：-1
-- `strictUpBound` (bool) - 是否追求严格小于uptolerance，开启后可能会把很小的母单也拆的很细，不建议开启，默认：false
-- `takeMakeFeeDiff` (string) - 客户账户的taker maker commission fee的差，范围：-0.1~0.1，默认："0.000175"
-- `tailOrderProtection` (bool) - 尾单必须taker扫完，如果false则允许省一点，小于交易所最小发单量，默认：true
-
-**POV 算法参数：**
-- `makerRateLimit` (string) - 要求maker占比超过该值，范围：0-1，默认："0"
-- `povLimit` (string) - 占市场成交量比例限制，范围：0-0.5，默认："0.05"
-- `povMinLimit` (string) - 占市场成交量比例下限，范围：小于max(POVLimit-0.01,0)，默认："0"
-- `limitPrice` (string) - 最高/低允许交易的价格，买的话就是最高价，卖就是最低价，超出范围暂停交易，填"-1"不限制，范围：>0，默认："-1"
-- `strictUpBound` (bool) - 是否追求严格小于povlimit，开启后可能会把很小的母单也拆的很细，不建议开启，默认：false
-- `takeMakeFeeDiff` (string) - 客户账户的taker maker commission fee的差，范围：-0.1~0.1，默认："0.000175"
-- `tailOrderProtection` (bool) - 尾单必须taker扫完，如果false则允许省一点，小于交易所最小发单量，默认：true
-
-**其他参数：**
-
-- `reduceOnly` (bool) - 合约交易时是否仅减仓，默认：false
-- `marginType` (string) - 合约交易保证金类型，可选值：`U`（U本位）、`C`（币本位）
-- `notes` (string) - 订单备注，可选
+*注：totalQuantity 和 orderNotional 必须传其中一个  
+**注：TWAP-1 算法需要 executionDuration，TWAP-2 算法需要 endTime
 
 **响应字段：**
-- `masterOrderId` - 创建成功的主订单 ID
-- `success` - 创建是否成功
-- `message` - 创建结果消息
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| masterOrderId | string | 创建成功的主订单 ID |
+| success | bool | 创建是否成功 |
+| message | string | 创建结果消息 |
 
 **示例代码：**
 
@@ -228,59 +226,65 @@ if result.Success {
 获取用户的主订单列表。
 
 **请求参数：**
-- `page` (int32) - 页码，可选
-- `pageSize` (int32) - 每页数量，可选
-- `status` (string) - 订单状态筛选，可选值：`NEW`（执行中）、`COMPLETED`（已完成），可选
-- `exchange` (string) - 交易所名称筛选，可选
-- `symbol` (string) - 交易对筛选，可选
-- `startTime` (string) - 开始时间筛选，可选
-- `endTime` (string) - 结束时间筛选，可选
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| page | int32 | 否 | 页码 |
+| pageSize | int32 | 否 | 每页数量 |
+| status | string | 否 | 订单状态筛选，可选值：NEW（执行中）、COMPLETED（已完成） |
+| exchange | string | 否 | 交易所名称筛选 |
+| symbol | string | 否 | 交易对筛选 |
+| startTime | string | 否 | 开始时间筛选 |
+| endTime | string | 否 | 结束时间筛选 |
 
 **响应字段：**
-- `items` - 主订单列表，每个订单包含：
-  - `masterOrderId` - 主订单 ID
-  - `algorithm` - 算法
-  - `algorithmType` - 算法类型
-  - `exchange` - 交易所
-  - `symbol` - 交易对
-  - `marketType` - 市场类型
-  - `side` - 买卖方向
-  - `totalQuantity` - 总数量
-  - `filledQuantity` - 已成交数量
-  - `averagePrice` - 平均成交价
-  - `status` - 状态，可选值：`NEW`（执行中）、`COMPLETED`（已完成）
-  - `executionDuration` - 执行时长（秒）
-  - `priceLimit` - 价格限制
-  - `startTime` - 开始时间
-  - `endTime` - 结束时间
-  - `createdAt` - 创建时间
-  - `updatedAt` - 更新时间
-  - `notes` - 备注
-  - `marginType` - 保证金类型（U:U本位, C:币本位）
-  - `reduceOnly` - 是否仅减仓
-  - `strategyType` - 策略类型
-  - `orderNotional` - 订单金额（USDT）
-  - `mustComplete` - 是否必须完成
-  - `makerRateLimit` - 最低 Maker 率
-  - `povLimit` - 最大市场成交量占比
-  - `clientId` - 客户端 ID
-  - `date` - 发单日期（格式：YYYYMMDD）
-  - `ticktimeInt` - 发单时间（格式：093000000 表示 9:30:00.000）
-  - `limitPriceString` - 限价（字符串）
-  - `upTolerance` - 上容忍度
-  - `lowTolerance` - 下容忍度
-  - `strictUpBound` - 严格上界
-  - `ticktimeMs` - 发单时间戳（epoch 毫秒）
-  - `category` - 交易品种（spot 或 perp）
-  - `filledAmount` - 成交金额
-  - `totalValue` - 成交总值
-  - `base` - 基础币种
-  - `quote` - 计价币种
-  - `completionProgress` - 完成进度（0-1）
-  - `reason` - 原因（如取消原因）
-- `total` - 总数
-- `page` - 当前页码
-- `pageSize` - 每页数量
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| items | array | 主订单列表 |
+| ├─ masterOrderId | string | 主订单 ID |
+| ├─ algorithm | string | 算法 |
+| ├─ algorithmType | string | 算法类型 |
+| ├─ exchange | string | 交易所 |
+| ├─ symbol | string | 交易对 |
+| ├─ marketType | string | 市场类型 |
+| ├─ side | string | 买卖方向 |
+| ├─ totalQuantity | string | 总数量 |
+| ├─ filledQuantity | string | 已成交数量 |
+| ├─ averagePrice | float64 | 平均成交价 |
+| ├─ status | string | 状态：NEW（创建，未执行）、WAITING（等待中）、PROCESSING（执行中，且未完成）、PAUSED（已暂停）、CANCEL（取消中）、CANCELLED（已取消）、COMPLETED（已完成）、REJECTED（已拒绝）、EXPIRED（已过期）、CANCEL_REJECT（取消被拒绝） |
+| ├─ executionDuration | int32 | 执行时长（分钟） |
+| ├─ priceLimit | float64 | 价格限制 |
+| ├─ startTime | string | 开始时间 |
+| ├─ endTime | string | 结束时间 |
+| ├─ createdAt | string | 创建时间 |
+| ├─ updatedAt | string | 更新时间 |
+| ├─ notes | string | 备注 |
+| ├─ marginType | string | 保证金类型（U:U本位） |
+| ├─ reduceOnly | bool | 是否仅减仓 |
+| ├─ strategyType | string | 策略类型 |
+| ├─ orderNotional | string | 订单金额（USDT） |
+| ├─ mustComplete | bool | 是否必须完成 |
+| ├─ makerRateLimit | string | 最低 Maker 率 |
+| ├─ povLimit | string | 最大市场成交量占比 |
+| ├─ clientId | string | 客户端 ID |
+| ├─ date | string | 发单日期（格式：YYYYMMDD） |
+| ├─ ticktimeInt | string | 发单时间（格式：093000000 表示 9:30:00.000） |
+| ├─ limitPriceString | string | 限价（字符串） |
+| ├─ upTolerance | string | 上容忍度 |
+| ├─ lowTolerance | string | 下容忍度 |
+| ├─ strictUpBound | bool | 严格上界 |
+| ├─ ticktimeMs | int64 | 发单时间戳（epoch 毫秒） |
+| ├─ category | string | 交易品种（spot 或 perp） |
+| ├─ filledAmount | float64 | 成交金额 |
+| ├─ totalValue | float64 | 成交总值 |
+| ├─ base | string | 基础币种 |
+| ├─ quote | string | 计价币种 |
+| ├─ completionProgress | float64 | 完成进度（0-1） |
+| ├─ reason | string | 原因（如取消原因） |
+| total | int32 | 总数 |
+| page | int32 | 当前页码 |
+| pageSize | int32 | 每页数量 |
 
 **示例代码：**
 
@@ -348,37 +352,43 @@ for _, order := range orders.Items {
 获取用户的成交记录。
 
 **请求参数：**
-- `page` (int32) - 页码，可选
-- `pageSize` (int32) - 每页数量，可选
-- `masterOrderId` (string) - 主订单 ID 筛选，可选
-- `subOrderId` (string) - 子订单 ID 筛选，可选
-- `symbol` (string) - 交易对筛选，可选
-- `startTime` (string) - 开始时间筛选，可选
-- `endTime` (string) - 结束时间筛选，可选
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| page | int32 | 否 | 页码 |
+| pageSize | int32 | 否 | 每页数量 |
+| masterOrderId | string | 否 | 主订单 ID 筛选 |
+| subOrderId | string | 否 | 子订单 ID 筛选 |
+| symbol | string | 否 | 交易对筛选 |
+| startTime | string | 否 | 开始时间筛选 |
+| endTime | string | 否 | 结束时间筛选 |
 
 **响应字段：**
-- `items` - 成交记录列表，每条记录包含：
-  - `id` - 记录 ID
-  - `orderCreatedTime` - 订单创建时间
-  - `masterOrderId` - 主订单 ID
-  - `exchange` - 交易所
-  - `category` - 市场类型
-  - `symbol` - 交易对
-  - `side` - 方向
-  - `filledValue` - 成交价值
-  - `filledQuantity` - 成交数量
-  - `avgPrice` - 平均价格
-  - `price` - 成交价格
-  - `fee` - 手续费
-  - `tradingAccount` - 交易账户
-  - `status` - 状态
-  - `rejectReason` - 拒绝原因
-  - `base` - 基础币种
-  - `quote` - 计价币种
-  - `type` - 订单类型
-- `total` - 总数
-- `page` - 当前页码
-- `pageSize` - 每页数量
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| items | array | 成交记录列表 |
+| ├─ id | string | 记录 ID |
+| ├─ orderCreatedTime | string | 订单创建时间 |
+| ├─ masterOrderId | string | 主订单 ID |
+| ├─ exchange | string | 交易所 |
+| ├─ category | string | 市场类型 |
+| ├─ symbol | string | 交易对 |
+| ├─ side | string | 方向 |
+| ├─ filledValue | float64 | 成交价值 |
+| ├─ filledQuantity | string | 成交数量 |
+| ├─ avgPrice | float64 | 平均价格 |
+| ├─ price | float64 | 成交价格 |
+| ├─ fee | float64 | 手续费 |
+| ├─ tradingAccount | string | 交易账户 |
+| ├─ status | string | 状态 |
+| ├─ rejectReason | string | 拒绝原因 |
+| ├─ base | string | 基础币种 |
+| ├─ quote | string | 计价币种 |
+| ├─ type | string | 订单类型 |
+| total | int32 | 总数 |
+| page | int32 | 当前页码 |
+| pageSize | int32 | 每页数量 |
 
 **示例代码：**
 
@@ -440,12 +450,18 @@ log.Printf("总成交额: $%.2f, 总手续费: $%.2f", totalValue, totalFee)
 取消指定的主订单。
 
 **请求参数：**
-- `masterOrderId` (string) - 要取消的主订单 ID，必填
-- `reason` (string) - 取消原因，可选
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| masterOrderId | string | 是 | 要取消的主订单 ID |
+| reason | string | 否 | 取消原因 |
 
 **响应字段：**
-- `success` - 取消是否成功
-- `message` - 取消结果消息
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| success | bool | 取消是否成功 |
+| message | string | 取消结果消息 |
 
 **示例代码：**
 
@@ -471,13 +487,19 @@ if result.Success {
 创建一个随机的UUID作为ListenKey，绑定当前用户信息，有效期24小时。ListenKey用于WebSocket连接，可以实时接收用户相关的交易数据推送。
 
 **请求参数：**
-- 无需参数
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| 无需参数 | - | - | - |
 
 **响应字段：**
-- `listenKey` (string) - 生成的ListenKey
-- `expireAt` (string) - ListenKey过期时间戳（秒）
-- `success` (bool) - 创建是否成功
-- `message` (string) - 创建结果消息
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| listenKey | string | 生成的ListenKey |
+| expireAt | string | ListenKey过期时间戳（秒） |
+| success | bool | 创建是否成功 |
+| message | string | 创建结果消息 |
 
 **示例代码：**
 
@@ -976,16 +998,22 @@ func main() {
 #### 消息类型说明
 
 **客户端推送消息类型：**
-- `data` - 数据消息
-- `status` - 状态消息
-- `error` - 错误消息
-- `master_data` - 主订单数据
-- `order_data` - 订单数据
+
+| 消息类型 | 描述 |
+|----------|------|
+| data | 数据消息 |
+| status | 状态消息 |
+| error | 错误消息 |
+| master_data | 主订单数据 |
+| order_data | 订单数据 |
 
 **第三方消息类型：**
-- `master_order` - 主订单消息
-- `order` - 子订单消息
-- `fill` - 成交消息
+
+| 消息类型 | 描述 |
+|----------|------|
+| master_order | 主订单消息 |
+| order | 子订单消息 |
+| fill | 成交消息 |
 
 #### 配置选项
 
@@ -1066,28 +1094,45 @@ handlers := &qe.WebSocketEventHandlers{
 ### 4. 枚举值说明
 
 **算法类型 (Algorithm)：**
-- `TWAP` - TWAP算法
-- `VWAP` - VWAP算法  
-- `POV` - POV算法
+
+| 枚举值 | 描述 |
+|--------|------|
+| TWAP | TWAP算法 |
+| VWAP | VWAP算法 |
+| POV | POV算法 |
 
 **市场类型 (MarketType)：**
-- `SPOT` - 现货市场
-- `PERP` - 合约市场
+
+| 枚举值 | 描述 |
+|--------|------|
+| SPOT | 现货市场 |
+| PERP | 合约市场 |
 
 **订单方向 (OrderSide)：**
-- `buy` - 买入
-- `sell` - 卖出
+
+| 枚举值 | 描述 |
+|--------|------|
+| buy | 买入 |
+| sell | 卖出 |
 
 **交易所 (Exchange)：**
-- `Binance` - 币安
+
+| 枚举值 | 描述 |
+|--------|------|
+| Binance | 币安 |
 
 **保证金类型 (MarginType)：**
-- `U` - U本位
-- `C` - 币本位
+
+| 枚举值 | 描述 |
+|--------|------|
+| U | U本位 |
 
 **母单状态 (MasterOrderStatus)：**
-- `NEW` - 执行中
-- `COMPLETED` - 已完成
+
+| 枚举值 | 描述 |
+|--------|------|
+| NEW | 执行中 |
+| COMPLETED | 已完成 |
 
 ### 5. 容忍度参数说明
 
