@@ -8,14 +8,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Quantum-Execute/qe-connector-go/handlers"
-	"github.com/bitly/go-simplejson"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"time"
+
+	"github.com/Quantum-Execute/qe-connector-go/handlers"
+	"github.com/bitly/go-simplejson"
 )
 
 // TimeInForceType define time in force type of order
@@ -226,9 +227,6 @@ func newJSON(data []byte) (j *simplejson.Json, err error) {
 func (c *Client) NewListExchangeApisService() *ListExchangeApisService {
 	return &ListExchangeApisService{c: c}
 }
-func (c *Client) NewAddExchangeApiService() *AddExchangeApiService {
-	return &AddExchangeApiService{c: c}
-}
 func (c *Client) NewGetMasterOrdersService() *GetMasterOrdersService {
 	return &GetMasterOrdersService{c: c}
 }
@@ -240,4 +238,12 @@ func (c *Client) NewCreateMasterOrderService() *CreateMasterOrderService {
 }
 func (c *Client) NewCancelMasterOrderService() *CancelMasterOrderService {
 	return &CancelMasterOrderService{c: c}
+}
+func (c *Client) NewCreateListenKeyService() *CreateListenKeyService {
+	return &CreateListenKeyService{c: c}
+}
+
+// NewWebSocketService create WebSocket service for real-time data streaming
+func (c *Client) NewWebSocketService() *WebSocketService {
+	return NewWebSocketService(c)
 }

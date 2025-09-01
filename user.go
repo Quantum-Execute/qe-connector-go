@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/Quantum-Execute/qe-connector-go/constant/enums/trading_enums"
 )
 
 // ListExchangeApisService list exchange APIs
@@ -87,108 +89,12 @@ type ExchangeApiInfo struct {
 	IsPm               bool    `json:"isPm"`
 }
 
-// AddExchangeApiService add exchange API
-type AddExchangeApiService struct {
-	c                  *Client
-	accountName        string
-	exchange           string
-	apiKey             string
-	apiSecret          string
-	passphrase         *string
-	verificationMethod *string
-	enableTrading      *bool
-}
-
-// AccountName set accountName
-func (s *AddExchangeApiService) AccountName(accountName string) *AddExchangeApiService {
-	s.accountName = accountName
-	return s
-}
-
-// Exchange set exchange
-func (s *AddExchangeApiService) Exchange(exchange string) *AddExchangeApiService {
-	s.exchange = exchange
-	return s
-}
-
-// ApiKey set apiKey
-func (s *AddExchangeApiService) ApiKey(apiKey string) *AddExchangeApiService {
-	s.apiKey = apiKey
-	return s
-}
-
-// ApiSecret set apiSecret
-func (s *AddExchangeApiService) ApiSecret(apiSecret string) *AddExchangeApiService {
-	s.apiSecret = apiSecret
-	return s
-}
-
-// Passphrase set passphrase
-func (s *AddExchangeApiService) Passphrase(passphrase string) *AddExchangeApiService {
-	s.passphrase = &passphrase
-	return s
-}
-
-// VerificationMethod set verificationMethod
-func (s *AddExchangeApiService) VerificationMethod(verificationMethod string) *AddExchangeApiService {
-	s.verificationMethod = &verificationMethod
-	return s
-}
-
-// EnableTrading set enableTrading
-func (s *AddExchangeApiService) EnableTrading(enableTrading bool) *AddExchangeApiService {
-	s.enableTrading = &enableTrading
-	return s
-}
-
-// Do send request
-func (s *AddExchangeApiService) Do(ctx context.Context, opts ...RequestOption) (res *AddExchangeApiReply, err error) {
-	r := &request{
-		method:   http.MethodPost,
-		endpoint: "/user/exchange-apis",
-		secType:  secTypeSigned,
-	}
-	m := params{
-		"accountName": s.accountName,
-		"exchange":    s.exchange,
-		"apiKey":      s.apiKey,
-		"apiSecret":   s.apiSecret,
-	}
-	if s.passphrase != nil {
-		m["passphrase"] = *s.passphrase
-	}
-	if s.verificationMethod != nil {
-		m["verificationMethod"] = *s.verificationMethod
-	}
-	if s.enableTrading != nil {
-		m["enableTrading"] = *s.enableTrading
-	}
-	r.setParams(m)
-	data, err := s.c.callAPI(ctx, r, opts...)
-	if err != nil {
-		return nil, err
-	}
-	res = new(AddExchangeApiReply)
-	err = json.Unmarshal(data, res)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
-}
-
-// AddExchangeApiReply add exchange API response
-type AddExchangeApiReply struct {
-	Id      string `json:"id"`
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-}
-
 // GetMasterOrdersService get master orders
 type GetMasterOrdersService struct {
 	c         *Client
 	page      *int32
 	pageSize  *int32
-	status    *string
+	status    *trading_enums.MasterOrderStatus
 	exchange  *string
 	symbol    *string
 	startTime *string
@@ -208,7 +114,7 @@ func (s *GetMasterOrdersService) PageSize(pageSize int32) *GetMasterOrdersServic
 }
 
 // Status set status
-func (s *GetMasterOrdersService) Status(status string) *GetMasterOrdersService {
+func (s *GetMasterOrdersService) Status(status trading_enums.MasterOrderStatus) *GetMasterOrdersService {
 	s.status = &status
 	return s
 }
@@ -459,49 +365,44 @@ type OrderFillInfo struct {
 
 // CreateMasterOrderService create master order
 type CreateMasterOrderService struct {
-	c                 *Client
-	algorithm         string
-	algorithmType     string
-	exchange          string
-	symbol            string
-	marketType        string
-	side              string
-	totalQuantity     *float64
-	orderNotional     *float64
-	apiKeyId          string
-	strategyType      *string
-	startTime         *string
-	executionDuration *string
-	endTime           *string
-	limitPrice        *float64
-	mustComplete      *bool
-	makerRateLimit    *float64
-	povLimit          *float64
-	marginType        *string
-	reduceOnly        *bool
-	notes             *string
-	clientId          *string
-	worstPrice        *float64
-	limitPriceString  *string
-	upTolerance       *string
-	lowTolerance      *string
-	strictUpBound     *bool
+	c                   *Client
+	algorithm           trading_enums.Algorithm
+	algorithmType       string
+	exchange            trading_enums.Exchange
+	symbol              string
+	marketType          trading_enums.MarketType
+	side                trading_enums.OrderSide
+	totalQuantity       *float64
+	orderNotional       *float64
+	apiKeyId            string
+	strategyType        *trading_enums.StrategyType
+	startTime           *string
+	executionDuration   *string
+	endTime             *string
+	limitPrice          *float64
+	mustComplete        *bool
+	makerRateLimit      *float64
+	povLimit            *float64
+	marginType          *trading_enums.MarginType
+	reduceOnly          *bool
+	notes               *string
+	worstPrice          *float64
+	limitPriceString    *string
+	upTolerance         *string
+	lowTolerance        *string
+	strictUpBound       *bool
+	povMinLimit         *float64
+	tailOrderProtection *bool
 }
 
 // Algorithm set algorithm
-func (s *CreateMasterOrderService) Algorithm(algorithm string) *CreateMasterOrderService {
+func (s *CreateMasterOrderService) Algorithm(algorithm trading_enums.Algorithm) *CreateMasterOrderService {
 	s.algorithm = algorithm
 	return s
 }
 
-// AlgorithmType set algorithmType
-func (s *CreateMasterOrderService) AlgorithmType(algorithmType string) *CreateMasterOrderService {
-	s.algorithmType = algorithmType
-	return s
-}
-
 // Exchange set exchange
-func (s *CreateMasterOrderService) Exchange(exchange string) *CreateMasterOrderService {
+func (s *CreateMasterOrderService) Exchange(exchange trading_enums.Exchange) *CreateMasterOrderService {
 	s.exchange = exchange
 	return s
 }
@@ -513,13 +414,13 @@ func (s *CreateMasterOrderService) Symbol(symbol string) *CreateMasterOrderServi
 }
 
 // MarketType set marketType
-func (s *CreateMasterOrderService) MarketType(marketType string) *CreateMasterOrderService {
+func (s *CreateMasterOrderService) MarketType(marketType trading_enums.MarketType) *CreateMasterOrderService {
 	s.marketType = marketType
 	return s
 }
 
 // Side set side
-func (s *CreateMasterOrderService) Side(side string) *CreateMasterOrderService {
+func (s *CreateMasterOrderService) Side(side trading_enums.OrderSide) *CreateMasterOrderService {
 	s.side = side
 	return s
 }
@@ -543,7 +444,7 @@ func (s *CreateMasterOrderService) ApiKeyId(apiKeyId string) *CreateMasterOrderS
 }
 
 // StrategyType set strategyType
-func (s *CreateMasterOrderService) StrategyType(strategyType string) *CreateMasterOrderService {
+func (s *CreateMasterOrderService) StrategyType(strategyType trading_enums.StrategyType) *CreateMasterOrderService {
 	s.strategyType = &strategyType
 	return s
 }
@@ -591,7 +492,7 @@ func (s *CreateMasterOrderService) PovLimit(povLimit float64) *CreateMasterOrder
 }
 
 // MarginType set marginType
-func (s *CreateMasterOrderService) MarginType(marginType string) *CreateMasterOrderService {
+func (s *CreateMasterOrderService) MarginType(marginType trading_enums.MarginType) *CreateMasterOrderService {
 	s.marginType = &marginType
 	return s
 }
@@ -605,12 +506,6 @@ func (s *CreateMasterOrderService) ReduceOnly(reduceOnly bool) *CreateMasterOrde
 // Notes set notes
 func (s *CreateMasterOrderService) Notes(notes string) *CreateMasterOrderService {
 	s.notes = &notes
-	return s
-}
-
-// ClientId set clientId
-func (s *CreateMasterOrderService) ClientId(clientId string) *CreateMasterOrderService {
-	s.clientId = &clientId
 	return s
 }
 
@@ -644,6 +539,18 @@ func (s *CreateMasterOrderService) StrictUpBound(strictUpBound bool) *CreateMast
 	return s
 }
 
+// PovMinLimit set povMinLimit
+func (s *CreateMasterOrderService) PovMinLimit(povMinLimit float64) *CreateMasterOrderService {
+	s.povMinLimit = &povMinLimit
+	return s
+}
+
+// TailOrderProtection set tailOrderProtection
+func (s *CreateMasterOrderService) TailOrderProtection(tailOrderProtection bool) *CreateMasterOrderService {
+	s.tailOrderProtection = &tailOrderProtection
+	return s
+}
+
 // Do send request
 func (s *CreateMasterOrderService) Do(ctx context.Context, opts ...RequestOption) (res *CreateMasterOrderReply, err error) {
 	r := &request{
@@ -653,7 +560,7 @@ func (s *CreateMasterOrderService) Do(ctx context.Context, opts ...RequestOption
 	}
 	m := params{
 		"algorithm":     s.algorithm,
-		"algorithmType": s.algorithmType,
+		"algorithmType": "TWAP",
 		"exchange":      s.exchange,
 		"symbol":        s.symbol,
 		"marketType":    s.marketType,
@@ -699,9 +606,6 @@ func (s *CreateMasterOrderService) Do(ctx context.Context, opts ...RequestOption
 	if s.notes != nil {
 		m["notes"] = *s.notes
 	}
-	if s.clientId != nil {
-		m["clientId"] = *s.clientId
-	}
 	if s.worstPrice != nil {
 		m["worstPrice"] = *s.worstPrice
 	}
@@ -716,6 +620,14 @@ func (s *CreateMasterOrderService) Do(ctx context.Context, opts ...RequestOption
 	}
 	if s.strictUpBound != nil {
 		m["strictUpBound"] = *s.strictUpBound
+	}
+	if s.povMinLimit != nil {
+		m["povMinLimit"] = *s.povMinLimit
+	}
+	if s.tailOrderProtection != nil {
+		m["tailOrderProtection"] = *s.tailOrderProtection
+	} else {
+		m["tailOrderProtection"] = true
 	}
 	r.setParams(m)
 	data, err := s.c.callAPI(ctx, r, opts...)
@@ -786,4 +698,36 @@ func (s *CancelMasterOrderService) Do(ctx context.Context, opts ...RequestOption
 type CancelMasterOrderReply struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
+}
+
+// CreateListenKeyService create listen key
+type CreateListenKeyService struct {
+	c *Client
+}
+
+// Do send request
+func (s *CreateListenKeyService) Do(ctx context.Context, opts ...RequestOption) (res *CreateListenKeyReply, err error) {
+	r := &request{
+		method:   http.MethodPost,
+		endpoint: "/user/trading/listen-key",
+		secType:  secTypeSigned,
+	}
+	data, err := s.c.callAPI(ctx, r, opts...)
+	if err != nil {
+		return nil, err
+	}
+	res = new(CreateListenKeyReply)
+	err = json.Unmarshal(data, res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// CreateListenKeyReply create listen key response
+type CreateListenKeyReply struct {
+	ListenKey string `json:"listenKey"`
+	ExpireAt  string `json:"expireAt"`
+	Success   bool   `json:"success"`
+	Message   string `json:"message"`
 }
