@@ -121,7 +121,7 @@ for _, api := range result.Items {
 **请求参数：**
 
 | 参数名 | 类型 | 是否必传 | 描述 |
-|--------|------|----------|------|
+|--------|------|--------|------|
 | **基础参数** |
 | algorithm | string | 是 | 交易算法，可选值：TWAP、VWAP、POV |
 | exchange | string | 是 | 交易所名称，可选值：Binance |
@@ -134,7 +134,7 @@ for _, api := range result.Items {
 | orderNotional | string | 否* | 按价值下单时的金额，以计价币种为单位（如ETHUSDT为USDT数量），与 totalQuantity 二选一，范围：>0 |
 | **时间参数** |
 | startTime | string | 否 | 开始执行时间（ISO 8601格式） |
-| executionDuration | int | 否** | 订单的有效时间（分钟），TWAP-1 时必填，范围：>1 |
+| executionDuration | int | 否 | 订单的有效时间（分钟），范围：>1 |
 | **TWAP/VWAP 算法参数** |
 | mustComplete | bool | 否 | 是否一定要在duration之内执行完，选false则不会追进度，默认：true |
 | makerRateLimit | string | 否 | 要求maker占比超过该值（优先级低于mustcomplete），范围：0-1，默认："0" |
@@ -152,7 +152,6 @@ for _, api := range result.Items {
 | notes | string | 否 | 订单备注 |
 
 *注：totalQuantity 和 orderNotional 必须传其中一个  
-**注：TWAP-1 算法需要 executionDuration，TWAP-2 算法需要 endTime
 
 **响应字段：**
 
@@ -1193,10 +1192,6 @@ handlers := &qe.WebSocketEventHandlers{
 ## 贡献指南
 
 欢迎提交 Issue 和 Pull Request！
-
-## 许可证
-
-本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件。
 
 ## 联系我们
 
