@@ -12,6 +12,9 @@
 - ✅ 主订单创建与管理（TWAP、VWAP 等算法）
 - ✅ 订单查询和成交明细
 - ✅ ListenKey 创建与管理
+- ✅ 交易对信息查询
+- ✅ 服务器连通性测试
+- ✅ 服务器时间同步
 - ✅ 安全的 HMAC-SHA256 签名认证
 - ✅ 支持生产环境和测试环境
 - ✅ 链式调用 API 设计
@@ -49,6 +52,162 @@ func main() {
 ```
 
 ## API 参考
+
+### 公共接口
+
+#### 服务器连通性测试
+
+##### Ping 服务器
+
+测试与 Quantum Execute 服务器的连通性。
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| 无需参数 | - | - | - |
+
+**响应：**
+
+成功时无返回内容，失败时返回错误信息。
+
+**示例代码：**
+
+```go
+// 测试服务器连通性
+err := client.NewPingServer().Do(context.Background())
+if err != nil {
+    log.Printf("服务器连接失败: %v", err)
+} else {
+    log.Println("服务器连接正常")
+}
+```
+
+#### 获取服务器时间
+
+##### 查询服务器时间戳
+
+获取 Quantum Execute 服务器的当前时间戳（毫秒）。
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| 无需参数 | - | - | - |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| serverTimeMilli | int64 | 服务器时间戳（毫秒） |
+
+**示例代码：**
+
+```go
+// 获取服务器时间戳
+timestamp, err := client.NewTimestampService().Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+
+log.Printf("服务器时间戳: %d", timestamp)
+log.Printf("服务器时间: %s", time.Unix(timestamp/1000, 0).Format("2006-01-02 15:04:05"))
+```
+
+#### 交易对管理
+
+##### 查询交易对列表
+
+获取支持的交易对信息，包括现货和合约交易对。
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| page | int32 | 否 | 页码 |
+| pageSize | int32 | 否 | 每页数量 |
+| exchange | string | 否 | 交易所名称筛选 |
+| marketType | string | 否 | 市场类型筛选，可选值：SPOT（现货）、FUTURES（合约） |
+| isCoin | bool | 否 | 是否为币种筛选 |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| items | array | 交易对列表 |
+| ├─ id | int | 交易对 ID |
+| ├─ symbol | string | 交易对符号（如：BTCUSDT） |
+| ├─ baseAsset | string | 基础币种（如：BTC） |
+| ├─ quoteAsset | string | 计价币种（如：USDT） |
+| ├─ exchange | string | 交易所名称 |
+| ├─ marketType | string | 市场类型（SPOT/FUTURES） |
+| ├─ contractType | string | 合约类型（仅合约交易对） |
+| ├─ deliveryDate | string | 交割日期（仅合约交易对） |
+| ├─ status | string | 交易对状态 |
+| ├─ createdAt | string | 创建时间 |
+| ├─ updatedAt | string | 更新时间 |
+| page | int | 当前页码 |
+| pageSize | int | 每页数量 |
+| total | string | 总数 |
+
+**示例代码：**
+
+```go
+// 获取所有交易对
+pairs, err := client.NewTradingPairsService().Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+
+// 获取币安现货交易对
+pairs, err := client.NewTradingPairsService().
+    Exchange("Binance").
+    MarketType("SPOT").
+    Page(1).
+    PageSize(50).
+    Do(context.Background())
+
+// 获取合约交易对
+pairs, err := client.NewTradingPairsService().
+    MarketType("FUTURES").
+    Page(1).
+    PageSize(100).
+    Do(context.Background())
+
+if err != nil {
+    log.Fatal(err)
+}
+
+// 打印交易对信息
+for _, pair := range pairs {
+    log.Printf(`
+交易对信息：
+    符号: %s
+    基础币种: %s
+    计价币种: %s
+    交易所: %s
+    市场类型: %s
+    状态: %s
+    创建时间: %s
+`,
+        pair.Symbol,
+        pair.BaseAsset,
+        pair.QuoteAsset,
+        pair.Exchange,
+        pair.MarketType,
+        pair.Status,
+        pair.CreatedAt,
+    )
+    
+    // 如果是合约交易对，显示额外信息
+    if pair.MarketType == "FUTURES" {
+        log.Printf("    合约类型: %s", pair.ContractType)
+        if pair.DeliveryDate != "" {
+            log.Printf("    交割日期: %s", pair.DeliveryDate)
+        }
+    }
+}
+```
 
 ### 交易所 API 管理
 

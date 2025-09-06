@@ -1,14 +1,15 @@
 package trading_enums
 
 type (
-	MasterOrderStatus string
-	Algorithm         string
-	StrategyType      string
-	MarketType        string
-	OrderSide         string
-	MarginType        string
-	Exchange          string
-	Category          string
+	MasterOrderStatus     string
+	Algorithm             string
+	StrategyType          string
+	MarketType            string
+	OrderSide             string
+	MarginType            string
+	Exchange              string
+	Category              string
+	TradingPairMarketType string
 )
 
 // 母单状态枚举
@@ -58,4 +59,10 @@ const (
 const (
 	CategorySpot Category = "spot" // 现货品种
 	CategoryPerp Category = "perp" // 合约品种
+)
+
+// 币对品种枚举（与市场类型对应）
+const (
+	TradingPairFutures TradingPairMarketType = "FUTURES" // 现货品种
+	TradingPairSpot    TradingPairMarketType = "SPOT"    // 合约品种
 )

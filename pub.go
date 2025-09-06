@@ -3,6 +3,7 @@ package qe_connector
 import (
 	"context"
 	"encoding/json"
+	"github.com/Quantum-Execute/qe-connector-go/constant/enums/trading_enums"
 	"net/http"
 )
 
@@ -12,7 +13,7 @@ type TradingPairsService struct {
 	page       *int32
 	pageSize   *int32
 	exchange   *string
-	marketType *string
+	marketType *trading_enums.TradingPairMarketType
 	isCoin     *bool
 }
 
@@ -35,7 +36,7 @@ func (s *TradingPairsService) Exchange(exchange string) *TradingPairsService {
 }
 
 // MarketType set marketType
-func (s *TradingPairsService) MarketType(marketType string) *TradingPairsService {
+func (s *TradingPairsService) MarketType(marketType trading_enums.TradingPairMarketType) *TradingPairsService {
 	s.marketType = &marketType
 	return s
 }
