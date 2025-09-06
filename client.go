@@ -242,6 +242,15 @@ func (c *Client) NewCancelMasterOrderService() *CancelMasterOrderService {
 func (c *Client) NewCreateListenKeyService() *CreateListenKeyService {
 	return &CreateListenKeyService{c: c}
 }
+func (c *Client) NewTradingPairsService() *TradingPairsService {
+	return &TradingPairsService{c: c}
+}
+func (c *Client) NewPingServer() *PingService {
+	return &PingService{c: c}
+}
+func (c *Client) NewTimestampService() *TimestampService {
+	return &TimestampService{c: c}
+}
 
 // NewWebSocketService create WebSocket service for real-time data streaming
 func (c *Client) NewWebSocketService() *WebSocketService {

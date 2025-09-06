@@ -174,3 +174,25 @@ func TestClient_NewWebSocketService(t *testing.T) {
 
 	t.Logf("WebSocket client stopped.")
 }
+
+func TestPubFun(t *testing.T) {
+	ctx := context.Background()
+	client := NewClient("", "")
+	do, err := client.NewTradingPairsService().Do(ctx)
+	if err != nil {
+		t.Errorf("err should be nil, but got %v", err)
+		return
+	}
+	t.Logf("%#v", do)
+	err = client.NewPingServer().Do(ctx)
+	if err != nil {
+		t.Errorf("err should be nil, but got %v", err)
+		return
+	}
+	timestampMill, err := client.NewTimestampService().Do(ctx)
+	if err != nil {
+		t.Errorf("err should be nil, but got %v", err)
+		return
+	}
+	t.Logf("timestampMill: %v", timestampMill)
+}
