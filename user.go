@@ -3,6 +3,7 @@ package qe_connector
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -393,6 +394,7 @@ type CreateMasterOrderService struct {
 	strictUpBound       *bool
 	povMinLimit         *float64
 	tailOrderProtection *bool
+	isTargetPosition    *bool
 }
 
 // Algorithm set algorithm
@@ -551,6 +553,12 @@ func (s *CreateMasterOrderService) TailOrderProtection(tailOrderProtection bool)
 	return s
 }
 
+// IsTargetPosition set tailOrderProtection
+func (s *CreateMasterOrderService) IsTargetPosition(isTargetPosition bool) *CreateMasterOrderService {
+	s.isTargetPosition = &isTargetPosition
+	return s
+}
+
 // Do send request
 func (s *CreateMasterOrderService) Do(ctx context.Context, opts ...RequestOption) (res *CreateMasterOrderReply, err error) {
 	r := &request{
@@ -628,6 +636,16 @@ func (s *CreateMasterOrderService) Do(ctx context.Context, opts ...RequestOption
 		m["tailOrderProtection"] = *s.tailOrderProtection
 	} else {
 		m["tailOrderProtection"] = true
+	}
+	if s.isTargetPosition != nil {
+		m["isTargetPosition"] = *s.isTargetPosition
+		if *s.isTargetPosition {
+			if s.totalQuantity == nil || s.orderNotional != nil {
+				return nil, errors.New("totalQuantity is required and orderNotional not required when isTargetPosition is true")
+			}
+		}
+	} else {
+		m["isTargetPosition"] = false
 	}
 	r.setParams(m)
 	data, err := s.c.callAPI(ctx, r, opts...)

@@ -292,6 +292,8 @@ for _, api := range result.Items {
 | **数量参数（二选一）** |
 | totalQuantity | string | 否* | 要交易的总数量，支持字符串表示以避免精度问题，与 orderNotional 二选一，范围：>0              |
 | orderNotional | string | 否* | 按价值下单时的金额，以计价币种为单位（如ETHUSDT为USDT数量），与 totalQuantity 二选一，范围：>0 |
+| **下单模式参数** |
+| isTargetPosition | bool | 否 | 下单模式为目标仓位下单，当为true时totalQuantity必填，orderNotional不可填，默认：false |
 | **时间参数** |
 | startTime | string | 否 | 开始执行时间（ISO 8601格式）                                            |
 | executionDuration | int | 否 | 订单的有效时间（分钟），范围：>1                                             |
@@ -311,7 +313,7 @@ for _, api := range result.Items {
 | marginType | string | 否 | 合约交易保证金类型，可选值：U（U本位）                                          |
 | notes | string | 否 | 订单备注                                                          |
 
-*注：totalQuantity 和 orderNotional 必须传其中一个  
+*注：totalQuantity 和 orderNotional 必须传其中一个，但当 isTargetPosition 为 true 时，totalQuantity 必填且 orderNotional 不可填  
 
 **响应字段：**
 
@@ -349,6 +351,37 @@ if err != nil {
 
 if result.Success {
     log.Printf("主订单创建成功，ID: %s", result.MasterOrderId)
+}
+```
+
+**目标仓位下单示例：**
+
+```go
+// 目标仓位下单示例 - 买入 1.5 BTC 到目标仓位
+result, err := client.NewCreateMasterOrderService().
+    Algorithm("TWAP").
+    Exchange("Binance").
+    Symbol("BTCUSDT").
+    MarketType("SPOT").
+    Side("buy").
+    ApiKeyId("your-api-key-id").
+    TotalQuantity("1.5").                 // 目标数量 1.5 BTC
+    IsTargetPosition(true).               // 启用目标仓位模式
+    StartTime("2024-01-01T10:00:00Z").
+    ExecutionDuration(60).                // 60 分钟
+    MustComplete(true).
+    LimitPrice("65000").                  // 最高价格 $65,000
+    UpTolerance("0.1").
+    LowTolerance("0.1").
+    TailOrderProtection(true).
+    Do(context.Background())
+
+if err != nil {
+    log.Fatal(err)
+}
+
+if result.Success {
+    log.Printf("目标仓位订单创建成功，ID: %s", result.MasterOrderId)
 }
 ```
 
