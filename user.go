@@ -378,7 +378,7 @@ type CreateMasterOrderService struct {
 	apiKeyId            string
 	strategyType        *trading_enums.StrategyType
 	startTime           *string
-	executionDuration   *string
+	executionDuration   *int32
 	endTime             *string
 	limitPrice          *float64
 	mustComplete        *bool
@@ -387,8 +387,6 @@ type CreateMasterOrderService struct {
 	marginType          *trading_enums.MarginType
 	reduceOnly          *bool
 	notes               *string
-	worstPrice          *float64
-	limitPriceString    *string
 	upTolerance         *string
 	lowTolerance        *string
 	strictUpBound       *bool
@@ -458,7 +456,7 @@ func (s *CreateMasterOrderService) StartTime(startTime string) *CreateMasterOrde
 }
 
 // ExecutionDuration set executionDuration
-func (s *CreateMasterOrderService) ExecutionDuration(executionDuration string) *CreateMasterOrderService {
+func (s *CreateMasterOrderService) ExecutionDuration(executionDuration int32) *CreateMasterOrderService {
 	s.executionDuration = &executionDuration
 	return s
 }
@@ -508,18 +506,6 @@ func (s *CreateMasterOrderService) ReduceOnly(reduceOnly bool) *CreateMasterOrde
 // Notes set notes
 func (s *CreateMasterOrderService) Notes(notes string) *CreateMasterOrderService {
 	s.notes = &notes
-	return s
-}
-
-// WorstPrice set worstPrice
-func (s *CreateMasterOrderService) WorstPrice(worstPrice float64) *CreateMasterOrderService {
-	s.worstPrice = &worstPrice
-	return s
-}
-
-// LimitPriceString set limitPriceString
-func (s *CreateMasterOrderService) LimitPriceString(limitPriceString string) *CreateMasterOrderService {
-	s.limitPriceString = &limitPriceString
 	return s
 }
 
@@ -613,12 +599,6 @@ func (s *CreateMasterOrderService) Do(ctx context.Context, opts ...RequestOption
 	}
 	if s.notes != nil {
 		m["notes"] = *s.notes
-	}
-	if s.worstPrice != nil {
-		m["worstPrice"] = *s.worstPrice
-	}
-	if s.limitPriceString != nil {
-		m["limitPriceString"] = *s.limitPriceString
 	}
 	if s.upTolerance != nil {
 		m["upTolerance"] = *s.upTolerance

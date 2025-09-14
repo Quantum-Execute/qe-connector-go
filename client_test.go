@@ -8,6 +8,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/Quantum-Execute/qe-connector-go/constant/enums/trading_enums"
 )
 
 func TestClient_NewListExchangeApisService(t *testing.T) {
@@ -31,7 +33,7 @@ func TestClient_NewGetMasterOrdersService(t *testing.T) {
 	do, err := client.NewGetMasterOrdersService().
 		Page(1).
 		PageSize(10).
-		Status("COMPLETED").
+		Status(trading_enums.MasterOrderStatusCompleted).
 		Exchange("Binance").
 		Do(ctx)
 	if err != nil {
@@ -61,22 +63,19 @@ func TestClient_NewCreateMasterOrderService(t *testing.T) {
 
 	// 根据提供的JSON示例创建订单
 	do, err := client.NewCreateMasterOrderService().
-		MarketType("SPOT").
+		MarketType(trading_enums.MarketTypeSpot).
 		Symbol("BTCUSDT").
-		Exchange("Binance").
-		Side("buy").
+		Exchange(trading_enums.ExchangeBinance).
+		Side(trading_enums.OrderSideBuy).
 		StartTime("2025-08-17T01:11:34+08:00").
 		EndTime("2025-08-17T01:44:35+08:00").
-		Algorithm("TWAP").
-		ExecutionDuration("5").
+		Algorithm(trading_enums.AlgorithmTWAP).
+		ExecutionDuration(5).
 		ApiKeyId("").
 		ReduceOnly(false).
 		MustComplete(true).
 		OrderNotional(200).
-		StrategyType("TWAP-1").
-		WorstPrice(-1).
-		UpTolerance("-1").
-		LowTolerance("-1").
+		StrategyType(trading_enums.StrategyTypeTWAP1).
 		Do(ctx)
 	if err != nil {
 		t.Errorf("err should be nil, but got %v", err)

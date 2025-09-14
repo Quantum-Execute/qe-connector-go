@@ -162,14 +162,14 @@ if err != nil {
 // 获取币安现货交易对
 pairs, err := client.NewTradingPairsService().
     Exchange("Binance").
-    MarketType("SPOT").
+    MarketType(trading_enums.TradingPairSpot).
     Page(1).
     PageSize(50).
     Do(context.Background())
 
 // 获取合约交易对
 pairs, err := client.NewTradingPairsService().
-    MarketType("FUTURES").
+    MarketType(trading_enums.TradingPairFutures).
     Page(1).
     PageSize(100).
     Do(context.Background())
@@ -279,39 +279,40 @@ for _, api := range result.Items {
 
 **请求参数：**
 
-| 参数名 | 类型 | 是否必传 | 描述                                                            |
-|--------|------|--------|---------------------------------------------------------------|
+| 参数名 | 类型 | 是否必传 | 描述                                                                                                                                                                                         |
+|--------|------|--------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **基础参数** |
-| strategyType | string | 是 | 交易算法，可选值：TWAP-1、POV                                      |
-| algorithm | string | 是 | 交易算法，可选值：TWAP、VWAP、POV                                        |
-| exchange | string | 是 | 交易所名称，可选值：Binance                                             |
-| symbol | string | 是 | 交易对符号（如：BTCUSDT）                                              |
-| marketType | string | 是 | 市场类型，可选值：SPOT（现货）、PERP（合约）                                    |
-| side | string | 是 | 买卖方向，可选值：buy（买入）、sell（卖出）                                     |
-| apiKeyId | string | 是 | 指定使用的 API 密钥 ID                                               |
+| strategyType | string | 是 | 交易算法，可选值：TWAP-1、POV                                                                                                                                                                        |
+| algorithm | string | 是 | 交易算法，可选值：TWAP、VWAP、POV                                                                                                                                                                     |
+| exchange | string | 是 | 交易所名称，可选值：Binance                                                                                                                                                                          |
+| symbol | string | 是 | 交易对符号（如：BTCUSDT）                                                                                                                                                                           |
+| marketType | string | 是 | 市场类型，可选值：SPOT（现货）、PERP（合约）                                                                                                                                                                 |
+| side | string | 是 | 1.如果isTargetPosition=False：side代表交易方向，可选值：buy（买入）、sell（卖出）。合约交易时可与reduceOnly组合：reduceOnly=True时，buy代表买入平空，sell代表卖出平多。2.如果isTargetPosition=True：side代表仓位方向，可选值：buy（多头）、sell（空头）。【仅合约交易时需传入】 |
+| apiKeyId | string | 是 | 指定使用的 API 密钥 ID                                                                                                                                                                            |
 | **数量参数（二选一）** |
-| totalQuantity | string | 否* | 要交易的总数量，支持字符串表示以避免精度问题，与 orderNotional 二选一，范围：>0              |
-| orderNotional | string | 否* | 按价值下单时的金额，以计价币种为单位（如ETHUSDT为USDT数量），与 totalQuantity 二选一，范围：>0 |
+| totalQuantity | string | 否* | 要交易的总数量，支持字符串表示以避免精度问题，与 orderNotional 二选一，输入范围：>0                                                                                                                                         |
+| orderNotional | string | 否* | 按价值下单时的金额，以计价币种为单位（如ETHUSDT为USDT数量），与 totalQuantity 二选一，输入范围：>0                                                                                                                            |
 | **下单模式参数** |
-| isTargetPosition | bool | 否 | 下单模式为目标仓位下单，当为true时totalQuantity必填，orderNotional不可填，默认：false |
+| isTargetPosition | bool | 否 | 下单模式为目标仓位下单，当为true时totalQuantity必填，orderNotional不可填，默认：false                                                                                                                               |
 | **时间参数** |
-| startTime | string | 否 | 开始执行时间（ISO 8601格式）                                            |
-| executionDuration | int | 否 | 订单的有效时间（分钟），范围：>1                                             |
+| startTime | string | 否 | 开始执行时间（ISO 8601格式）                                                                                                                                                                         |
+| endTime | string | 否 | 结束执行时间（ISO 8601格式）                                                                                                                                                                       |
+| executionDuration | int | 否 | 订单的有效时间（分钟），范围：>1                                                                                                                                                                          |
 | **TWAP/VWAP 算法参数** |
-| mustComplete | bool | 否 | 是否一定要在duration之内执行完，选false则不会追进度，默认：true                      |
-| makerRateLimit | string | 否 | 要求maker占比超过该值（优先级低于mustcomplete），范围：0-1，默认："0"                |
-| povLimit | string | 否 | 占市场成交量比例限制，优先级低于mustcomplete，范围：0-1，默认："0.8"                  |
-| limitPrice | string | 否 | 最高/低允许交易的价格，买的话就是最高价，卖就是最低价，超出范围停止交易，填"-1"不限制，范围：>0，默认："-1"   |
-| upTolerance | string | 否 | 允许超出schedule的容忍度，比如0.1就是执行过程中允许比目标进度超出母单数量的10%，范围：>0且<1，默认：-1 |
-| lowTolerance | string | 否 | 允许落后schedule的容忍度，范围：>0且<1，默认：-1                               |
-| strictUpBound | bool | 否 | 是否追求严格小于uptolerance，开启后可能会把很小的母单也拆的很细，不建议开启，默认：false          |
-| tailOrderProtection | bool | 否 | 尾单必须taker扫完，如果false则允许省一点，小于交易所最小发单量，默认：true                  |
+| mustComplete | bool | 否 | 是否一定要在duration之内执行完，选false则不会追进度，默认：true                                                                                                                                                   |
+| makerRateLimit | string | 否 | 要求maker占比超过该值（优先级低于mustcomplete），范围：0-1，默认："0"                                                                                                                                             |
+| povLimit | string | 否 | 占市场成交量比例限制，优先级低于mustcomplete，范围：0-1，默认："0.8"                                                                                                                                               |
+| limitPrice | string | 否 | 最高/低允许交易的价格，买的话就是最高价，卖就是最低价，超出范围停止交易，填"-1"不限制，范围：>0，默认："-1"                                                                                                                                |
+| upTolerance | string | 否 | 允许超出schedule的容忍度，比如0.1就是执行过程中允许比目标进度超出母单数量的10%，范围：>0且<1，默认：-1                                                                                                                              |
+| lowTolerance | string | 否 | 允许落后schedule的容忍度，范围：>0且<1，默认：-1                                                                                                                                                            |
+| strictUpBound | bool | 否 | 是否追求严格小于uptolerance，开启后可能会把很小的母单也拆的很细，不建议开启，默认：false                                                                                                                                       |
+| tailOrderProtection | bool | 否 | 尾单必须taker扫完，如果false则允许省一点，小于交易所最小发单量，默认：true                                                                                                                                               |
 | **POV 算法参数** |
-| povMinLimit | string | 否 | 占市场成交量比例下限，范围：小于max(POVLimit-0.01,0)，默认："0"                   |
+| povMinLimit | string | 否 | 占市场成交量比例下限，范围：小于max(POVLimit-0.01,0)，默认："0"                                                                                                                                                |
 | **其他参数** |
-| reduceOnly | bool | 否 | 合约交易时是否仅减仓，默认：false                                           |
-| marginType | string | 否 | 合约交易保证金类型，可选值：U（U本位）                                          |
-| notes | string | 否 | 订单备注                                                          |
+| reduceOnly | bool | 否 | 合约交易时是否仅减仓，默认：false                                                                                                                                                                        |
+| marginType | string | 否 | 合约交易保证金类型，可选值：U（U本位）                                                                                                                                                                       |
+| notes | string | 否 | 订单备注                                                                                                                                                                                       |
 
 *注：totalQuantity 和 orderNotional 必须传其中一个，但当 isTargetPosition 为 true 时，totalQuantity 必填且 orderNotional 不可填  
 
@@ -326,20 +327,27 @@ for _, api := range result.Items {
 **示例代码：**
 
 ```go
+import (
+    "context"
+    "log"
+    qe "github.com/Quantum-Execute/qe-connector-go"
+    "github.com/Quantum-Execute/qe-connector-go/constant/enums/trading_enums"
+)
+
 // TWAP 订单示例 - 在 30 分钟内分批买入价值 $10,000 的 BTC
 result, err := client.NewCreateMasterOrderService().
-    Algorithm("TWAP").
-    Exchange("Binance").
+    Algorithm(trading_enums.AlgorithmTWAP).
+    Exchange(trading_enums.ExchangeBinance).
     Symbol("BTCUSDT").
-    MarketType("SPOT").
-    Side("buy").
+    MarketType(trading_enums.MarketTypeSpot).
+    Side(trading_enums.OrderSideBuy).
     ApiKeyId("your-api-key-id").
-    OrderNotional("10000").            // $10,000 名义价值
+    OrderNotional(10000).              // $10,000 名义价值
     StartTime("2024-01-01T10:00:00Z").
     EndTime("2024-01-01T10:30:00Z").
     ExecutionDuration(30).             // 30 分钟
     MustComplete(true).
-    LimitPrice("60000").               // 最高价格 $60,000
+    LimitPrice(60000).                 // 最高价格 $60,000
     UpTolerance("0.1").                // 允许超出 10%
     LowTolerance("0.1").               // 允许落后 10%
     TailOrderProtection(true).
@@ -359,18 +367,18 @@ if result.Success {
 ```go
 // 目标仓位下单示例 - 买入 1.5 BTC 到目标仓位
 result, err := client.NewCreateMasterOrderService().
-    Algorithm("TWAP").
-    Exchange("Binance").
+    Algorithm(trading_enums.AlgorithmTWAP).
+    Exchange(trading_enums.ExchangeBinance).
     Symbol("BTCUSDT").
-    MarketType("SPOT").
-    Side("buy").
+    MarketType(trading_enums.MarketTypeSpot).
+    Side(trading_enums.OrderSideBuy).
     ApiKeyId("your-api-key-id").
-    TotalQuantity("1.5").                 // 目标数量 1.5 BTC
+    TotalQuantity(1.5).                   // 目标数量 1.5 BTC
     IsTargetPosition(true).               // 启用目标仓位模式
     StartTime("2024-01-01T10:00:00Z").
     ExecutionDuration(60).                // 60 分钟
     MustComplete(true).
-    LimitPrice("65000").                  // 最高价格 $65,000
+    LimitPrice(65000).                    // 最高价格 $65,000
     UpTolerance("0.1").
     LowTolerance("0.1").
     TailOrderProtection(true).
@@ -390,17 +398,17 @@ if result.Success {
 ```go
 // POV 订单示例 - 按市场成交量比例买入 BTC
 result, err := client.NewCreateMasterOrderService().
-    Algorithm("POV").
-    Exchange("Binance").
+    Algorithm(trading_enums.AlgorithmPOV).
+    Exchange(trading_enums.ExchangeBinance).
     Symbol("BTCUSDT").
-    MarketType("SPOT").
-    Side("buy").
+    MarketType(trading_enums.MarketTypeSpot).
+    Side(trading_enums.OrderSideBuy).
     ApiKeyId("your-api-key-id").
-    TotalQuantity("1.5").              // 买入 1.5 BTC
+    TotalQuantity(1.5).                // 买入 1.5 BTC
     ExecutionDuration(60).             // 60 分钟
-    PovLimit("0.1").                   // 占市场成交量 10%
-    PovMinLimit("0.05").               // 最低占市场成交量 5%
-    LimitPrice("65000").               // 最高价格 $65,000
+    PovLimit(0.1).                     // 占市场成交量 10%
+    PovMinLimit(0.05).                 // 最低占市场成交量 5%
+    LimitPrice(65000).                 // 最高价格 $65,000
     TailOrderProtection(true).
     Do(context.Background())
 
@@ -491,7 +499,7 @@ orders, err := client.NewGetMasterOrdersService().
 orders, err := client.NewGetMasterOrdersService().
     Page(1).
     PageSize(20).
-    Status("NEW").                    // 查询执行中的订单
+    Status(trading_enums.MasterOrderStatusNew).  // 查询执行中的订单
     Symbol("BTCUSDT").
     StartTime("2024-01-01T00:00:00Z").
     EndTime("2024-01-31T23:59:59Z").
@@ -1287,44 +1295,60 @@ handlers := &qe.WebSocketEventHandlers{
 
 **算法类型 (Algorithm)：**
 
-| 枚举值 | 描述 |
-|--------|------|
-| TWAP | TWAP算法 |
-| VWAP | VWAP算法 |
-| POV | POV算法 |
+| 枚举常量 | 枚举值 | 描述 |
+|----------|--------|------|
+| `trading_enums.AlgorithmTWAP` | TWAP | TWAP算法 |
+| `trading_enums.AlgorithmVWAP` | VWAP | VWAP算法 |
+| `trading_enums.AlgorithmPOV` | POV | POV算法 |
 
 **市场类型 (MarketType)：**
 
-| 枚举值 | 描述 |
-|--------|------|
-| SPOT | 现货市场 |
-| PERP | 合约市场 |
+| 枚举常量 | 枚举值 | 描述 |
+|----------|--------|------|
+| `trading_enums.MarketTypeSpot` | SPOT | 现货市场 |
+| `trading_enums.MarketTypePerp` | PERP | 合约市场 |
 
 **订单方向 (OrderSide)：**
 
-| 枚举值 | 描述 |
-|--------|------|
-| buy | 买入 |
-| sell | 卖出 |
+| 枚举常量 | 枚举值 | 描述 |
+|----------|--------|------|
+| `trading_enums.OrderSideBuy` | buy | 买入 |
+| `trading_enums.OrderSideSell` | sell | 卖出 |
 
 **交易所 (Exchange)：**
 
-| 枚举值 | 描述 |
-|--------|------|
-| Binance | 币安 |
+| 枚举常量 | 枚举值 | 描述 |
+|----------|--------|------|
+| `trading_enums.ExchangeBinance` | Binance | 币安 |
 
 **保证金类型 (MarginType)：**
 
-| 枚举值 | 描述 |
-|--------|------|
-| U | U本位 |
+| 枚举常量 | 枚举值 | 描述 |
+|----------|--------|------|
+| `trading_enums.MarginTypeU` | U | U本位 |
+| `trading_enums.MarginTypeC` | C | 币本位 |
 
 **母单状态 (MasterOrderStatus)：**
 
-| 枚举值 | 描述 |
-|--------|------|
-| NEW | 执行中 |
-| COMPLETED | 已完成 |
+| 枚举常量 | 枚举值 | 描述 |
+|----------|--------|------|
+| `trading_enums.MasterOrderStatusNew` | NEW | 执行中 |
+| `trading_enums.MasterOrderStatusCompleted` | COMPLETED | 已完成 |
+
+**策略类型 (StrategyType)：**
+
+| 枚举常量 | 枚举值 | 描述 |
+|----------|--------|------|
+| `trading_enums.StrategyTypeTWAP1` | TWAP-1 | TWAP策略版本1 |
+| `trading_enums.StrategyTypeTWAP2` | TWAP-2 | TWAP策略版本2 |
+| `trading_enums.StrategyTypePOV` | POV | POV策略 |
+
+**交易对市场类型 (TradingPairMarketType)：**
+
+| 枚举常量 | 枚举值 | 描述 |
+|----------|--------|------|
+| `trading_enums.TradingPairSpot` | SPOT | 现货交易对 |
+| `trading_enums.TradingPairFutures` | FUTURES | 合约交易对 |
 
 ### 5. 容忍度参数说明
 
