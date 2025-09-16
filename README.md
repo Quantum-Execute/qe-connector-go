@@ -161,7 +161,7 @@ if err != nil {
 
 // 获取币安现货交易对
 pairs, err := client.NewTradingPairsService().
-    Exchange("Binance").
+    Exchange(trading_enums.ExchangeBinance).
     MarketType(trading_enums.TradingPairSpot).
     Page(1).
     PageSize(50).
@@ -179,7 +179,7 @@ if err != nil {
 }
 
 // 打印交易对信息
-for _, pair := range pairs {
+for _, pair := range pairs.Items {
     log.Printf(`
 交易对信息：
     符号: %s
@@ -257,16 +257,15 @@ if err != nil {
 result, err := client.NewListExchangeApisService().
     Page(1).
     PageSize(10).
-    Exchange("binance").
+    Exchange(trading_enums.ExchangeBinance).
     Do(context.Background())
 
 // 打印结果
 for _, api := range result.Items {
-    log.Printf("账户: %s, 交易所: %s, 状态: %s, 余额: $%.2f",
+    log.Printf("账户: %s, 交易所: %s, 状态: %s",
         api.AccountName,
         api.Exchange,
         api.Status,
-        api.Balance,
     )
 }
 ```
@@ -355,6 +354,7 @@ result, err := client.NewCreateMasterOrderService().
     UpTolerance("0.1").                // 允许超出 10%
     LowTolerance("0.1").               // 允许落后 10%
     TailOrderProtection(true).
+    StrategyType(trading_enums.StrategyTypeTWAP1).
     Do(context.Background())
 
 if err != nil {
@@ -386,6 +386,7 @@ result, err := client.NewCreateMasterOrderService().
     UpTolerance("0.1").
     LowTolerance("0.1").
     TailOrderProtection(true).
+    StrategyType(trading_enums.StrategyTypeTWAP1).
     Do(context.Background())
 
 if err != nil {
@@ -414,6 +415,7 @@ result, err := client.NewCreateMasterOrderService().
     PovMinLimit(0.05).                 // 最低占市场成交量 5%
     LimitPrice(65000).                 // 最高价格 $65,000
     TailOrderProtection(true).
+    StrategyType(trading_enums.StrategyTypeTWAP1).
     Do(context.Background())
 
 if err != nil {
@@ -453,8 +455,8 @@ if result.Success {
 | ├─ symbol | string | 交易对 |
 | ├─ marketType | string | 市场类型 |
 | ├─ side | string | 买卖方向 |
-| ├─ totalQuantity | string | 总数量 |
-| ├─ filledQuantity | string | 已成交数量 |
+| ├─ totalQuantity | float64 | 总数量 |         
+| ├─ filledQuantity | float64 | 已成交数量 |      
 | ├─ averagePrice | float64 | 平均成交价 |
 | ├─ status | string | 状态：NEW（创建，未执行）、WAITING（等待中）、PROCESSING（执行中，且未完成）、PAUSED（已暂停）、CANCEL（取消中）、CANCELLED（已取消）、COMPLETED（已完成）、REJECTED（已拒绝）、EXPIRED（已过期）、CANCEL_REJECT（取消被拒绝） |
 | ├─ executionDuration | int32 | 执行时长（分钟） |
@@ -469,8 +471,8 @@ if result.Success {
 | ├─ strategyType | string | 策略类型 |
 | ├─ orderNotional | string | 订单金额（USDT） |
 | ├─ mustComplete | bool | 是否必须完成 |
-| ├─ makerRateLimit | string | 最低 Maker 率 |
-| ├─ povLimit | string | 最大市场成交量占比 |
+| ├─ makerRateLimit | float64 | 最低 Maker 率 |
+| ├─ povLimit | float64 | 最大市场成交量占比 |
 | ├─ clientId | string | 客户端 ID |
 | ├─ date | string | 发单日期（格式：YYYYMMDD） |
 | ├─ ticktimeInt | string | 发单时间（格式：093000000 表示 9:30:00.000） |
@@ -478,8 +480,8 @@ if result.Success {
 | ├─ upTolerance | string | 上容忍度 |
 | ├─ lowTolerance | string | 下容忍度 |
 | ├─ strictUpBound | bool | 严格上界 |
-| ├─ ticktimeMs | int64 | 发单时间戳（epoch 毫秒） |
-| ├─ category | string | 交易品种（spot 或 perp） |
+| ├─ ticktimeMs | string | 发单时间戳（epoch 毫秒） |   
+| ├─ category | string | 交易品种（spot 或 perp） |   
 | ├─ filledAmount | float64 | 成交金额 |
 | ├─ totalValue | float64 | 成交总值 |
 | ├─ base | string | 基础币种 |
@@ -961,127 +963,171 @@ func getAllOrders(client *qe.Client) ([]qe.MasterOrderInfo, error) {
 ### 4. ListenKey 管理
 
 ```go
-// ListenKey 管理器
+package main
+
+import (
+	"context"
+	"fmt"
+	qe "github.com/Quantum-Execute/qe-connector-go"
+	"log"
+	"strconv"
+	"time"
+)
+
 type ListenKeyManager struct {
-    client     *qe.Client
-    listenKey  string
-    expireAt   int64
-    wsConn     *websocket.Conn
-    reconnect  chan bool
+	client    *qe.Client
+	handlers  *qe.WebSocketEventHandlers
+	listenKey string
+	expireAt  int64
+	wsConn    *qe.WebSocketService
 }
 
 // 创建 ListenKey 管理器
 func NewListenKeyManager(client *qe.Client) *ListenKeyManager {
-    return &ListenKeyManager{
-        client:    client,
-        reconnect: make(chan bool, 1),
-    }
+	handlers := &qe.WebSocketEventHandlers{
+		OnConnected: func() {
+			log.Printf("WebSocket connected")
+		},
+		OnDisconnected: func() {
+			log.Printf("WebSocket disconnected")
+		},
+		OnError: func(err error) {
+			log.Printf("WebSocket error: %v\n", err)
+		},
+		OnStatus: func(data string) error {
+			log.Printf("Status message: %s\n", data)
+			return nil
+		},
+		OnMasterOrder: func(msg *qe.MasterOrderMessage) error {
+			log.Printf("Master Order Update:\n")
+			log.Printf("  - Master Order ID: %s\n", msg.MasterOrderID)
+			log.Printf("  - Symbol: %s\n", msg.Symbol)
+			log.Printf("  - Side: %s\n", msg.Side)
+			log.Printf("  - Quantity: %.8f\n", msg.Qty)
+			log.Printf("  - Status: %s\n", msg.Status)
+			log.Printf("  - Strategy: %s\n", msg.Strategy)
+			if msg.Reason != "" {
+				log.Printf("  - Reason: %s\n", msg.Reason)
+			}
+			return nil
+		},
+		OnOrder: func(msg *qe.OrderMessage) error {
+			log.Printf("Order Update:\n")
+			log.Printf("  - Order ID: %s\n", msg.OrderID)
+			log.Printf("  - Master Order ID: %s\n", msg.MasterOrderID)
+			log.Printf("  - Symbol: %s\n", msg.Symbol)
+			log.Printf("  - Side: %s\n", msg.Side)
+			log.Printf("  - Price: %.8f\n", msg.Price)
+			log.Printf("  - Quantity: %.8f\n", msg.Quantity)
+			log.Printf("  - Status: %s\n", msg.Status)
+			log.Printf("  - Filled Qty: %.8f\n", msg.FillQty)
+			log.Printf("  - Cumulative Filled: %.8f\n", msg.CumFilledQty)
+			if msg.Reason != "" {
+				log.Printf("  - Reason: %s\n", msg.Reason)
+			}
+			return nil
+		},
+		OnFill: func(msg *qe.FillMessage) error {
+			log.Printf("Fill Update:\n")
+			log.Printf("  - Order ID: %s\n", msg.OrderID)
+			log.Printf("  - Master Order ID: %s\n", msg.MasterOrderID)
+			log.Printf("  - Symbol: %s\n", msg.Symbol)
+			log.Printf("  - Side: %s\n", msg.Side)
+			log.Printf("  - Fill Price: %.8f\n", msg.FillPrice)
+			log.Printf("  - Filled Qty: %.8f\n", msg.FilledQty)
+			log.Printf("  - Fill Time: %s\n", time.Unix(msg.FillTime/1000, 0).Format("2006-01-02 15:04:05"))
+			return nil
+		},
+		OnRawMessage: func(msg *qe.ClientPushMessage) error {
+			// 可选：处理原始消息
+			// log.Printf("Raw message - Type: %s, MessageId: %s\n", msg.Type, msg.MessageId)
+			return nil
+		},
+	}
+	m := &ListenKeyManager{
+		client:   client,
+		handlers: handlers,
+	}
+	// 启动自动刷新协程
+	go m.autoRefresh()
+	return m
 }
 
 // 创建或刷新 ListenKey
 func (m *ListenKeyManager) createListenKey() error {
-    result, err := m.client.NewCreateListenKeyService().
-        Do(context.Background())
-    
-    if err != nil {
-        return err
-    }
-    
-    if !result.Success {
-        return fmt.Errorf("创建 ListenKey 失败: %s", result.Message)
-    }
-    
-    m.listenKey = result.ListenKey
-    m.expireAt, _ = strconv.ParseInt(result.ExpireAt, 10, 64)
-    
-    log.Printf("ListenKey 创建成功: %s, 过期时间: %d", m.listenKey, m.expireAt)
-    return nil
+	result, err := m.client.NewCreateListenKeyService().
+		Do(context.Background())
+
+	if err != nil {
+		return err
+	}
+
+	if !result.Success {
+		return fmt.Errorf("创建 ListenKey 失败: %s", result.Message)
+	}
+
+	m.listenKey = result.ListenKey
+	m.expireAt, _ = strconv.ParseInt(result.ExpireAt, 10, 64)
+
+	log.Printf("ListenKey 创建成功: %s, 过期时间: %d", m.listenKey, m.expireAt)
+	return nil
 }
 
 // 启动 WebSocket 连接
 func (m *ListenKeyManager) StartWebSocket() error {
-    if err := m.createListenKey(); err != nil {
-        return err
-    }
-    
-    // 建立 WebSocket 连接
-    wsURL := fmt.Sprintf("wss://api.quantumexecute.com/ws/%s", m.listenKey)
-    conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
-    if err != nil {
-        return err
-    }
-    
-    m.wsConn = conn
-    
-    // 启动消息处理协程
-    go m.handleMessages()
-    
-    // 启动自动刷新协程
-    go m.autoRefresh()
-    
-    return nil
-}
+	if m.wsConn != nil {
+		_ = m.wsConn.Close()
+	}
+	if err := m.createListenKey(); err != nil {
+		return err
+	}
 
-// 处理 WebSocket 消息
-func (m *ListenKeyManager) handleMessages() {
-    defer m.wsConn.Close()
-    
-    for {
-        _, message, err := m.wsConn.ReadMessage()
-        if err != nil {
-            log.Printf("WebSocket 读取错误: %v", err)
-            m.reconnect <- true
-            return
-        }
-        
-        // 处理接收到的消息
-        log.Printf("收到消息: %s", string(message))
-        
-        // 这里可以解析消息并处理业务逻辑
-        // 例如：订单状态更新、成交通知等
-    }
+	wsService := m.client.NewWebSocketService()
+	wsService.SetHandlers(m.handlers)
+	if err := wsService.Connect(m.listenKey); err != nil {
+		log.Fatalf("Failed to connect WebSocket: %v", err)
+	}
+	m.wsConn = wsService
+
+	return nil
 }
 
 // 自动刷新 ListenKey
 func (m *ListenKeyManager) autoRefresh() {
-    ticker := time.NewTicker(30 * time.Minute) // 每30分钟检查一次
-    defer ticker.Stop()
-    
-    for {
-        select {
-        case <-ticker.C:
-            // 检查是否接近过期（提前1小时刷新）
-            if time.Now().Unix() > m.expireAt-3600 {
-                log.Println("ListenKey 即将过期，开始刷新...")
-                if err := m.createListenKey(); err != nil {
-                    log.Printf("刷新 ListenKey 失败: %v", err)
-                }
-            }
-        case <-m.reconnect:
-            log.Println("开始重连 WebSocket...")
-            m.wsConn.Close()
-            time.Sleep(5 * time.Second)
-            if err := m.StartWebSocket(); err != nil {
-                log.Printf("重连失败: %v", err)
-            }
-            return
-        }
-    }
+	ticker := time.NewTicker(30 * time.Minute) // 每30分钟检查一次
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			// 检查是否接近过期（提前1小时刷新）
+			if m.expireAt == 0 {
+				continue
+			}
+			if time.Now().Unix() > m.expireAt-3600 {
+				log.Println("ListenKey 即将过期，开始刷新...")
+				if err := m.StartWebSocket(); err != nil {
+					log.Printf("刷新 ListenKey 失败: %v", err)
+				}
+			}
+		}
+	}
 }
 
 // 使用示例
 func main() {
-    client := qe.NewClient("your-api-key", "your-secret-key")
-    
-    manager := NewListenKeyManager(client)
-    
-    if err := manager.StartWebSocket(); err != nil {
-        log.Fatalf("启动 WebSocket 失败: %v", err)
-    }
-    
-    // 保持程序运行
-    select {}
+	client := qe.NewClient("your-api-key", "your-secret-key")
+
+	manager := NewListenKeyManager(client)
+
+	if err := manager.StartWebSocket(); err != nil {
+		log.Fatalf("启动 WebSocket 失败: %v", err)
+	}
+
+	// 保持程序运行
+	select {}
 }
+
 ```
 
 ### 5. WebSocket 实时数据推送

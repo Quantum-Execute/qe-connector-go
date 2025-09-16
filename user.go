@@ -15,7 +15,7 @@ type ListExchangeApisService struct {
 	c        *Client
 	page     *int32
 	pageSize *int32
-	exchange *string
+	exchange *trading_enums.Exchange
 }
 
 // Page set page
@@ -31,7 +31,7 @@ func (s *ListExchangeApisService) PageSize(pageSize int32) *ListExchangeApisServ
 }
 
 // Exchange set exchange
-func (s *ListExchangeApisService) Exchange(exchange string) *ListExchangeApisService {
+func (s *ListExchangeApisService) Exchange(exchange trading_enums.Exchange) *ListExchangeApisService {
 	s.exchange = &exchange
 	return s
 }
@@ -76,18 +76,17 @@ type ListExchangeApisReply struct {
 
 // ExchangeApiInfo exchange API info
 type ExchangeApiInfo struct {
-	Id                 string  `json:"id"`
-	CreatedAt          string  `json:"createdAt"`
-	AccountName        string  `json:"accountName"`
-	Exchange           string  `json:"exchange"`
-	ApiKey             string  `json:"apiKey"`
-	VerificationMethod string  `json:"verificationMethod"`
-	Balance            float64 `json:"balance"`
-	Status             string  `json:"status"`
-	IsValid            bool    `json:"isValid"`
-	IsTradingEnabled   bool    `json:"isTradingEnabled"`
-	IsDefault          bool    `json:"isDefault"`
-	IsPm               bool    `json:"isPm"`
+	Id                 string `json:"id"`
+	CreatedAt          string `json:"createdAt"`
+	AccountName        string `json:"accountName"`
+	Exchange           string `json:"exchange"`
+	ApiKey             string `json:"apiKey"`
+	VerificationMethod string `json:"verificationMethod"`
+	Status             string `json:"status"`
+	IsValid            bool   `json:"isValid"`
+	IsTradingEnabled   bool   `json:"isTradingEnabled"`
+	IsDefault          bool   `json:"isDefault"`
+	IsPm               bool   `json:"isPm"`
 }
 
 // GetMasterOrdersService get master orders

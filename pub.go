@@ -12,7 +12,7 @@ type TradingPairsService struct {
 	c          *Client
 	page       *int32
 	pageSize   *int32
-	exchange   *string
+	exchange   *trading_enums.Exchange
 	marketType *trading_enums.TradingPairMarketType
 	isCoin     *bool
 }
@@ -30,7 +30,7 @@ func (s *TradingPairsService) PageSize(pageSize int32) *TradingPairsService {
 }
 
 // Exchange set exchange
-func (s *TradingPairsService) Exchange(exchange string) *TradingPairsService {
+func (s *TradingPairsService) Exchange(exchange trading_enums.Exchange) *TradingPairsService {
 	s.exchange = &exchange
 	return s
 }
@@ -48,7 +48,7 @@ func (s *TradingPairsService) IsCoin(isCoin bool) *TradingPairsService {
 }
 
 // Do send request
-func (s *TradingPairsService) Do(ctx context.Context, opts ...RequestOption) (res []*TradingPairs, err error) {
+func (s *TradingPairsService) Do(ctx context.Context, opts ...RequestOption) (res *TradingPairMessage, err error) {
 	r := &request{
 		method:   http.MethodGet,
 		endpoint: "/pub/trading-pairs",
@@ -80,7 +80,7 @@ func (s *TradingPairsService) Do(ctx context.Context, opts ...RequestOption) (re
 	if err != nil {
 		return nil, err
 	}
-	return resp.Items, nil
+	return resp, nil
 }
 
 type TradingPairMessage struct {

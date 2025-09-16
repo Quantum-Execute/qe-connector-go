@@ -92,7 +92,7 @@ func (ws *WebSocketService) connect() error {
 	}
 
 	// 启动读取和心跳协程
-	ws.wg.Add(2)
+	ws.wg.Add(1)
 	go ws.readMessages()
 
 	return nil

@@ -14,9 +14,9 @@ import (
 
 func TestClient_NewListExchangeApisService(t *testing.T) {
 	ctx := context.Background()
-	client := NewClient("8BA1mgp41pGIADG4BAW3MmcbwQnOr83qnJWVC0pptgYVB8dV4oFlOGoo2HEXlcrJ", "Pw313Ni-4W4L8s7l-7MypTvh8ll1RKEHqASjkVeNJY78QGaY2UHRGNVFEOIs_1Xz")
+	client := NewClient("your-api-key", "your-secret-key")
 	do, err := client.NewListExchangeApisService().
-		Exchange("Binance").
+		Exchange(trading_enums.ExchangeBinance).
 		Page(1).
 		PageSize(10).
 		Do(ctx)
