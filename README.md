@@ -234,7 +234,6 @@ for _, pair := range pairs.Items {
 | ├─ exchange | string | 交易所名称（如：Binance、OKX、Bybit） |
 | ├─ apiKey | string | 交易所 API Key（部分隐藏） |
 | ├─ verificationMethod | string | API 验证方式（如：OAuth、API） |
-| ├─ balance | float64 | 账户余额（美元） |
 | ├─ status | string | API 状态：正常、异常（不可用） |
 | ├─ isValid | bool | API 是否有效 |
 | ├─ isTradingEnabled | bool | 是否开启交易权限 |
@@ -879,9 +878,6 @@ func checkApiKeyStatus(client *qe.Client) {
     for _, api := range apis.Items {
         if !api.IsValid {
             log.Printf("警告: API %s (%s) 状态异常", api.Id, api.AccountName)
-        }
-        if api.Balance < 100 {
-            log.Printf("警告: 账户 %s 余额不足 ($%.2f)", api.AccountName, api.Balance)
         }
     }
 }
