@@ -53,6 +53,7 @@ const (
 // 交易所枚举
 const (
 	ExchangeBinance Exchange = "Binance" // 币安
+	ExchangeOKX     Exchange = "OKX"     // OKX
 )
 
 // 币对品种枚举（与市场类型对应）
