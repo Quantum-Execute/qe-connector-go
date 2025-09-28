@@ -253,6 +253,6 @@ func (c *Client) NewTimestampService() *TimestampService {
 }
 
 // NewWebSocketService create WebSocket service for real-time data streaming
-func (c *Client) NewWebSocketService() *WebSocketService {
-	return NewWebSocketService(c)
+func (c *Client) NewWebSocketService(host ...string) *WebSocketService {
+	return NewWebSocketService(c, host...)
 }

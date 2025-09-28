@@ -459,52 +459,52 @@ if result.Success {
 
 **响应字段：**
 
-| 字段名 | 类型 | 描述 |
-|--------|------|------|
-| items | array | 主订单列表 |
-| ├─ masterOrderId | string | 主订单 ID |
-| ├─ algorithm | string | 算法 |
-| ├─ algorithmType | string | 算法类型 |
-| ├─ exchange | string | 交易所 |
-| ├─ symbol | string | 交易对 |
-| ├─ marketType | string | 市场类型 |
-| ├─ side | string | 买卖方向 |
-| ├─ totalQuantity | float64 | 总数量 |         
-| ├─ filledQuantity | float64 | 已成交数量 |      
-| ├─ averagePrice | float64 | 平均成交价 |
+| 字段名 | 类型 | 描述                                                                                                                                                     |
+|--------|------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| items | array | 主订单列表                                                                                                                                                  |
+| ├─ masterOrderId | string | 主订单 ID                                                                                                                                                 |
+| ├─ algorithm | string | 算法                                                                                                                                                     |
+| ├─ algorithmType | string | 算法类型                                                                                                                                                   |
+| ├─ exchange | string | 交易所                                                                                                                                                    |
+| ├─ symbol | string | 交易对                                                                                                                                                    |
+| ├─ marketType | string | 市场类型                                                                                                                                                   |
+| ├─ side | string | 买卖方向                                                                                                                                                   |
+| ├─ totalQuantity | float64 | 按币数下单的总数量，按金额下单时，该值为0，下单数量应查看orderNotional字段                                                                                                           |         
+| ├─ filledQuantity | float64 | 1.按币数下单时，该字段代表已成交币数。2.按金额下单时，该字段值代表已成交金额                                                                                                               |      
+| ├─ averagePrice | float64 | 平均成交价                                                                                                                                                  |
 | ├─ status | string | 状态：NEW（创建，未执行）、WAITING（等待中）、PROCESSING（执行中，且未完成）、PAUSED（已暂停）、CANCEL（取消中）、CANCELLED（已取消）、COMPLETED（已完成）、REJECTED（已拒绝）、EXPIRED（已过期）、CANCEL_REJECT（取消被拒绝） |
-| ├─ executionDuration | int32 | 执行时长（分钟） |
-| ├─ priceLimit | float64 | 价格限制 |
-| ├─ startTime | string | 开始时间 |
-| ├─ endTime | string | 结束时间 |
-| ├─ createdAt | string | 创建时间 |
-| ├─ updatedAt | string | 更新时间 |
-| ├─ notes | string | 备注 |
-| ├─ marginType | string | 保证金类型（U:U本位） |
-| ├─ reduceOnly | bool | 是否仅减仓 |
-| ├─ strategyType | string | 策略类型 |
-| ├─ orderNotional | string | 订单金额（USDT） |
-| ├─ mustComplete | bool | 是否必须完成 |
-| ├─ makerRateLimit | float64 | 最低 Maker 率 |
-| ├─ povLimit | float64 | 最大市场成交量占比 |
-| ├─ clientId | string | 客户端 ID |
-| ├─ date | string | 发单日期（格式：YYYYMMDD） |
-| ├─ ticktimeInt | string | 发单时间（格式：093000000 表示 9:30:00.000） |
-| ├─ limitPriceString | string | 限价（字符串） |
-| ├─ upTolerance | string | 上容忍度 |
-| ├─ lowTolerance | string | 下容忍度 |
-| ├─ strictUpBound | bool | 严格上界 |
-| ├─ ticktimeMs | string | 发单时间戳（epoch 毫秒） |   
-| ├─ category | string | 交易品种（spot 或 perp） |   
-| ├─ filledAmount | float64 | 成交金额 |
-| ├─ totalValue | float64 | 成交总值 |
-| ├─ base | string | 基础币种 |
-| ├─ quote | string | 计价币种 |
-| ├─ completionProgress | float64 | 完成进度（0-1） |
-| ├─ reason | string | 原因（如取消原因） |
-| total | int32 | 总数 |
-| page | int32 | 当前页码 |
-| pageSize | int32 | 每页数量 |
+| ├─ executionDuration | int32 | 执行时长（分钟）                                                                                                                                               |
+| ├─ priceLimit | float64 | 价格限制                                                                                                                                                   |
+| ├─ startTime | string | 开始时间                                                                                                                                                   |
+| ├─ endTime | string | 结束时间                                                                                                                                                   |
+| ├─ createdAt | string | 创建时间                                                                                                                                                   |
+| ├─ updatedAt | string | 更新时间                                                                                                                                                   |
+| ├─ notes | string | 备注                                                                                                                                                     |
+| ├─ marginType | string | 保证金类型（U:U本位）                                                                                                                                           |
+| ├─ reduceOnly | bool | 是否仅减仓                                                                                                                                                  |
+| ├─ strategyType | string | 策略类型                                                                                                                                                   |
+| ├─ orderNotional | string | 订单金额（按成交额提交的下单数量）                                                                                                                                      |
+| ├─ mustComplete | bool | 是否必须完成                                                                                                                                                 |
+| ├─ makerRateLimit | float64 | 最低 Maker 率                                                                                                                                             |
+| ├─ povLimit | float64 | 最大市场成交量占比                                                                                                                                              |
+| ├─ clientId | string | 客户端 ID                                                                                                                                                 |
+| ├─ date | string | 发单日期（格式：YYYYMMDD）                                                                                                                                      |
+| ├─ ticktimeInt | string | 发单时间（格式：093000000 表示 9:30:00.000）                                                                                                                      |
+| ├─ limitPriceString | string | 限价（字符串）                                                                                                                                                |
+| ├─ upTolerance | string | 上容忍度                                                                                                                                                   |
+| ├─ lowTolerance | string | 下容忍度                                                                                                                                                   |
+| ├─ strictUpBound | bool | 严格上界                                                                                                                                                   |
+| ├─ ticktimeMs | string | 发单时间戳（epoch 毫秒）                                                                                                                                        |   
+| ├─ category | string | 交易品种（spot 或 perp）                                                                                                                                      |   
+| ├─ filledAmount | float64 | 成交币数                                                                                                                                                   |
+| ├─ totalValue | float64 | 成交总值                                                                                                                                                   |
+| ├─ base | string | 基础币种                                                                                                                                                   |
+| ├─ quote | string | 计价币种                                                                                                                                                   |
+| ├─ completionProgress | float64 | 完成进度（0-100）返回50代表50%                                                                                                                                   |
+| ├─ reason | string | 原因（如取消原因）                                                                                                                                              |
+| total | int32 | 总数                                                                                                                                                     |
+| page | int32 | 当前页码                                                                                                                                                   |
+| pageSize | int32 | 每页数量                                                                                                                                                   |
 
 **示例代码：**
 
@@ -1161,8 +1161,15 @@ func main() {
     // 创建客户端
     client := qe.NewClient("your-api-key", "your-api-secret")
     
-    // 创建 WebSocket 服务
+    // 创建 WebSocket 服务（使用默认host）
     wsService := client.NewWebSocketService()
+    
+    // 或者创建 WebSocket 服务并指定自定义host
+    // wsService := client.NewWebSocketService("wss://custom.quantumexecute.com")
+    
+    // 或者使用 SetHost 方法设置自定义host
+    // wsService := client.NewWebSocketService()
+    // wsService.SetHost("wss://another-custom.quantumexecute.com")
     
     // 设置事件处理器
     handlers := &qe.WebSocketEventHandlers{
@@ -1279,6 +1286,9 @@ func main() {
 #### 配置选项
 
 ```go
+// 设置自定义host
+wsService.SetHost("wss://custom.quantumexecute.com")
+
 // 设置重连延迟
 wsService.SetReconnectDelay(10 * time.Second)
 
@@ -1292,6 +1302,36 @@ wsService.SetPongTimeout(15 * time.Second)
 logger := log.New(os.Stdout, "[WS] ", log.LstdFlags)
 wsService.SetLogger(logger)
 ```
+
+#### 自定义 WebSocket Host
+
+SDK 支持自定义 WebSocket 连接地址，适用于以下场景：
+
+- **测试环境**：连接到测试服务器
+- **私有部署**：连接到私有部署的服务器
+- **负载均衡**：连接到特定的服务器实例
+
+**使用方式：**
+
+```go
+// 方式1：在创建时指定host
+wsService := client.NewWebSocketService("wss://custom.quantumexecute.com")
+
+// 方式2：使用 SetHost 方法
+wsService := client.NewWebSocketService()
+wsService.SetHost("wss://another-custom.quantumexecute.com")
+
+// 方式3：链式调用
+wsService := client.NewWebSocketService().
+    SetHost("wss://custom.quantumexecute.com").
+    SetReconnectDelay(5 * time.Second).
+    SetPingInterval(1 * time.Second)
+```
+
+**注意事项：**
+- Host 地址必须包含协议（`wss://` 或 `ws://`）
+- 确保自定义host支持相同的API路径格式：`/api/ws?listen_key={listenKey}`
+- 如果未设置自定义host，将使用默认地址：`wss://test.quantumexecute.com`
 
 #### 连接状态管理
 

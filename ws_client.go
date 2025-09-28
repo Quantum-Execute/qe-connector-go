@@ -15,6 +15,7 @@ import (
 type WebSocketService struct {
 	c              *Client
 	listenKey      string
+	host           string
 	conn           *websocket.Conn
 	handlers       *WebSocketEventHandlers
 	isConnected    bool
@@ -28,9 +29,9 @@ type WebSocketService struct {
 }
 
 // NewWebSocketService 创建 WebSocket 服务
-func NewWebSocketService(c *Client) *WebSocketService {
+func NewWebSocketService(c *Client, host ...string) *WebSocketService {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &WebSocketService{
+	ws := &WebSocketService{
 		c:              c,
 		handlers:       &WebSocketEventHandlers{},
 		reconnectDelay: 5 * time.Second,
@@ -39,11 +40,26 @@ func NewWebSocketService(c *Client) *WebSocketService {
 		ctx:            ctx,
 		cancel:         cancel,
 	}
+
+	// 如果提供了host参数，设置自定义host
+	if len(host) > 0 && host[0] != "" {
+		ws.host = host[0]
+	}
+
+	return ws
 }
 
 // SetHandlers 设置事件处理器
 func (ws *WebSocketService) SetHandlers(handlers *WebSocketEventHandlers) *WebSocketService {
 	ws.handlers = handlers
+	return ws
+}
+
+// SetHost 设置自定义WebSocket主机地址
+func (ws *WebSocketService) SetHost(host string) *WebSocketService {
+	ws.mu.Lock()
+	defer ws.mu.Unlock()
+	ws.host = host
 	return ws
 }
 
@@ -101,6 +117,11 @@ func (ws *WebSocketService) connect() error {
 // getWebSocketURL 获取 WebSocket URL
 func (ws *WebSocketService) getWebSocketURL() string {
 	baseURL := "wss://test.quantumexecute.com"
+
+	// 如果设置了自定义host，使用自定义host
+	if ws.host != "" {
+		baseURL = ws.host
+	}
 
 	return fmt.Sprintf("%s/api/ws?listen_key=%s", baseURL, ws.listenKey)
 }
