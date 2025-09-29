@@ -317,7 +317,7 @@ for _, api := range result.Items {
 | limitPrice | float64       | 否 | 最高/低允许交易的价格，买入时该字段象征最高买入价，卖出时该字段象征最低卖出价，若市价超出范围则停止交易，范围：>0，默认：-1，代表无限制                                                                                                                     |
 | upTolerance | string  | 否 | 允许超出目标进度的最大容忍度，比如0.1就是执行过程中允许比目标进度超出母单数量的10%，范围：0-1（不含0、1），默认：-1（即无容忍）                                                                                                                     |
 | lowTolerance | string  | 否 | 允许落后目标进度的最大容忍度，比如0.1就是执行过程中允许比目标进度落后母单数量的10%，范围：0-1（不含0、1），默认：-1（即无容忍）                                                                                                                     |
-| strictUpBound | bool    | 否 | 表达是否追求严格小于uptolerance，开启后可能会把很小的母单也拆的很细，不建议开启，默认：false                                                                                                                                     |
+| strictUpBound | bool    | 否 | 是否严格小于uptolerance，开启后会更加严格贴近交易进度执行，同时可能会把母单拆很细；如需严格控制交易进度则建议开启，其他场景建议不开启，默认：false                                                                                                                                     |
 | tailOrderProtection | bool    | 否 | 订单余量小于交易所最小发单量时，是否必须taker扫完，如果false，则订单余量小于交易所最小发单量时，订单结束执行；如果true，则订单余量随最近一笔下单全额执行（可能会提高Taker率），默认：true                                                                                   |
 | **POV 算法参数** |
 | makerRateLimit | float64  | 否 | 要求maker占比超过该值，输入范围：0-1（输入0.1代表10%），默认：-1(算法智能计算推荐值执行)                                                                                                                                      |
@@ -367,6 +367,7 @@ result, err := client.NewCreateMasterOrderService().
     LimitPrice(60000).                 // 最高价格 $60,000
     UpTolerance("0.1").                // 允许超出 10%
     LowTolerance("0.1").               // 允许落后 10%
+    StrictUpBound(false).              // 不追求严格小于uptolerance
     TailOrderProtection(true).
     StrategyType(trading_enums.StrategyTypeTWAP1).
     Do(context.Background())
@@ -399,6 +400,7 @@ result, err := client.NewCreateMasterOrderService().
     LimitPrice(65000).                    // 最高价格 $65,000
     UpTolerance("0.1").
     LowTolerance("0.1").
+    StrictUpBound(false).                 // 不追求严格小于uptolerance
     TailOrderProtection(true).
     StrategyType(trading_enums.StrategyTypeTWAP1).
     Do(context.Background())
@@ -427,6 +429,7 @@ result, err := client.NewCreateMasterOrderService().
     ExecutionDuration(60).             // 60 分钟
     PovLimit(0.1).                     // 占市场成交量 10%
     PovMinLimit(0.05).                 // 最低占市场成交量 5%
+    StrictUpBound(false).              // 不追求严格小于povLimit
     LimitPrice(65000).                 // 最高价格 $65,000
     TailOrderProtection(true).
     StrategyType(trading_enums.StrategyTypeTWAP1).
@@ -542,6 +545,7 @@ for _, order := range orders.Items {
     平均价格: %.2f
     已成交: %.4f / %.4f
     成交金额: $%.2f
+    Maker率: %.2f%%
     创建时间: %s
     发单日期: %s
     上容忍度: %s
@@ -559,6 +563,7 @@ for _, order := range orders.Items {
         order.FilledQuantity,
         order.TotalQuantity,
         order.FilledAmount,
+        order.TakerMakerRate*100,
         order.CreatedAt,
         order.Date,
         order.UpTolerance,
