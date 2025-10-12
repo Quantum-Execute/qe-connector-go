@@ -395,6 +395,7 @@ type CreateMasterOrderService struct {
 	povMinLimit         *float64
 	tailOrderProtection *bool
 	isTargetPosition    *bool
+	isMargin            *bool
 }
 
 // Algorithm set algorithm
@@ -547,6 +548,12 @@ func (s *CreateMasterOrderService) IsTargetPosition(isTargetPosition bool) *Crea
 	return s
 }
 
+// IsMargin set isMargin
+func (s *CreateMasterOrderService) IsMargin(isMargin bool) *CreateMasterOrderService {
+	s.isMargin = &isMargin
+	return s
+}
+
 // Do send request
 func (s *CreateMasterOrderService) Do(ctx context.Context, opts ...RequestOption) (res *CreateMasterOrderReply, err error) {
 	r := &request{
@@ -628,6 +635,9 @@ func (s *CreateMasterOrderService) Do(ctx context.Context, opts ...RequestOption
 		}
 	} else {
 		m["isTargetPosition"] = false
+	}
+	if s.isMargin != nil {
+		m["isMargin"] = *s.isMargin
 	}
 	r.setParams(m)
 	data, err := s.c.callAPI(ctx, r, opts...)
