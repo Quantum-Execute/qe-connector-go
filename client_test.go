@@ -59,7 +59,7 @@ func TestClient_NewGetOrderFillsService(t *testing.T) {
 
 func TestClient_NewCreateMasterOrderService(t *testing.T) {
 	ctx := context.Background()
-	client := NewTestClient("", "")
+	client := NewTestClient("sk-627034f904de454f939b9a8e2e5580ef", "AoF3J7AUpcWuXWnxjokKq4I21pLjVwv2dJjT4rUa1JeLH2ByUKRamF4VP8om1Ggl", "http://127.0.0.1:8000/strategy-api")
 
 	// 根据提供的JSON示例创建订单
 	do, err := client.NewCreateMasterOrderService().
@@ -67,11 +67,11 @@ func TestClient_NewCreateMasterOrderService(t *testing.T) {
 		Symbol("BTCUSDT").
 		Exchange(trading_enums.ExchangeBinance).
 		Side(trading_enums.OrderSideBuy).
-		StartTime("2025-08-17T01:11:34+08:00").
-		EndTime("2025-08-17T01:44:35+08:00").
+		StartTime("2025-11-17T01:11:34+08:00").
+		EndTime("2025-11-17T01:44:35+08:00").
 		Algorithm(trading_enums.AlgorithmTWAP).
 		ExecutionDuration(5).
-		ApiKeyId("").
+		ApiKeyId("a1f638297cc6467fbf96b1b4b8becf26").
 		ReduceOnly(false).
 		MustComplete(true).
 		OrderNotional(200).

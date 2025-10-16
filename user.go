@@ -248,6 +248,7 @@ type GetOrderFillsService struct {
 	masterOrderId *string
 	subOrderId    *string
 	symbol        *string
+	status        *string
 	startTime     *string
 	endTime       *string
 }
@@ -279,6 +280,12 @@ func (s *GetOrderFillsService) SubOrderId(subOrderId string) *GetOrderFillsServi
 // Symbol set symbol
 func (s *GetOrderFillsService) Symbol(symbol string) *GetOrderFillsService {
 	s.symbol = &symbol
+	return s
+}
+
+// Status set symbol
+func (s *GetOrderFillsService) Status(status string) *GetOrderFillsService {
+	s.status = &status
 	return s
 }
 
@@ -316,6 +323,9 @@ func (s *GetOrderFillsService) Do(ctx context.Context, opts ...RequestOption) (r
 	}
 	if s.symbol != nil {
 		m["symbol"] = *s.symbol
+	}
+	if s.status != nil {
+		m["status"] = *s.status
 	}
 	if s.startTime != nil {
 		m["startTime"] = *s.startTime
