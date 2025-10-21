@@ -20,9 +20,11 @@ const (
 
 // 算法枚举
 const (
-	AlgorithmTWAP Algorithm = "TWAP" // TWAP算法
-	AlgorithmVWAP Algorithm = "VWAP" // VWAP算法
-	AlgorithmPOV  Algorithm = "POV"  // POV算法
+	AlgorithmTWAP      Algorithm = "TWAP"      // TWAP算法
+	AlgorithmVWAP      Algorithm = "VWAP"      // VWAP算法
+	AlgorithmPOV       Algorithm = "POV"       // POV算法
+	AlgorithmBoostVWAP Algorithm = "BoostVWAP" // BoostVWAP算法（高频alpha发单）
+	AlgorithmBoostTWAP Algorithm = "BoostTWAP" // BoostTWAP算法（高频alpha发单）
 )
 
 // 策略类型枚举
