@@ -2,4 +2,4 @@ package qe_connector
 
 const Name = "qe-connector-go"
 
-const Version = "0.1.14"
+const Version = "1.1.15"

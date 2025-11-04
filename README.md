@@ -126,7 +126,7 @@ log.Printf("服务器时间: %s", time.Unix(timestamp/1000, 0).Format("2006-01-0
 |--------|------|----------|------|
 | page | int32 | 否 | 页码 |
 | pageSize | int32 | 否 | 每页数量 |
-| exchange | string | 否 | 交易所名称筛选 |
+| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP |
 | marketType | string | 否 | 市场类型筛选，可选值：SPOT（现货）、FUTURES（合约） |
 | isCoin | bool | 否 | 是否为币种筛选 |
 
@@ -170,6 +170,14 @@ pairs, err := client.NewTradingPairsService().
 // 获取OKX现货交易对
 pairs, err := client.NewTradingPairsService().
     Exchange(trading_enums.ExchangeOKX).
+    MarketType(trading_enums.TradingPairSpot).
+    Page(1).
+    PageSize(50).
+    Do(context.Background())
+
+// 获取LTP现货交易对
+pairs, err := client.NewTradingPairsService().
+    Exchange(trading_enums.ExchangeLTP).
     MarketType(trading_enums.TradingPairSpot).
     Page(1).
     PageSize(50).
@@ -229,7 +237,7 @@ for _, pair := range pairs.Items {
 |--------|------|----------|------|
 | page | int32 | 否 | 页码 |
 | pageSize | int32 | 否 | 每页数量 |
-| exchange | string | 否 | 交易所名称筛选 |
+| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP |
 
 **响应字段：**
 
@@ -239,7 +247,7 @@ for _, pair := range pairs.Items {
 | ├─ id | string | API 记录的唯一标识 |
 | ├─ createdAt | string | API 添加时间 |
 | ├─ accountName | string | 账户名称（如：账户1、账户2） |
-| ├─ exchange | string | 交易所名称（如：Binance、OKX） |
+| ├─ exchange | string | 交易所名称（如：Binance、OKX、LTP） |
 | ├─ apiKey | string | 交易所 API Key（部分隐藏） |
 | ├─ verificationMethod | string | API 验证方式（如：OAuth、API） |
 | ├─ status | string | API 状态：正常、异常（不可用） |
@@ -274,6 +282,13 @@ result, err := client.NewListExchangeApisService().
     Exchange(trading_enums.ExchangeOKX).
     Do(context.Background())
 
+// 查询LTP API
+result, err := client.NewListExchangeApisService().
+    Page(1).
+    PageSize(10).
+    Exchange(trading_enums.ExchangeLTP).
+    Do(context.Background())
+
 // 打印结果
 for _, api := range result.Items {
     log.Printf("账户: %s, 交易所: %s, 状态: %s",
@@ -297,7 +312,7 @@ for _, api := range result.Items {
 | **基础参数** |
 | strategyType | string  | 是 | 策略类型，可选值：TWAP-1、POV                                                                                                                                                                        |
 | algorithm | string  | 是 | 交易算法。strategyType=TWAP-1时，可选值：TWAP、VWAP、BoostVWAP、BoostTWAP；strategyType=POV时，可选值：POV                                                                                                                          |
-| exchange | string  | 是 | 交易所名称，可选值：Binance、OKX                                                                                                                                                                      |
+| exchange | string  | 是 | 交易所名称，可选值：Binance、OKX、LTP                                                                                                                                                                      |
 | symbol | string  | 是 | 交易对符号（如：BTCUSDT）（可用交易对查询）                                                                                                                                                                  |
 | marketType | string  | 是 | 可选值：SPOT（现货）、PERP（永续合约）                                                                                                                                                                    |
 | side | string  | 是 | 1.如果isTargetPosition=False：side代表交易方向，可选值：buy（买入）、sell（卖出）；合约交易时可与reduceOnly组合，reduceOnly=True时：buy代表买入平空，sell代表卖出平多。2.如果isTargetPosition=True：side代表仓位方向，可选值：buy（多头）、sell（空头）。【仅合约交易时需传入】 |
@@ -457,7 +472,7 @@ if result.Success {
 | page | int32 | 否 | 页码 |
 | pageSize | int32 | 否 | 每页数量 |
 | status | string | 否 | 订单状态筛选，可选值：NEW（执行中）、COMPLETED（已完成） |
-| exchange | string | 否 | 交易所名称筛选 |
+| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP |
 | symbol | string | 否 | 交易对筛选 |
 | startTime | string | 否 | 开始时间筛选 |
 | endTime | string | 否 | 结束时间筛选 |
@@ -1449,6 +1464,7 @@ handlers := &qe.WebSocketEventHandlers{
 |----------|--------|------|
 | `trading_enums.ExchangeBinance` | Binance | 币安 |
 | `trading_enums.ExchangeOKX` | OKX | OKX |
+| `trading_enums.ExchangeLTP` | LTP | LTP |
 
 **保证金类型 (MarginType)：**
 

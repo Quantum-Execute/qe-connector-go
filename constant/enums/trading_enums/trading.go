@@ -56,6 +56,7 @@ const (
 const (
 	ExchangeBinance Exchange = "Binance" // 币安
 	ExchangeOKX     Exchange = "OKX"     // OKX
+	ExchangeLTP     Exchange = "LTP"     // LTP
 )
 
 // 币对品种枚举（与市场类型对应）
