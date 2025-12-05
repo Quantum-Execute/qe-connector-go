@@ -221,13 +221,13 @@ type MasterOrderInfo struct {
 	MakerRateLimit      float64 `json:"makerRateLimit"`
 	PovLimit            float64 `json:"povLimit"`
 	ClientId            string  `json:"clientId"`
-	Date                int64   `json:"date"`
-	TicktimeInt         int64   `json:"ticktimeInt"`
+	Date                string  `json:"date"`
+	TicktimeInt         string  `json:"ticktimeInt"`
 	LimitPriceString    string  `json:"limitPriceString"`
 	UpTolerance         string  `json:"upTolerance"`
 	LowTolerance        string  `json:"lowTolerance"`
 	StrictUpBound       bool    `json:"strictUpBound"`
-	TicktimeMs          int64   `json:"ticktimeMs"`
+	TicktimeMs          string  `json:"ticktimeMs"`
 	Category            string  `json:"category"`
 	FilledAmount        float64 `json:"filledAmount"`
 	TotalValue          float64 `json:"totalValue"`
