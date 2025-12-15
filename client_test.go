@@ -14,6 +14,9 @@ import (
 )
 
 func TestClient_NewListExchangeApisService(t *testing.T) {
+	if os.Getenv("QE_INTEGRATION_TEST") != "1" {
+		t.Skip("skipping integration test; set QE_INTEGRATION_TEST=1 to enable")
+	}
 	ctx := context.Background()
 	client := NewClient("your-api-key", "your-secret-key")
 	do, err := client.NewListExchangeApisService().
@@ -29,6 +32,9 @@ func TestClient_NewListExchangeApisService(t *testing.T) {
 }
 
 func TestClient_NewGetMasterOrdersService(t *testing.T) {
+	if os.Getenv("QE_INTEGRATION_TEST") != "1" {
+		t.Skip("skipping integration test; set QE_INTEGRATION_TEST=1 to enable")
+	}
 	ctx := context.Background()
 	client := NewTestClient("", "")
 	do, err := client.NewGetMasterOrdersService().
@@ -45,6 +51,9 @@ func TestClient_NewGetMasterOrdersService(t *testing.T) {
 }
 
 func TestClient_NewGetOrderFillsService(t *testing.T) {
+	if os.Getenv("QE_INTEGRATION_TEST") != "1" {
+		t.Skip("skipping integration test; set QE_INTEGRATION_TEST=1 to enable")
+	}
 	ctx := context.Background()
 	client := NewTestClient("", "")
 	do, err := client.NewGetOrderFillsService().
@@ -59,6 +68,9 @@ func TestClient_NewGetOrderFillsService(t *testing.T) {
 }
 
 func TestClient_NewCreateMasterOrderService(t *testing.T) {
+	if os.Getenv("QE_INTEGRATION_TEST") != "1" {
+		t.Skip("skipping integration test; set QE_INTEGRATION_TEST=1 to enable")
+	}
 	ctx := context.Background()
 	client := NewTestClient("", "")
 	loc, _ := time.LoadLocation("Asia/Shanghai")
@@ -95,6 +107,9 @@ func TestClient_NewCreateMasterOrderService(t *testing.T) {
 }
 
 func TestClient_NewWebSocketService(t *testing.T) {
+	if os.Getenv("QE_INTEGRATION_TEST") != "1" {
+		t.Skip("skipping integration test; set QE_INTEGRATION_TEST=1 to enable")
+	}
 	client := NewTestClient("", "")
 	wsService := client.NewWebSocketService()
 	// 设置事件处理器
@@ -185,6 +200,9 @@ func TestClient_NewWebSocketService(t *testing.T) {
 }
 
 func TestPubFun(t *testing.T) {
+	if os.Getenv("QE_INTEGRATION_TEST") != "1" {
+		t.Skip("skipping integration test; set QE_INTEGRATION_TEST=1 to enable")
+	}
 	ctx := context.Background()
 	client := NewClient("", "")
 	do, err := client.NewTradingPairsService().Do(ctx)

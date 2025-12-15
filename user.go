@@ -381,7 +381,6 @@ type OrderFillInfo struct {
 type CreateMasterOrderService struct {
 	c                   *Client
 	algorithm           trading_enums.Algorithm
-	algorithmType       string
 	exchange            trading_enums.Exchange
 	symbol              string
 	marketType          trading_enums.MarketType
