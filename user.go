@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/Quantum-Execute/qe-connector-go/constant/enums/trading_enums"
 )
@@ -566,6 +567,18 @@ func (s *CreateMasterOrderService) IsMargin(isMargin bool) *CreateMasterOrderSer
 
 // Do send request
 func (s *CreateMasterOrderService) Do(ctx context.Context, opts ...RequestOption) (res *CreateMasterOrderReply, err error) {
+	// Deribit special rules:
+	// - When trading BTCUSD/ETHUSD, only totalQuantity is allowed, and orderNotional is not allowed.
+	if s.exchange == trading_enums.ExchangeDeribit &&
+		(strings.EqualFold(s.symbol, "BTCUSD") || strings.EqualFold(s.symbol, "ETHUSD")) {
+		if s.orderNotional != nil {
+			return nil, errors.New("orderNotional is not allowed when exchange is Deribit and symbol is BTCUSD or ETHUSD; use totalQuantity (unit: USD) instead")
+		}
+		if s.totalQuantity == nil {
+			return nil, errors.New("totalQuantity is required when exchange is Deribit and symbol is BTCUSD or ETHUSD (unit: USD)")
+		}
+	}
+
 	r := &request{
 		method:   http.MethodPost,
 		endpoint: "/user/trading/master-orders",
