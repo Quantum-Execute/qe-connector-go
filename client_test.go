@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -59,29 +60,38 @@ func TestClient_NewGetOrderFillsService(t *testing.T) {
 
 func TestClient_NewCreateMasterOrderService(t *testing.T) {
 	ctx := context.Background()
-	client := NewTestClient("sk-627034f904de454f939b9a8e2e5580ef", "AoF3J7AUpcWuXWnxjokKq4I21pLjVwv2dJjT4rUa1JeLH2ByUKRamF4VP8om1Ggl", "http://127.0.0.1:8000/strategy-api")
-
+	client := NewTestClient("", "")
+	loc, _ := time.LoadLocation("Asia/Shanghai")
 	// 根据提供的JSON示例创建订单
-	do, err := client.NewCreateMasterOrderService().
-		MarketType(trading_enums.MarketTypeSpot).
-		Symbol("BTCUSDT").
-		Exchange(trading_enums.ExchangeBinance).
-		Side(trading_enums.OrderSideBuy).
-		StartTime("2025-11-17T01:11:34+08:00").
-		EndTime("2025-11-17T01:44:35+08:00").
-		Algorithm(trading_enums.AlgorithmTWAP).
-		ExecutionDuration(5).
-		ApiKeyId("a1f638297cc6467fbf96b1b4b8becf26").
-		ReduceOnly(false).
-		MustComplete(true).
-		OrderNotional(200).
-		StrategyType(trading_enums.StrategyTypeTWAP1).
-		Do(ctx)
-	if err != nil {
-		t.Errorf("err should be nil, but got %v", err)
-		return
+	wg := sync.WaitGroup{}
+	for i := 0; i < 1000; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			do, err := client.NewCreateMasterOrderService().
+				MarketType(trading_enums.MarketTypeSpot).
+				Symbol("BTCUSDT").
+				Exchange(trading_enums.ExchangeBinance).
+				Side(trading_enums.OrderSideBuy).
+				StartTime(time.Now().In(loc).Format("2006-01-02T15:04:05-07:00")).
+				Algorithm(trading_enums.AlgorithmTWAP).
+				ExecutionDuration(5).
+				ApiKeyId("6ead9160857441e3846f39b85daf55a3").
+				ReduceOnly(false).
+				MustComplete(true).
+				OrderNotional(200).
+				StrategyType(trading_enums.StrategyTypeTWAP1).
+				Do(ctx)
+			if err != nil {
+				t.Errorf("err should be nil, but got %v", err)
+				return
+			}
+			time.Sleep(1 * time.Second)
+			client.NewCancelMasterOrderService().MasterOrderId(do.MasterOrderId).Do(ctx)
+			t.Logf("%#v", do)
+		}()
 	}
-	t.Logf("%#v", do)
+	wg.Wait()
 }
 
 func TestClient_NewWebSocketService(t *testing.T) {
