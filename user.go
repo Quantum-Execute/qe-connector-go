@@ -391,7 +391,6 @@ type CreateMasterOrderService struct {
 	strategyType        *trading_enums.StrategyType
 	startTime           *string
 	executionDuration   *int32
-	endTime             *string
 	limitPrice          *float64
 	mustComplete        *bool
 	makerRateLimit      *float64
@@ -471,12 +470,6 @@ func (s *CreateMasterOrderService) StartTime(startTime string) *CreateMasterOrde
 // ExecutionDuration set executionDuration
 func (s *CreateMasterOrderService) ExecutionDuration(executionDuration int32) *CreateMasterOrderService {
 	s.executionDuration = &executionDuration
-	return s
-}
-
-// EndTime set endTime
-func (s *CreateMasterOrderService) EndTime(endTime string) *CreateMasterOrderService {
-	s.endTime = &endTime
 	return s
 }
 
@@ -606,9 +599,6 @@ func (s *CreateMasterOrderService) Do(ctx context.Context, opts ...RequestOption
 	}
 	if s.executionDuration != nil {
 		m["executionDuration"] = *s.executionDuration
-	}
-	if s.endTime != nil {
-		m["endTime"] = *s.endTime
 	}
 	if s.limitPrice != nil {
 		m["limitPrice"] = *s.limitPrice
