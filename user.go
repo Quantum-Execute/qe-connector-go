@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Quantum-Execute/qe-connector-go/constant/enums/trading_enums"
+	"github.com/Quantum-Execute/qe-connector-go/dto/algorithm_dto"
 )
 
 // ListExchangeApisService list exchange APIs
@@ -752,4 +753,83 @@ type CreateListenKeyReply struct {
 	ExpireAt  string `json:"expireAt"`
 	Success   bool   `json:"success"`
 	Message   string `json:"message"`
+}
+
+// GetTcaAnalysisService get TCA analysis full data list
+type GetTcaAnalysisService struct {
+	c         *Client
+	symbol    *string
+	category  *string
+	apikey    *string
+	startTime *int64
+	endTime   *int64
+}
+
+// Symbol set symbol
+func (s *GetTcaAnalysisService) Symbol(symbol string) *GetTcaAnalysisService {
+	s.symbol = &symbol
+	return s
+}
+
+// Category set category
+func (s *GetTcaAnalysisService) Category(category string) *GetTcaAnalysisService {
+	s.category = &category
+	return s
+}
+
+// Apikey set apikey (comma-separated supported by server)
+func (s *GetTcaAnalysisService) Apikey(apikey string) *GetTcaAnalysisService {
+	s.apikey = &apikey
+	return s
+}
+
+// StartTime set startTime (unix milli)
+func (s *GetTcaAnalysisService) StartTime(startTime int64) *GetTcaAnalysisService {
+	s.startTime = &startTime
+	return s
+}
+
+// EndTime set endTime (unix milli)
+func (s *GetTcaAnalysisService) EndTime(endTime int64) *GetTcaAnalysisService {
+	s.endTime = &endTime
+	return s
+}
+
+// Do send request
+func (s *GetTcaAnalysisService) Do(ctx context.Context, opts ...RequestOption) (res []*algorithm_dto.AlgorithmTCAAnalysisAllDataDTO, err error) {
+	r := &request{
+		method:   http.MethodGet,
+		endpoint: "/user/trading/tca-analysis",
+		secType:  secTypeSigned,
+	}
+	m := params{}
+	if s.symbol != nil {
+		m["symbol"] = *s.symbol
+	}
+	if s.category != nil {
+		m["category"] = *s.category
+	}
+	if s.apikey != nil {
+		m["apikey"] = *s.apikey
+	}
+	if s.startTime != nil {
+		m["startTime"] = *s.startTime
+	}
+	if s.endTime != nil {
+		m["endTime"] = *s.endTime
+	}
+	r.setParams(m)
+
+	data, err := s.c.callAPI(ctx, r, opts...)
+	if err != nil {
+		return nil, err
+	}
+	res = make([]*algorithm_dto.AlgorithmTCAAnalysisAllDataDTO, 0)
+	if len(data) == 0 {
+		return res, nil
+	}
+	if err := json.Unmarshal(data, &res); err != nil {
+		return nil, err
+	}
+	return res, nil
 }

@@ -705,6 +705,57 @@ for _, fill := range fills.Items {
 log.Printf("总成交额: $%.2f, 总手续费: $%.2f", totalValue, totalFee)
 ```
 
+#### 查询TCA分析数据
+
+获取TCA分析数据列表（strategy-api：APIKEY签名鉴权）。
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| symbol | string | 否 | 交易对筛选 |
+| category | string | 否 | 策略类别筛选 |
+| apikey | string | 否 | ApiKey id 列表，逗号分隔 |
+| startTime | int64 | 否 | 开始时间戳（毫秒） |
+| endTime | int64 | 否 | 结束时间戳（毫秒） |
+
+**响应：**
+
+成功时返回 `[]*algorithm_dto.AlgorithmTCAAnalysisAllDataDTO`。
+
+**示例代码：**
+
+```go
+import (
+    "context"
+    "log"
+    qe "github.com/Quantum-Execute/qe-connector-go"
+    "github.com/Quantum-Execute/qe-connector-go/dto/algorithm_dto"
+)
+
+// 查询TCA分析数据
+items, err := client.NewGetTcaAnalysisService().
+    Symbol("BTCUSDT").
+    Category("spot").
+    Apikey("your-apikey-id").
+    StartTime(1735689600000). // 2025-01-01 00:00:00 UTC
+    EndTime(1735776000000).   // 2025-01-02 00:00:00 UTC
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+
+for _, it := range items {
+    // it is *algorithm_dto.AlgorithmTCAAnalysisAllDataDTO
+    _ = it
+    log.Printf("masterOrderId=%s side=%s category=%v symbol=%v twapSlippageBps=%v makerRate=%v",
+        it.MasterOrderID, it.Side, it.Category, it.Symbol, it.TwapSlippageBps, it.MakeFillRate,
+    )
+}
+
+var _ = algorithm_dto.AlgorithmTCAAnalysisAllDataDTO{}
+```
+
 #### 取消主订单
 
 取消指定的主订单。

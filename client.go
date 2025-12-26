@@ -242,6 +242,9 @@ func (c *Client) NewCancelMasterOrderService() *CancelMasterOrderService {
 func (c *Client) NewCreateListenKeyService() *CreateListenKeyService {
 	return &CreateListenKeyService{c: c}
 }
+func (c *Client) NewGetTcaAnalysisService() *GetTcaAnalysisService {
+	return &GetTcaAnalysisService{c: c}
+}
 func (c *Client) NewTradingPairsService() *TradingPairsService {
 	return &TradingPairsService{c: c}
 }
