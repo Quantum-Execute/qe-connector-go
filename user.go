@@ -474,6 +474,16 @@ func (s *CreateMasterOrderService) ExecutionDuration(executionDuration int32) *C
 	return s
 }
 
+// EndTime set endTime
+//
+// Deprecated: EndTime is deprecated and no longer used.
+// This method is kept for backward compatibility but does nothing.
+// The endTime field has been removed from the API.
+func (s *CreateMasterOrderService) EndTime(endTime string) *CreateMasterOrderService {
+	// No-op: endTime is deprecated and no longer sent to the API
+	return s
+}
+
 // LimitPrice set limitPrice
 func (s *CreateMasterOrderService) LimitPrice(limitPrice float64) *CreateMasterOrderService {
 	s.limitPrice = &limitPrice
