@@ -27,7 +27,6 @@ type TCAAnalysisResponse struct {
 	TwapSlippagePct         float64 `json:"TWAP_Slippage_pct"`
 	VwapSlippagePct         float64 `json:"VWAP_Slippage_pct"`
 	Spread                  float64 `json:"Spread"`
-	SlippagePctFartouch     float64 `json:"Slippage_pct_Fartouch"`
 	TwapSlippagePctFartouch float64 `json:"TWAP_Slippage_pct_Fartouch"`
 	VwapSlippagePctFartouch float64 `json:"VWAP_Slippage_pct_Fartouch"`
 	IntervalReturn          float64 `json:"IntervalReturn"`

@@ -750,7 +750,6 @@ log.Printf("总成交额: $%.2f, 总手续费: $%.2f", totalValue, totalFee)
 | TWAP_Slippage_pct | float64 | TWAP_Slippage_pct |
 | VWAP_Slippage_pct | float64 | VWAP_Slippage_pct |
 | Spread | float64 | Spread |
-| Slippage_pct_Fartouch | float64 | Slippage_pct_Fartouch |
 | TWAP_Slippage_pct_Fartouch | float64 | TWAP_Slippage_pct_Fartouch |
 | VWAP_Slippage_pct_Fartouch | float64 | VWAP_Slippage_pct_Fartouch |
 | IntervalReturn | float64 | IntervalReturn |
