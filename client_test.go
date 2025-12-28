@@ -223,3 +223,19 @@ func TestPubFun(t *testing.T) {
 	}
 	t.Logf("timestampMill: %v", timestampMill)
 }
+
+func TestTca(t *testing.T) {
+	if os.Getenv("QE_INTEGRATION_TEST") != "1" {
+		t.Skip("skipping integration test; set QE_INTEGRATION_TEST=1 to enable")
+	}
+	ctx := context.Background()
+	client := NewClient("", "")
+	now := time.Now()
+	timeBeforeOneYear := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
+	do, err := client.NewGetTcaAnalysisService().StartTime(timeBeforeOneYear.UnixMilli()).EndTime(now.UnixMilli()).Do(ctx)
+	if err != nil {
+		t.Errorf("err should be nil, but got %v", err)
+		return
+	}
+	t.Logf("%#v", do)
+}
