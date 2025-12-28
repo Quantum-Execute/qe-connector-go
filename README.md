@@ -719,9 +719,42 @@ log.Printf("总成交额: $%.2f, 总手续费: $%.2f", totalValue, totalFee)
 | startTime | int64 | 否 | 开始时间戳（毫秒） |
 | endTime | int64 | 否 | 结束时间戳（毫秒） |
 
-**响应：**
+**响应字段：**
 
-成功时返回 `[]*algorithm_dto.AlgorithmTCAAnalysisAllDataDTO`。
+成功时返回 `[]*algorithm_dto.TCAAnalysisResponse`。
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| MasterOrderID | string | MasterOrderID |
+| StartTime | string | StartTime |
+| EndTime | string | EndTime |
+| FinishedTime | string | FinishedTime |
+| Strategy | string | Strategy |
+| Symbol | string | Symbol |
+| Category | string | Category |
+| Side | string | Side |
+| Date | string | Date |
+| MasterOrderQty | float64 | MasterOrderQty |
+| MasterOrderNotional | float64 | MasterOrderNotional |
+| ArrivalPrice | float64 | ArrivalPrice |
+| ExcutedRate | float64 | ExcutedRate |
+| FillQty | float64 | FillQty |
+| TakeFillNotional | float64 | TakeFillNotional |
+| MakeFillNotional | float64 | MakeFillNotional |
+| FillNotional | float64 | FillNotional |
+| MakerRate | float64 | MakerRate |
+| ChildOrderCnt | int | ChildOrderCnt |
+| AverageFillPrice | float64 | AverageFillPrice |
+| Slippage | float64 | Slippage |
+| Slippage_pct | float64 | Slippage_pct |
+| TWAP_Slippage_pct | float64 | TWAP_Slippage_pct |
+| VWAP_Slippage_pct | float64 | VWAP_Slippage_pct |
+| Spread | float64 | Spread |
+| Slippage_pct_Fartouch | float64 | Slippage_pct_Fartouch |
+| TWAP_Slippage_pct_Fartouch | float64 | TWAP_Slippage_pct_Fartouch |
+| VWAP_Slippage_pct_Fartouch | float64 | VWAP_Slippage_pct_Fartouch |
+| IntervalReturn | float64 | IntervalReturn |
+| ParticipationRate | float64 | ParticipationRate |
 
 **示例代码：**
 
@@ -746,14 +779,38 @@ if err != nil {
 }
 
 for _, it := range items {
-    // it is *algorithm_dto.AlgorithmTCAAnalysisAllDataDTO
-    _ = it
-    log.Printf("masterOrderId=%s side=%s category=%v symbol=%v twapSlippageBps=%v makerRate=%v",
-        it.MasterOrderID, it.Side, it.Category, it.Symbol, it.TwapSlippageBps, it.MakeFillRate,
+    // it is *algorithm_dto.TCAAnalysisResponse
+    log.Printf(`
+TCA分析数据：
+    主订单ID: %s
+    交易对: %s
+    方向: %s
+    策略: %s
+    开始时间: %s
+    结束时间: %s
+    完成时间: %s
+    成交数量: %.4f
+    平均成交价: %.2f
+    Maker率: %.2f%%
+    TWAP滑点: %.4f%%
+    VWAP滑点: %.4f%%
+    参与率: %.4f%%
+`,
+        it.MasterOrderID,
+        it.Symbol,
+        it.Side,
+        it.Strategy,
+        it.StartTime,
+        it.EndTime,
+        it.FinishedTime,
+        it.FillQty,
+        it.AverageFillPrice,
+        it.MakerRate*100,
+        it.TwapSlippagePct*100,
+        it.VwapSlippagePct*100,
+        it.ParticipationRate*100,
     )
 }
-
-var _ = algorithm_dto.AlgorithmTCAAnalysisAllDataDTO{}
 ```
 
 #### 取消主订单

@@ -806,7 +806,7 @@ func (s *GetTcaAnalysisService) EndTime(endTime int64) *GetTcaAnalysisService {
 }
 
 // Do send request
-func (s *GetTcaAnalysisService) Do(ctx context.Context, opts ...RequestOption) (res []*algorithm_dto.AlgorithmTCAAnalysisAllDataDTO, err error) {
+func (s *GetTcaAnalysisService) Do(ctx context.Context, opts ...RequestOption) (res []*algorithm_dto.TCAAnalysisResponse, err error) {
 	r := &request{
 		method:   http.MethodGet,
 		endpoint: "/user/trading/tca-analysis",
@@ -834,7 +834,7 @@ func (s *GetTcaAnalysisService) Do(ctx context.Context, opts ...RequestOption) (
 	if err != nil {
 		return nil, err
 	}
-	res = make([]*algorithm_dto.AlgorithmTCAAnalysisAllDataDTO, 0)
+	res = make([]*algorithm_dto.TCAAnalysisResponse, 0)
 	if len(data) == 0 {
 		return res, nil
 	}

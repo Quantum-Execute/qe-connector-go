@@ -2,6 +2,20 @@
 
 本文件记录 `qe-connector-go` 的用户可见变更。
 
+## 1.1.20 - 2025-12-27
+
+### 变更
+- **TCA 分析接口响应格式**：更新 `GetTcaAnalysisService` 返回类型
+  - 从 `[]*algorithm_dto.AlgorithmTCAAnalysisAllDataDTO` 改为 `[]*algorithm_dto.TCAAnalysisResponse`
+  - 响应字段名从 snake_case 改为 PascalCase，与后端接口和 Excel 表头一致
+  - 新增响应 DTO：`dto/algorithm_dto/tca_analysis_response.go`
+
+### 文档
+- **TCA 分析接口文档更新**：
+  - 更新响应字段描述表格，使用 Excel 表头字段名（PascalCase）
+  - 更新示例代码以使用新的字段名
+  - 字段描述直接使用 Excel 表头名称
+
 ## 1.1.19 - 2025-12-27
 
 ### 新增
