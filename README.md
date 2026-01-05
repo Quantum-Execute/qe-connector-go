@@ -311,14 +311,14 @@ for _, api := range result.Items {
 |--------|---------|--------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **基础参数** |
 | strategyType | string  | 是 | 策略类型，可选值：TWAP-1、POV                                                                                                                                                                        |
-| algorithm | string  | 是 | 交易算法。strategyType=TWAP-1时，可选值：TWAP、VWAP、BoostVWAP、BoostTWAP；strategyType=POV时，可选值：POV                                                                                                                          |
-| exchange | string  | 是 | 交易所名称，可选值：Binance、OKX、LTP、Deribit                                                                                                                                                               |
+| algorithm | string  | 是 | 交易算法。strategyType=TWAP-1时，可选值：TWAP、VWAP、BoostVWAP、BoostTWAP；strategyType=POV时，可选值：POV                                                                                                      |
+| exchange | string  | 是 | 交易所名称，可选值：Binance、OKX、LTP、Deribit                                                                                                                                                          |
 | symbol | string  | 是 | 交易对符号（如：BTCUSDT）（可用交易对查询）                                                                                                                                                                  |
 | marketType | string  | 是 | 可选值：SPOT（现货）、PERP（永续合约）                                                                                                                                                                    |
 | side | string  | 是 | 1.如果isTargetPosition=False：side代表交易方向，可选值：buy（买入）、sell（卖出）；合约交易时可与reduceOnly组合，reduceOnly=True时：buy代表买入平空，sell代表卖出平多。2.如果isTargetPosition=True：side代表仓位方向，可选值：buy（多头）、sell（空头）。【仅合约交易时需传入】 |
 | apiKeyId | string  | 是 | 指定使用的 API Key ID，这将决定您本次下单使用哪个交易所账户执行                                                                                                                                                      |
 | **数量参数（二选一）** |
-| totalQuantity | float64 | 否* | 要交易的总数量，与 orderNotional 二选一，输入范围：>0                                                                                                                                                         |
+| totalQuantity | float64 | 否* | 要交易的总数量，与 orderNotional 二选一，输入范围：>0                                                                                                                                                        |
 | orderNotional | float64 | 否* | 按价值下单时的金额，以计价币种为单位（如ETHUSDT为USDT数量），与 totalQuantity 二选一，输入范围：>0                                                                                                                            |
 | **下单模式参数** |
 | isTargetPosition | bool    | 否 | 是否为目标仓位下单，默认为 false                                                                                                                                                                        |
@@ -327,16 +327,16 @@ for _, api := range result.Items {
 | executionDuration | int32     | 否 | 订单最大执行时长，分钟，范围>=1                                                                                                                                                                          |
 | **TWAP/VWAP 算法参数** |
 | mustComplete | bool    | 否 | 是否一定要在executionDuration之内执行完毕，选false则不会追赶进度，默认：true                                                                                                                                        |
-| makerRateLimit | float64  | 否 | 要求maker占比超过该值，范围：0-1（包含0和1。输入0.1代表10%），默认：-1(算法智能计算推荐值执行)                                                                                                                                      |
-| povLimit | string  | 否 | 占市场成交量比例上限，优先级低于mustComplete，范围：0-1（包含0和1。输入0.1代表10%），默认：0.8                                                                                                                                   |
+| makerRateLimit | float64  | 否 | 要求maker占比超过该值，范围：0-1（包含0和1。输入0.1代表10%），默认：-1(算法智能计算推荐值执行)                                                                                                                                  |
+| povLimit | string  | 否 | 占市场成交量比例上限，优先级低于mustComplete，范围：0-1（包含0和1。输入0.1代表10%），默认：0.8                                                                                                                               |
 | limitPrice | float64       | 否 | 最高/低允许交易的价格，买入时该字段象征最高买入价，卖出时该字段象征最低卖出价，若市价超出范围则停止交易，范围：>0，默认：-1，代表无限制                                                                                                                     |
-| upTolerance | string  | 否 | 允许超出目标进度的最大容忍度，范围：0-1（不包含0和1，最小输入0.0001，最大输入0.9999。输入0.1代表可以超前目标进度10%），默认：-1（即无容忍）                                                                                                                     |
-| lowTolerance | string  | 否 | 允许落后目标进度的最大容忍度，范围：0-1（不包含0和1，最小输入0.0001，最大输入0.9999。输入0.1代表可落后目标进度10%），默认：-1（即无容忍）                                                                                                                     |
-| strictUpBound | bool    | 否 | 是否严格小于uptolerance，开启后会更加严格贴近交易进度执行，同时可能会把母单拆很细；如需严格控制交易进度则建议开启，其他场景建议不开启，默认：false                                                                                                                                     |
+| upTolerance | string  | 否 | 允许超出目标进度的最大容忍度，范围：0-1（不包含0和1，最小输入0.0001，最大输入0.9999。输入0.1代表可以超前目标进度10%），默认：-1（即无容忍）                                                                                                         |
+| lowTolerance | string  | 否 | 允许落后目标进度的最大容忍度，范围：0-1（不包含0和1，最小输入0.0001，最大输入0.9999。输入0.1代表可落后目标进度10%），默认：-1（即无容忍）                                                                                                          |
+| strictUpBound | bool    | 否 | 是否严格小于uptolerance，开启后会更加严格贴近交易进度执行，同时可能会把母单拆很细；如需严格控制交易进度则建议开启，其他场景建议不开启，默认：false                                                                                                          |
 | tailOrderProtection | bool    | 否 | 订单余量小于交易所最小发单量时，是否必须taker扫完，如果false，则订单余量小于交易所最小发单量时，订单结束执行；如果true，则订单余量随最近一笔下单全额执行（可能会提高Taker率），默认：true                                                                                   |
 | **POV 算法参数** |
-| makerRateLimit | float64  | 否 | 要求maker占比超过该值（包含0和1，输入0.1代表10%），输入范围：0-1（输入0.1代表10%），默认：-1(算法智能计算推荐值执行)                                                                                                                                      |
-| povLimit | string  | 否 | 占市场成交量比例上限（包含0和0.5，一般建议小于0.15），输入范围：0-0.5（povMinLimit < max(povLimit-0.01,0)），默认：0                                                                                                                             |
+| makerRateLimit | float64  | 否 | 要求maker占比超过该值（包含0和1，输入0.1代表10%），输入范围：0-1（输入0.1代表10%），默认：-1(算法智能计算推荐值执行)                                                                                                                    |
+| povLimit | string  | 否 | 占市场成交量比例上限（包含0和0.5，一般建议小于0.15），输入范围：0-0.5（povMinLimit < max(povLimit-0.01,0)），默认：0                                                                                                         |
 | povMinLimit | float64  | 否 | 占市场成交量比例下限，范围：小于max(POVLimit-0.01,0)，默认：0（即无下限）                                                                                                                                            |
 | limitPrice | float64       | 否 | 最高/低允许交易的价格，买入时该字段象征最高买入价，卖出时该字段象征最低卖出价，若市价超出范围则停止交易，范围：>0，默认：-1，代表无限制                                                                                                                     |
 | strictUpBound | bool    | 否 | 是否追求严格小于povLimit，开启后可能会把很小的母单也拆的很细，比如50u拆成10个5u，不建议开启，算法的每个order会权衡盘口流动性，默认：false                                                                                                          |
@@ -344,8 +344,9 @@ for _, api := range result.Items {
 | **其他参数** |
 | reduceOnly | bool    | 否 | 合约交易时是否仅减仓，默认值：false                                                                                                                                                                       |
 | marginType | string  | 否* | **永续合约必传参数** - 合约交易保证金类型，可选值：U（U本位），默认：U（暂时只支持U本位永续合约）。当marketType为PERP（永续合约）时必传                                                                                                           |
-| isMargin | bool    | 否 | 是否使用现货杠杆。- 默认为false - 仅现货可使用该字段                                                                                                                                                               |
+| isMargin | bool    | 否 | 是否使用现货杠杆。- 默认为false - 仅现货可使用该字段                                                                                                                                                            |
 | notes | string  | 否 | 订单备注                                                                                                                                                                                       |
+| enableMake | bool  | 否 | 是否允许挂单，如果关闭则全部吃单 - 默认：true                                                                                                                                                                          |
 
 *注：totalQuantity 和 orderNotional 必须传其中一个，但当 isTargetPosition 为 true 时，totalQuantity 必填代表目标仓位数量且 orderNotional 不可填  
 *注：当使用 Deribit 账户下单 BTCUSD 或 ETHUSD 合约时，只能使用 totalQuantity 作为数量输入字段，且数量单位为 USD；orderNotional 当前不可用。  
@@ -467,64 +468,67 @@ if result.Success {
 
 **请求参数：**
 
-| 参数名 | 类型 | 是否必传 | 描述 |
-|--------|------|----------|------|
-| page | int32 | 否 | 页码 |
-| pageSize | int32 | 否 | 每页数量 |
-| status | string | 否 | 订单状态筛选，可选值：NEW（执行中）、COMPLETED（已完成） |
-| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit |
-| symbol | string | 否 | 交易对筛选 |
-| startTime | string | 否 | 开始时间筛选 |
-| endTime | string | 否 | 结束时间筛选 |
+| 参数名       | 类型     | 是否必传 | 描述                                  |
+|-----------|--------|------|-------------------------------------|
+| page      | int32  | 否    | 页码                                  |
+| pageSize  | int32  | 否    | 每页数量                                |
+| status    | string | 否    | 订单状态筛选，可选值：NEW（执行中）、COMPLETED（已完成）  |
+| exchange  | string | 否    | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit |
+| symbol    | string | 否    | 交易对筛选                               |
+| startTime | string | 否    | 开始时间筛选                              |
+| endTime   | string | 否    | 结束时间筛选                              |
 
 **响应字段：**
 
-| 字段名 | 类型 | 描述                                                                                                                                                     |
-|--------|------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
-| items | array | 主订单列表                                                                                                                                                  |
-| ├─ masterOrderId | string | 主订单 ID                                                                                                                                                 |
-| ├─ algorithm | string | 算法                                                                                                                                                     |
-| ├─ algorithmType | string | 算法类型                                                                                                                                                   |
-| ├─ exchange | string | 交易所                                                                                                                                                    |
-| ├─ symbol | string | 交易对                                                                                                                                                    |
-| ├─ marketType | string | 市场类型                                                                                                                                                   |
-| ├─ side | string | 买卖方向                                                                                                                                                   |
-| ├─ totalQuantity | float64 | 按币数下单的总数量，按金额下单时，该值为0，下单数量应查看orderNotional字段                                                                                                           |         
-| ├─ filledQuantity | float64 | 1.按币数下单时，该字段代表已成交币数。2.按金额下单时，该字段值代表已成交金额                                                                                                               |      
-| ├─ averagePrice | float64 | 平均成交价                                                                                                                                                  |
-| ├─ status | string | 状态：NEW（创建，未执行）、WAITING（等待中）、PROCESSING（执行中，且未完成）、PAUSED（已暂停）、CANCEL（取消中）、CANCELLED（已取消）、COMPLETED（已完成）、REJECTED（已拒绝）、EXPIRED（已过期）、CANCEL_REJECT（取消被拒绝） |
-| ├─ executionDuration | int32 | 执行时长（分钟）                                                                                                                                               |
-| ├─ priceLimit | float64 | 价格限制                                                                                                                                                   |
-| ├─ startTime | string | 开始时间                                                                                                                                                   |
-| ├─ endTime | string | 结束时间                                                                                                                                                   |
-| ├─ createdAt | string | 创建时间                                                                                                                                                   |
-| ├─ updatedAt | string | 更新时间                                                                                                                                                   |
-| ├─ notes | string | 备注                                                                                                                                                     |
-| ├─ marginType | string | 保证金类型（U:U本位）                                                                                                                                           |
-| ├─ reduceOnly | bool | 是否仅减仓                                                                                                                                                  |
-| ├─ strategyType | string | 策略类型                                                                                                                                                   |
-| ├─ orderNotional | string | 订单金额（按成交额提交的下单数量）                                                                                                                                      |
-| ├─ mustComplete | bool | 是否必须完成                                                                                                                                                 |
-| ├─ makerRateLimit | float64 | 最低 Maker 率                                                                                                                                             |
-| ├─ povLimit | float64 | 最大市场成交量占比                                                                                                                                              |
-| ├─ clientId | string | 客户端 ID                                                                                                                                                 |
-| ├─ date | string | 发单日期（格式：YYYYMMDD）                                                                                                                                      |
-| ├─ ticktimeInt | string | 发单时间（格式：093000000 表示 9:30:00.000）                                                                                                                      |
-| ├─ limitPriceString | string | 限价（字符串）                                                                                                                                                |
-| ├─ upTolerance | string | 上容忍度                                                                                                                                                   |
-| ├─ lowTolerance | string | 下容忍度                                                                                                                                                   |
-| ├─ strictUpBound | bool | 严格上界                                                                                                                                                   |
-| ├─ ticktimeMs | string | 发单时间戳（epoch 毫秒）                                                                                                                                        |   
-| ├─ category | string | 交易品种（spot 或 perp）                                                                                                                                      |   
-| ├─ filledAmount | float64 | 成交币数                                                                                                                                                   |
-| ├─ totalValue | float64 | 成交总值                                                                                                                                                   |
-| ├─ base | string | 基础币种                                                                                                                                                   |
-| ├─ quote | string | 计价币种                                                                                                                                                   |
-| ├─ completionProgress | float64 | 完成进度（0-100）返回50代表50%                                                                                                                                   |
-| ├─ reason | string | 原因（如取消原因）                                                                                                                                              |
-| total | int32 | 总数                                                                                                                                                     |
-| page | int32 | 当前页码                                                                                                                                                   |
-| pageSize | int32 | 每页数量                                                                                                                                                   |
+| 字段名                    | 类型      | 描述                                                                                                                                                     |
+|------------------------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| items                  | array   | 主订单列表                                                                                                                                                  |
+| ├─ masterOrderId       | string  | 主订单 ID                                                                                                                                                 |
+| ├─ algorithm           | string  | 算法                                                                                                                                                     |
+| ├─ algorithmType       | string  | 算法类型                                                                                                                                                   |
+| ├─ exchange            | string  | 交易所                                                                                                                                                    |
+| ├─ symbol              | string  | 交易对                                                                                                                                                    |
+| ├─ marketType          | string  | 市场类型                                                                                                                                                   |
+| ├─ side                | string  | 买卖方向                                                                                                                                                   |
+| ├─ totalQuantity       | float64 | 按币数下单的总数量，按金额下单时，该值为0，下单数量应查看orderNotional字段                                                                                                           |         
+| ├─ filledQuantity      | float64 | 1.按币数下单时，该字段代表已成交币数。2.按金额下单时，该字段值代表已成交金额                                                                                                               |      
+| ├─ averagePrice        | float64 | 平均成交价                                                                                                                                                  |
+| ├─ status              | string  | 状态：NEW（创建，未执行）、WAITING（等待中）、PROCESSING（执行中，且未完成）、PAUSED（已暂停）、CANCEL（取消中）、CANCELLED（已取消）、COMPLETED（已完成）、REJECTED（已拒绝）、EXPIRED（已过期）、CANCEL_REJECT（取消被拒绝） |
+| ├─ executionDuration   | int32   | 执行时长（分钟）                                                                                                                                               |
+| ├─ priceLimit          | float64 | 价格限制                                                                                                                                                   |
+| ├─ startTime           | string  | 开始时间                                                                                                                                                   |
+| ├─ endTime             | string  | 结束时间                                                                                                                                                   |
+| ├─ createdAt           | string  | 创建时间                                                                                                                                                   |
+| ├─ updatedAt           | string  | 更新时间                                                                                                                                                   |
+| ├─ notes               | string  | 备注                                                                                                                                                     |
+| ├─ marginType          | string  | 保证金类型（U:U本位）                                                                                                                                           |
+| ├─ reduceOnly          | bool    | 是否仅减仓                                                                                                                                                  |
+| ├─ strategyType        | string  | 策略类型                                                                                                                                                   |
+| ├─ orderNotional       | string  | 订单金额（按成交额提交的下单数量）                                                                                                                                      |
+| ├─ mustComplete        | bool    | 是否必须完成                                                                                                                                                 |
+| ├─ makerRateLimit      | float64 | 最低 Maker 率                                                                                                                                             |
+| ├─ povLimit            | float64 | 最大市场成交量占比                                                                                                                                              |
+| ├─ clientId            | string  | 客户端 ID                                                                                                                                                 |
+| ├─ date                | string  | 发单日期（格式：YYYYMMDD）                                                                                                                                      |
+| ├─ ticktimeInt         | string  | 发单时间（格式：093000000 表示 9:30:00.000）                                                                                                                      |
+| ├─ limitPriceString    | string  | 限价（字符串）                                                                                                                                                |
+| ├─ upTolerance         | string  | 上容忍度                                                                                                                                                   |
+| ├─ lowTolerance        | string  | 下容忍度                                                                                                                                                   |
+| ├─ strictUpBound       | bool    | 严格上界                                                                                                                                                   |
+| ├─ ticktimeMs          | string  | 发单时间戳（epoch 毫秒）                                                                                                                                        |   
+| ├─ category            | string  | 交易品种（spot 或 perp）                                                                                                                                      |   
+| ├─ filledAmount        | float64 | 成交币数                                                                                                                                                   |
+| ├─ totalValue          | float64 | 成交总值                                                                                                                                                   |
+| ├─ base                | string  | 基础币种                                                                                                                                                   |
+| ├─ quote               | string  | 计价币种                                                                                                                                                   |
+| ├─ completionProgress  | float64 | 完成进度（0-100）返回50代表50%                                                                                                                                   |
+| ├─ reason              | string  | 原因（如取消原因）                                                                                                                                              |
+| ├─ tailOrderProtection | bool    | 尾单保护开关                                                                                                                                                 |
+| ├─ enableMake          | bool    | 是否允许挂单                                                                                                                                                 |
+| ├─ makerRate           | float64 | 被动成交率                                                                                                                                                  |
+| total                  | int32   | 总数                                                                                                                                                     |
+| page                   | int32   | 当前页码                                                                                                                                                   |
+| pageSize               | int32   | 每页数量                                                                                                                                                   |
 
 **示例代码：**
 
@@ -714,7 +718,7 @@ log.Printf("总成交额: $%.2f, 总手续费: $%.2f", totalValue, totalFee)
 | 参数名 | 类型 | 是否必传 | 描述 |
 |--------|------|----------|------|
 | symbol | string | 否 | 交易对筛选 |
-| category | string | 否 | 策略类别筛选 |
+| category | string | 否 | 交易品种（spot 或 perp） |
 | apikey | string | 否 | ApiKey id 列表，逗号分隔 |
 | startTime | int64 | 否 | 开始时间戳（毫秒） |
 | endTime | int64 | 否 | 结束时间戳（毫秒） |
@@ -725,35 +729,36 @@ log.Printf("总成交额: $%.2f, 总手续费: $%.2f", totalValue, totalFee)
 
 | 字段名 | 类型 | 描述 |
 |--------|------|------|
-| MasterOrderID | string | MasterOrderID |
-| StartTime | string | StartTime |
-| EndTime | string | EndTime |
-| FinishedTime | string | FinishedTime |
-| Strategy | string | Strategy |
-| Symbol | string | Symbol |
-| Category | string | Category |
-| Side | string | Side |
-| Date | string | Date |
-| MasterOrderQty | float64 | MasterOrderQty |
-| MasterOrderNotional | float64 | MasterOrderNotional |
-| ArrivalPrice | float64 | ArrivalPrice |
-| ExcutedRate | float64 | ExcutedRate |
-| FillQty | float64 | FillQty |
-| TakeFillNotional | float64 | TakeFillNotional |
-| MakeFillNotional | float64 | MakeFillNotional |
-| FillNotional | float64 | FillNotional |
-| MakerRate | float64 | MakerRate |
-| ChildOrderCnt | int | ChildOrderCnt |
-| AverageFillPrice | float64 | AverageFillPrice |
-| Slippage | float64 | Slippage |
-| Slippage_pct | float64 | Slippage_pct |
-| TWAP_Slippage_pct | float64 | TWAP_Slippage_pct |
-| VWAP_Slippage_pct | float64 | VWAP_Slippage_pct |
-| Spread | float64 | Spread |
-| TWAP_Slippage_pct_Fartouch | float64 | TWAP_Slippage_pct_Fartouch |
-| VWAP_Slippage_pct_Fartouch | float64 | VWAP_Slippage_pct_Fartouch |
-| IntervalReturn | float64 | IntervalReturn |
-| ParticipationRate | float64 | ParticipationRate |
+| MasterOrderID | string | 母单 |
+| StartTime | string | 母单创建时间 |
+| EndTime | string | 母单结束时间 |
+| FinishedTime | string | 实际结束时间 |
+| Strategy | string | 算法类型 |
+| Symbol | string | 交易对 |
+| Category | string | 交易类型 |
+| Side | string | 交易方向 |
+| Date | string | 母单创建日期 |
+| MasterOrderQty | float64 | 母单下单币数量（如0.001 BTC） |
+| MasterOrderNotional | float64 | 母单下单名义金额（如：10 USDT） |
+| ArrivalPrice | float64 | 到达价格 |
+| ExcutedRate | float64 | 执行率 |
+| FillQty | float64 | 成交数量 |
+| TakeFillNotional | float64 | Taker订单成交金额 |
+| MakeFillNotional | float64 | Maker订单成交金额 |
+| FillNotional | float64 | 成交金额 |
+| MakerRate | float64 | 挂单率 |
+| ChildOrderCnt | int | 子订单数量 |
+| AverageFillPrice | float64 | 成交均价 |
+| Slippage | float64 | 到达价滑点（绝对值） |
+| Slippage_pct | float64 | 到达价滑点 |
+| TWAP_Slippage_pct | float64 | TWAP滑点 |
+| VWAP_Slippage_pct | float64 | VWAP滑点 |
+| Spread | float64 | 相对买卖价差 |
+| Slippage_pct_Fartouch | float64 | 到达价滑点（相比对手价） |
+| TWAP_Slippage_pct_Fartouch | float64 | TWAP滑点（相比对手价） |
+| VWAP_Slippage_pct_Fartouch | float64 | VWAP滑点（相比对手价） |
+| IntervalReturn | float64 | 区间理论收益率 |
+| ParticipationRate | float64 | 市场参与率 |
 
 **示例代码：**
 

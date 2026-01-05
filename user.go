@@ -238,8 +238,10 @@ type MasterOrderInfo struct {
 	CompletionProgress  float64 `json:"completionProgress"`
 	Reason              string  `json:"reason"`
 	TakerMakerRate      float64 `json:"takerMakerRate"`
+	MakerRate           float64 `json:"makerRate"`
 	TailOrderProtection bool    `json:"tailOrderProtection"`
 	TradingAccount      string  `json:"tradingAccount"`
+	EnableMake          bool    `json:"enableMake"`
 }
 
 // GetOrderFillsService get order fills
@@ -406,6 +408,7 @@ type CreateMasterOrderService struct {
 	tailOrderProtection *bool
 	isTargetPosition    *bool
 	isMargin            *bool
+	enableMake          *bool
 }
 
 // Algorithm set algorithm
@@ -568,6 +571,12 @@ func (s *CreateMasterOrderService) IsMargin(isMargin bool) *CreateMasterOrderSer
 	return s
 }
 
+// EnableMake set isMargin
+func (s *CreateMasterOrderService) EnableMake(enableMake bool) *CreateMasterOrderService {
+	s.enableMake = &enableMake
+	return s
+}
+
 // Do send request
 func (s *CreateMasterOrderService) Do(ctx context.Context, opts ...RequestOption) (res *CreateMasterOrderReply, err error) {
 	// Deribit special rules:
@@ -648,6 +657,11 @@ func (s *CreateMasterOrderService) Do(ctx context.Context, opts ...RequestOption
 		m["tailOrderProtection"] = *s.tailOrderProtection
 	} else {
 		m["tailOrderProtection"] = true
+	}
+	if s.enableMake != nil {
+		m["enableMake"] = *s.enableMake
+	} else {
+		m["enableMake"] = true
 	}
 	if s.isTargetPosition != nil {
 		m["isTargetPosition"] = *s.isTargetPosition

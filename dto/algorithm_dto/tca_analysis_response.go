@@ -24,6 +24,7 @@ type TCAAnalysisResponse struct {
 	AverageFillPrice        float64 `json:"AverageFillPrice"`
 	Slippage                float64 `json:"Slippage"`
 	SlippagePct             float64 `json:"Slippage_pct"`
+	SlippagePctFartouch     float64 `json:"Slippage_pct_Fartouch"`
 	TwapSlippagePct         float64 `json:"TWAP_Slippage_pct"`
 	VwapSlippagePct         float64 `json:"VWAP_Slippage_pct"`
 	Spread                  float64 `json:"Spread"`
