@@ -2,6 +2,29 @@
 
 本文件记录 `qe-connector-go` 的用户可见变更。
 
+## 1.1.20 - 2026-01-06
+
+### 变更
+- **创建母单入参**：新增 `CreateMasterOrderService` 入参：`enableMake`，是否允许挂单
+- **TCA 分析接口响应格式**：更新 `GetTcaAnalysisService` 返回类型
+  - 从 `[]*algorithm_dto.AlgorithmTCAAnalysisAllDataDTO` 改为 `[]*algorithm_dto.TCAAnalysisResponse`
+  - 响应字段名从 snake_case 改为 PascalCase，与后端接口和 Excel 表头一致
+  - 新增响应 DTO：`dto/algorithm_dto/tca_analysis_response.go`
+- **母单数据响应格式**：更新 `GetMasterOrdersService` 返回类型
+  - 新增字段`makerRate`，被动成交率
+  - 新增字段`enableMake`，是否允许挂单
+  - 新增字段`tailOrderProtection`，尾单保护开关
+
+### 文档
+- **创建母单入参文档更新**：
+    - 新增入参字段描述
+- **TCA 分析接口文档更新**：
+  - 更新响应字段描述表格，使用 Excel 表头字段名（PascalCase）
+  - 更新示例代码以使用新的字段名
+  - 字段描述添加中文描述
+- **母单数据响应接口文档更新**：
+  - 更新响应字段描述
+
 ## 1.1.20-rc.1 - 2025-12-27
 
 ### 变更
