@@ -2,6 +2,13 @@
 
 本文件记录 `qe-connector-go` 的用户可见变更。
 
+## 1.1.21 - 2026-01-07
+
+### 文档
+- **Boost 算法支持交易对更新**：更新 `CreateMasterOrderService` 中 BoostVWAP、BoostTWAP 算法支持的交易对说明
+  - 现货支持的交易对：BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,LTCUSDT,AVAXUSDT,XLMUSDT,XRPUSDT,DOGEUSDT,CRVUSDT
+  - 永续合约支持的交易对：BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,LTCUSDT,AVAXUSDT,XLMUSDT,XRPUSDT,DOGEUSDT,ADAUSDT,BCHUSDT,FILUSDT,1000SATSUSDT,CRVUSDT
+
 ## 1.1.20 - 2026-01-06
 
 ### 变更
