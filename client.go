@@ -233,6 +233,9 @@ func (c *Client) NewGetMasterOrdersService() *GetMasterOrdersService {
 func (c *Client) NewGetOrderFillsService() *GetOrderFillsService {
 	return &GetOrderFillsService{c: c}
 }
+func (c *Client) NewGetMasterOrderDetailService() *GetMasterOrderDetailService {
+	return &GetMasterOrderDetailService{c: c}
+}
 func (c *Client) NewCreateMasterOrderService() *CreateMasterOrderService {
 	return &CreateMasterOrderService{c: c}
 }

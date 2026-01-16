@@ -195,53 +195,90 @@ type GetMasterOrdersReply struct {
 	PageSize int32             `json:"pageSize"`
 }
 
+// GetMasterOrderDetailService get master order detail
+type GetMasterOrderDetailService struct {
+	c             *Client
+	masterOrderId string
+}
+
+// MasterOrderId set masterOrderId
+func (s *GetMasterOrderDetailService) MasterOrderId(masterOrderId string) *GetMasterOrderDetailService {
+	s.masterOrderId = masterOrderId
+	return s
+}
+
+// Do send request
+func (s *GetMasterOrderDetailService) Do(ctx context.Context, opts ...RequestOption) (res *GetMasterOrderDetailReply, err error) {
+	r := &request{
+		method:   http.MethodGet,
+		endpoint: fmt.Sprintf("/user/trading/master-orders/%s", s.masterOrderId),
+		secType:  secTypeSigned,
+	}
+	data, err := s.c.callAPI(ctx, r, opts...)
+	if err != nil {
+		return nil, err
+	}
+	res = new(GetMasterOrderDetailReply)
+	err = json.Unmarshal(data, res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// GetMasterOrderDetailReply get master order detail response
+type GetMasterOrderDetailReply struct {
+	MasterOrder MasterOrderInfo `json:"masterOrder"`
+}
+
 // MasterOrderInfo master order info
 type MasterOrderInfo struct {
-	MasterOrderId       string  `json:"masterOrderId"`
-	Algorithm           string  `json:"algorithm"`
-	AlgorithmType       string  `json:"algorithmType"`
-	Exchange            string  `json:"exchange"`
-	Symbol              string  `json:"symbol"`
-	MarketType          string  `json:"marketType"`
-	Side                string  `json:"side"`
-	TotalQuantity       float64 `json:"totalQuantity"`
-	FilledQuantity      float64 `json:"filledQuantity"`
-	AveragePrice        float64 `json:"averagePrice"`
-	Status              string  `json:"status"`
-	ExecutionDuration   int32   `json:"executionDuration"`
-	PriceLimit          float64 `json:"priceLimit"`
-	StartTime           string  `json:"startTime"`
-	EndTime             string  `json:"endTime"`
-	CreatedAt           string  `json:"createdAt"`
-	UpdatedAt           string  `json:"updatedAt"`
-	Notes               string  `json:"notes"`
-	MarginType          string  `json:"marginType"`
-	ReduceOnly          bool    `json:"reduceOnly"`
-	StrategyType        string  `json:"strategyType"`
-	OrderNotional       float64 `json:"orderNotional"`
-	MustComplete        bool    `json:"mustComplete"`
-	MakerRateLimit      float64 `json:"makerRateLimit"`
-	PovLimit            float64 `json:"povLimit"`
-	ClientId            string  `json:"clientId"`
-	Date                string  `json:"date"`
-	TicktimeInt         string  `json:"ticktimeInt"`
-	LimitPriceString    string  `json:"limitPriceString"`
-	UpTolerance         string  `json:"upTolerance"`
-	LowTolerance        string  `json:"lowTolerance"`
-	StrictUpBound       bool    `json:"strictUpBound"`
-	TicktimeMs          string  `json:"ticktimeMs"`
-	Category            string  `json:"category"`
-	FilledAmount        float64 `json:"filledAmount"`
-	TotalValue          float64 `json:"totalValue"`
-	Base                string  `json:"base"`
-	Quote               string  `json:"quote"`
-	CompletionProgress  float64 `json:"completionProgress"`
-	Reason              string  `json:"reason"`
-	TakerMakerRate      float64 `json:"takerMakerRate"`
-	MakerRate           float64 `json:"makerRate"`
-	TailOrderProtection bool    `json:"tailOrderProtection"`
-	TradingAccount      string  `json:"tradingAccount"`
-	EnableMake          bool    `json:"enableMake"`
+	MasterOrderId            string  `json:"masterOrderId"`
+	Algorithm                string  `json:"algorithm"`
+	AlgorithmType            string  `json:"algorithmType"`
+	Exchange                 string  `json:"exchange"`
+	Symbol                   string  `json:"symbol"`
+	MarketType               string  `json:"marketType"`
+	Side                     string  `json:"side"`
+	TotalQuantity            float64 `json:"totalQuantity"`
+	FilledQuantity           float64 `json:"filledQuantity"`
+	AveragePrice             float64 `json:"averagePrice"`
+	Status                   string  `json:"status"`
+	ExecutionDuration        int32   `json:"executionDuration"`
+	ExecutionDurationSeconds *int32  `json:"executionDurationSeconds,omitempty"`
+	PriceLimit               float64 `json:"priceLimit"`
+	StartTime                string  `json:"startTime"`
+	EndTime                  string  `json:"endTime"`
+	CreatedAt                string  `json:"createdAt"`
+	UpdatedAt                string  `json:"updatedAt"`
+	Notes                    string  `json:"notes"`
+	MarginType               string  `json:"marginType"`
+	ReduceOnly               bool    `json:"reduceOnly"`
+	StrategyType             string  `json:"strategyType"`
+	OrderNotional            float64 `json:"orderNotional"`
+	MustComplete             bool    `json:"mustComplete"`
+	MakerRateLimit           float64 `json:"makerRateLimit"`
+	PovLimit                 float64 `json:"povLimit"`
+	ClientId                 string  `json:"clientId"`
+	Date                     string  `json:"date"`
+	TicktimeInt              string  `json:"ticktimeInt"`
+	LimitPriceString         string  `json:"limitPriceString"`
+	UpTolerance              string  `json:"upTolerance"`
+	LowTolerance             string  `json:"lowTolerance"`
+	StrictUpBound            bool    `json:"strictUpBound"`
+	TicktimeMs               string  `json:"ticktimeMs"`
+	Category                 string  `json:"category"`
+	FilledAmount             float64 `json:"filledAmount"`
+	TotalValue               float64 `json:"totalValue"`
+	Base                     string  `json:"base"`
+	Quote                    string  `json:"quote"`
+	CompletionProgress       float64 `json:"completionProgress"`
+	Reason                   string  `json:"reason"`
+	TakerMakerRate           float64 `json:"takerMakerRate"`
+	MakerRate                float64 `json:"makerRate"`
+	TailOrderProtection      bool    `json:"tailOrderProtection"`
+	TradingAccount           string  `json:"tradingAccount"`
+	EnableMake               bool    `json:"enableMake"`
 }
 
 // GetOrderFillsService get order fills
@@ -382,33 +419,34 @@ type OrderFillInfo struct {
 
 // CreateMasterOrderService create master order
 type CreateMasterOrderService struct {
-	c                   *Client
-	algorithm           trading_enums.Algorithm
-	exchange            trading_enums.Exchange
-	symbol              string
-	marketType          trading_enums.MarketType
-	side                trading_enums.OrderSide
-	totalQuantity       *float64
-	orderNotional       *float64
-	apiKeyId            string
-	strategyType        *trading_enums.StrategyType
-	startTime           *string
-	executionDuration   *int32
-	limitPrice          *float64
-	mustComplete        *bool
-	makerRateLimit      *float64
-	povLimit            *float64
-	marginType          *trading_enums.MarginType
-	reduceOnly          *bool
-	notes               *string
-	upTolerance         *string
-	lowTolerance        *string
-	strictUpBound       *bool
-	povMinLimit         *float64
-	tailOrderProtection *bool
-	isTargetPosition    *bool
-	isMargin            *bool
-	enableMake          *bool
+	c                        *Client
+	algorithm                trading_enums.Algorithm
+	exchange                 trading_enums.Exchange
+	symbol                   string
+	marketType               trading_enums.MarketType
+	side                     trading_enums.OrderSide
+	totalQuantity            *float64
+	orderNotional            *float64
+	apiKeyId                 string
+	strategyType             *trading_enums.StrategyType
+	startTime                *string
+	executionDuration        *int32
+	executionDurationSeconds *int32
+	limitPrice               *float64
+	mustComplete             *bool
+	makerRateLimit           *float64
+	povLimit                 *float64
+	marginType               *trading_enums.MarginType
+	reduceOnly               *bool
+	notes                    *string
+	upTolerance              *string
+	lowTolerance             *string
+	strictUpBound            *bool
+	povMinLimit              *float64
+	tailOrderProtection      *bool
+	isTargetPosition         *bool
+	isMargin                 *bool
+	enableMake               *bool
 }
 
 // Algorithm set algorithm
@@ -474,6 +512,15 @@ func (s *CreateMasterOrderService) StartTime(startTime string) *CreateMasterOrde
 // ExecutionDuration set executionDuration
 func (s *CreateMasterOrderService) ExecutionDuration(executionDuration int32) *CreateMasterOrderService {
 	s.executionDuration = &executionDuration
+	return s
+}
+
+// ExecutionDurationSeconds set executionDurationSeconds
+//
+// Note: Only used for TWAP-1. When provided and > 0, it takes precedence over executionDuration (minutes).
+// It must be greater than 10 seconds.
+func (s *CreateMasterOrderService) ExecutionDurationSeconds(executionDurationSeconds int32) *CreateMasterOrderService {
+	s.executionDurationSeconds = &executionDurationSeconds
 	return s
 }
 
@@ -619,6 +666,9 @@ func (s *CreateMasterOrderService) Do(ctx context.Context, opts ...RequestOption
 	}
 	if s.executionDuration != nil {
 		m["executionDuration"] = *s.executionDuration
+	}
+	if s.executionDurationSeconds != nil {
+		m["executionDurationSeconds"] = *s.executionDurationSeconds
 	}
 	if s.limitPrice != nil {
 		m["limitPrice"] = *s.limitPrice

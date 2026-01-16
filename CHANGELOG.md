@@ -2,6 +2,18 @@
 
 本文件记录 `qe-connector-go` 的用户可见变更。
 
+## 1.1.22 - 2026-01-17
+
+### 新增
+- **获取母单详情接口**：新增 `GetMasterOrderDetailService`，支持 `GET /user/trading/master-orders/{masterOrderId}`
+
+### 变更
+- **创建母单入参**：`CreateMasterOrderService` 新增 `executionDurationSeconds`（秒级执行时长，仅 TWAP-1 使用；当提供且>0时优先使用，且必须大于10秒）
+- **母单数据响应**：母单列表/母单详情新增 `executionDurationSeconds` 字段返回
+
+### 文档
+- README：补充“获取母单详情”用法，并在“创建主订单”参数中增加 `executionDurationSeconds` 说明
+
 ## 1.1.21 - 2026-01-07
 
 ### 文档
