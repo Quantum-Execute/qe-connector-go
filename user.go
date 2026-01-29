@@ -231,6 +231,37 @@ type GetMasterOrderDetailReply struct {
 	MasterOrder MasterOrderInfo `json:"masterOrder"`
 }
 
+// GetMasterOrderDetailByClientOrderIdService get master order detail by client order id
+type GetMasterOrderDetailByClientOrderIdService struct {
+	c             *Client
+	clientOrderId string
+}
+
+// ClientOrderId set clientOrderId
+func (s *GetMasterOrderDetailByClientOrderIdService) ClientOrderId(clientOrderId string) *GetMasterOrderDetailByClientOrderIdService {
+	s.clientOrderId = clientOrderId
+	return s
+}
+
+// Do send request
+func (s *GetMasterOrderDetailByClientOrderIdService) Do(ctx context.Context, opts ...RequestOption) (res *GetMasterOrderDetailReply, err error) {
+	r := &request{
+		method:   http.MethodGet,
+		endpoint: fmt.Sprintf("/user/trading/master-orders/by-client-order-id/%s", s.clientOrderId),
+		secType:  secTypeSigned,
+	}
+	data, err := s.c.callAPI(ctx, r, opts...)
+	if err != nil {
+		return nil, err
+	}
+	res = new(GetMasterOrderDetailReply)
+	err = json.Unmarshal(data, res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 // MasterOrderInfo master order info
 type MasterOrderInfo struct {
 	MasterOrderId            string  `json:"masterOrderId"`
@@ -279,6 +310,7 @@ type MasterOrderInfo struct {
 	TailOrderProtection      bool    `json:"tailOrderProtection"`
 	TradingAccount           string  `json:"tradingAccount"`
 	EnableMake               bool    `json:"enableMake"`
+	ClientOrderId            string  `json:"clientOrderId"`
 }
 
 // GetOrderFillsService get order fills
@@ -447,6 +479,7 @@ type CreateMasterOrderService struct {
 	isTargetPosition         *bool
 	isMargin                 *bool
 	enableMake               *bool
+	clientOrderId            *string
 }
 
 // Algorithm set algorithm
@@ -624,6 +657,12 @@ func (s *CreateMasterOrderService) EnableMake(enableMake bool) *CreateMasterOrde
 	return s
 }
 
+// ClientOrderId set clientOrderId
+func (s *CreateMasterOrderService) ClientOrderId(clientOrderId string) *CreateMasterOrderService {
+	s.clientOrderId = &clientOrderId
+	return s
+}
+
 // Do send request
 func (s *CreateMasterOrderService) Do(ctx context.Context, opts ...RequestOption) (res *CreateMasterOrderReply, err error) {
 	// Deribit special rules:
@@ -725,6 +764,9 @@ func (s *CreateMasterOrderService) Do(ctx context.Context, opts ...RequestOption
 	}
 	if s.isMargin != nil {
 		m["isMargin"] = *s.isMargin
+	}
+	if s.clientOrderId != nil {
+		m["clientOrderId"] = *s.clientOrderId
 	}
 	r.setParams(m)
 	data, err := s.c.callAPI(ctx, r, opts...)

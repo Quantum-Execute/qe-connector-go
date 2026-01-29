@@ -348,6 +348,7 @@ for _, api := range result.Items {
 | isMargin | bool    | 否 | 是否使用现货杠杆。- 默认为false - 仅现货可使用该字段                                                                                                                                                            |
 | notes | string  | 否 | 订单备注                                                                                                                                                                                       |
 | enableMake | bool  | 否 | 是否允许挂单，如果关闭则全部吃单 - 默认：true                                                                                                                                                                          |
+| clientOrderId | string  | 否 | 用户自定义的订单ID，用于后续通过client_order_id查询母单详情（可选）                                                                                                                                                                          |
 
 *注：totalQuantity 和 orderNotional 必须传其中一个，但当 isTargetPosition 为 true 时，totalQuantity 必填代表目标仓位数量且 orderNotional 不可填  
 *注：当使用 Deribit 账户下单 BTCUSD 或 ETHUSD 合约时，只能使用 totalQuantity 作为数量输入字段，且数量单位为 USD；orderNotional 当前不可用。  
@@ -528,6 +529,7 @@ if result.Success {
 | ├─ tailOrderProtection | bool    | 尾单保护开关                                                                                                                                                 |
 | ├─ enableMake          | bool    | 是否允许挂单                                                                                                                                                 |
 | ├─ makerRate           | float64 | 被动成交率                                                                                                                                                  |
+| ├─ clientOrderId       | string  | 用户自定义的订单ID                                                                                                                                              |
 | total                  | int32   | 总数                                                                                                                                                     |
 | page                   | int32   | 当前页码                                                                                                                                                   |
 | pageSize               | int32   | 每页数量                                                                                                                                                   |
@@ -614,6 +616,32 @@ for _, order := range orders.Items {
 ```go
 detail, err := client.NewGetMasterOrderDetailService().
     MasterOrderId("your-master-order-id").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+log.Printf("母单详情: %+v", detail.MasterOrder)
+```
+
+#### 通过client_order_id获取母单详情
+
+通过用户指定的client_order_id获取母单的详细信息。
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| clientOrderId | string | 是 | 用户自定义的订单ID |
+
+**响应字段：**
+
+成功时返回 `masterOrder` 字段（结构与 `MasterOrderInfo` 一致）。
+
+**示例代码：**
+
+```go
+detail, err := client.NewGetMasterOrderDetailByClientOrderIdService().
+    ClientOrderId("your-client-order-id").
     Do(context.Background())
 if err != nil {
     log.Fatal(err)
