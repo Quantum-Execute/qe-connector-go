@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"strings"
 
@@ -674,6 +675,24 @@ func (s *CreateMasterOrderService) Do(ctx context.Context, opts ...RequestOption
 		}
 		if s.totalQuantity == nil {
 			return nil, errors.New("totalQuantity is required when exchange is Deribit and symbol is BTCUSD or ETHUSD (unit: USD)")
+		}
+	}
+
+	// Binance coin-margined perp special rules:
+	// - When trading Binance PERP with marginType=C, only totalQuantity is allowed.
+	// - totalQuantity unit is contracts and must be an integer.
+	if s.exchange == trading_enums.ExchangeBinance &&
+		s.marketType == trading_enums.MarketTypePerp &&
+		s.marginType != nil &&
+		*s.marginType == trading_enums.MarginTypeC {
+		if s.orderNotional != nil {
+			return nil, errors.New("orderNotional is not allowed when exchange is Binance and marginType is C for PERP orders; use totalQuantity (unit: contracts) instead")
+		}
+		if s.totalQuantity == nil {
+			return nil, errors.New("totalQuantity is required when exchange is Binance and marginType is C for PERP orders (unit: contracts)")
+		}
+		if math.Trunc(*s.totalQuantity) != *s.totalQuantity {
+			return nil, errors.New("totalQuantity must be an integer when exchange is Binance and marginType is C for PERP orders (unit: contracts)")
 		}
 	}
 

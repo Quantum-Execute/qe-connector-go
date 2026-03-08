@@ -62,8 +62,9 @@ const (
 
 // 币对品种枚举（与市场类型对应）
 const (
-	CategorySpot Category = "spot" // 现货品种
-	CategoryPerp Category = "perp" // 合约品种
+	CategorySpot   Category = "spot"    // 现货品种
+	CategoryPerp   Category = "perp"    // 合约品种
+	CategoryPerpCm Category = "perp_cm" // 币本位合约品种（仅币安可用）
 )
 
 // 币对品种枚举（与市场类型对应）

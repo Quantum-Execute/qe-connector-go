@@ -128,7 +128,7 @@ log.Printf("服务器时间: %s", time.Unix(timestamp/1000, 0).Format("2006-01-0
 | pageSize | int32 | 否 | 每页数量 |
 | exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit |
 | marketType | string | 否 | 市场类型筛选，可选值：SPOT（现货）、FUTURES（合约） |
-| isCoin | bool | 否 | 是否为币种筛选 |
+| isCoin | bool | 否 | 是否查询币本位合约可用交易对。传 `true` 时返回币本位合约可用交易对，仅 Binance 可用 |
 
 **响应字段：**
 
@@ -186,6 +186,13 @@ pairs, err := client.NewTradingPairsService().
 // 获取合约交易对
 pairs, err := client.NewTradingPairsService().
     MarketType(trading_enums.TradingPairFutures).
+    Page(1).
+    PageSize(100).
+    Do(context.Background())
+
+// 获取币本位合约可用交易对（仅 Binance）
+pairs, err := client.NewTradingPairsService().
+    IsCoin(true).
     Page(1).
     PageSize(100).
     Do(context.Background())
@@ -318,8 +325,8 @@ for _, api := range result.Items {
 | side | string  | 是 | 1.如果isTargetPosition=False：side代表交易方向，可选值：buy（买入）、sell（卖出）；合约交易时可与reduceOnly组合，reduceOnly=True时：buy代表买入平空，sell代表卖出平多。2.如果isTargetPosition=True：side代表仓位方向，可选值：buy（多头）、sell（空头）。【仅合约交易时需传入】 |
 | apiKeyId | string  | 是 | 指定使用的 API Key ID，这将决定您本次下单使用哪个交易所账户执行                                                                                                                                                      |
 | **数量参数（二选一）** |
-| totalQuantity | float64 | 否* | 要交易的总数量，与 orderNotional 二选一，输入范围：>0                                                                                                                                                        |
-| orderNotional | float64 | 否* | 按价值下单时的金额，以计价币种为单位（如ETHUSDT为USDT数量），与 totalQuantity 二选一，输入范围：>0                                                                                                                            |
+| totalQuantity | float64 | 否* | 要交易的总数量，与 orderNotional 二选一，输入范围：>0。Deribit 下单 BTCUSD/ETHUSD 时该字段单位为 USD；Binance 下单 `perp_cm` 时该字段单位为张，且必须为整数                                                                                                       |
+| orderNotional | float64 | 否* | 按价值下单时的金额，以计价币种为单位（如ETHUSDT为USDT数量），与 totalQuantity 二选一，输入范围：>0。Deribit 下单 BTCUSD/ETHUSD 与 Binance 下单 `perp_cm` 时当前字段不可用                                                                                           |
 | **下单模式参数** |
 | isTargetPosition | bool    | 否 | 是否为目标仓位下单，默认为 false                                                                                                                                                                        |
 | **时间参数** |
@@ -344,7 +351,7 @@ for _, api := range result.Items {
 | tailOrderProtection | bool    | 否 | 订单余量小于交易所最小发单量时，是否必须taker扫完，如果false，则订单余量小于交易所最小发单量时，订单结束执行；如果true，则订单余量随最近一笔下单全额执行（可能会提高Taker率），默认：true                                                                                   |
 | **其他参数** |
 | reduceOnly | bool    | 否 | 合约交易时是否仅减仓，默认值：false                                                                                                                                                                       |
-| marginType | string  | 否* | **永续合约必传参数** - 合约交易保证金类型，可选值：U（U本位），默认：U（暂时只支持U本位永续合约）。当marketType为PERP（永续合约）时必传                                                                                                           |
+| marginType | string  | 否* | **永续合约必传参数** - 合约交易保证金类型，可选值：U（U本位）、C（币本位）。当 marketType 为 PERP（永续合约）时必传；其中 `C` 对应 Binance 币本位合约                                                                                                      |
 | isMargin | bool    | 否 | 是否使用现货杠杆。- 默认为false - 仅现货可使用该字段                                                                                                                                                            |
 | notes | string  | 否 | 订单备注                                                                                                                                                                                       |
 | enableMake | bool  | 否 | 是否允许挂单，如果关闭则全部吃单 - 默认：true                                                                                                                                                                          |
@@ -352,6 +359,7 @@ for _, api := range result.Items {
 
 *注：totalQuantity 和 orderNotional 必须传其中一个，但当 isTargetPosition 为 true 时，totalQuantity 必填代表目标仓位数量且 orderNotional 不可填  
 *注：当使用 Deribit 账户下单 BTCUSD 或 ETHUSD 合约时，只能使用 totalQuantity 作为数量输入字段，且数量单位为 USD；orderNotional 当前不可用。  
+*注：当使用 Binance 账户下单 `perp_cm`（币本位合约）时，只能使用 totalQuantity 作为数量输入字段，数量单位为张，且输入值必须为整数；orderNotional 当前不可用。  
 *注：使用BoostVWAP、BoostTWAP时，代表使用高频alpha发单。仅Binance交易所可用，不适用于其他交易所。现货支持的交易对：BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,LTCUSDT,AVAXUSDT,XLMUSDT,XRPUSDT,DOGEUSDT,CRVUSDT。永续合约支持的交易对：BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,LTCUSDT,AVAXUSDT,XLMUSDT,XRPUSDT,DOGEUSDT,ADAUSDT,BCHUSDT,FILUSDT,1000SATSUSDT,CRVUSDT。
 
 **响应字段：**
@@ -504,7 +512,7 @@ if result.Success {
 | ├─ createdAt           | string  | 创建时间                                                                                                                                                   |
 | ├─ updatedAt           | string  | 更新时间                                                                                                                                                   |
 | ├─ notes               | string  | 备注                                                                                                                                                     |
-| ├─ marginType          | string  | 保证金类型（U:U本位）                                                                                                                                           |
+| ├─ marginType          | string  | 保证金类型（U:U本位，C:币本位）                                                                                                                                  |
 | ├─ reduceOnly          | bool    | 是否仅减仓                                                                                                                                                  |
 | ├─ strategyType        | string  | 策略类型                                                                                                                                                   |
 | ├─ orderNotional       | string  | 订单金额（按成交额提交的下单数量）                                                                                                                                      |
@@ -519,7 +527,7 @@ if result.Success {
 | ├─ lowTolerance        | string  | 下容忍度                                                                                                                                                   |
 | ├─ strictUpBound       | bool    | 严格上界                                                                                                                                                   |
 | ├─ ticktimeMs          | string  | 发单时间戳（epoch 毫秒）                                                                                                                                        |   
-| ├─ category            | string  | 交易品种（spot 或 perp）                                                                                                                                      |   
+| ├─ category            | string  | 交易品种（spot、perp 或 perp_cm，其中 perp_cm 表示 Binance 币本位合约）                                                                                     |   
 | ├─ filledAmount        | float64 | 成交币数                                                                                                                                                   |
 | ├─ totalValue          | float64 | 成交总值                                                                                                                                                   |
 | ├─ base                | string  | 基础币种                                                                                                                                                   |
@@ -774,7 +782,7 @@ log.Printf("总成交额: $%.2f, 总手续费: $%.2f", totalValue, totalFee)
 | 参数名 | 类型 | 是否必传 | 描述 |
 |--------|------|----------|------|
 | symbol | string | 否 | 交易对筛选 |
-| category | string | 否 | 交易品种（spot 或 perp） |
+| category | string | 否 | 交易品种（spot、perp 或 perp_cm） |
 | apikey | string | 否 | ApiKey id 列表，逗号分隔 |
 | startTime | int64 | 否 | 开始时间戳（毫秒） |
 | endTime | int64 | 否 | 结束时间戳（毫秒） |
@@ -791,7 +799,7 @@ log.Printf("总成交额: $%.2f, 总手续费: $%.2f", totalValue, totalFee)
 | FinishedTime | string | 实际结束时间 |
 | Strategy | string | 算法类型 |
 | Symbol | string | 交易对 |
-| Category | string | 交易类型 |
+| Category | string | 交易类型（spot、perp 或 perp_cm） |
 | Side | string | 交易方向 |
 | Date | string | 母单创建日期 |
 | MasterOrderQty | float64 | 母单下单币数量（如0.001 BTC） |
