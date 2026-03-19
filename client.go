@@ -262,3 +262,98 @@ func (c *Client) NewTimestampService() *TimestampService {
 func (c *Client) NewWebSocketService(host ...string) *WebSocketService {
 	return NewWebSocketService(c, host...)
 }
+
+// NewGetAccountBalanceService create service for getting Binance spot account balance
+func (c *Client) NewGetAccountBalanceService() *GetAccountBalanceService {
+	return &GetAccountBalanceService{c: c}
+}
+
+// NewGetMarginBalanceService create service for getting Binance futures account balance
+func (c *Client) NewGetMarginBalanceService() *GetMarginBalanceService {
+	return &GetMarginBalanceService{c: c}
+}
+
+// NewGetPv1BalanceService create service for getting Binance PAPI PV1 balance
+func (c *Client) NewGetPv1BalanceService() *GetPv1BalanceService {
+	return &GetPv1BalanceService{c: c}
+}
+
+// NewGetOkxAccountBalanceService create service for getting OKX account balance
+func (c *Client) NewGetOkxAccountBalanceService() *GetOkxAccountBalanceService {
+	return &GetOkxAccountBalanceService{c: c}
+}
+
+// NewGetFapiPositionSideDialService create service for getting Binance FAPI position side dual status
+func (c *Client) NewGetFapiPositionSideDialService() *GetFapiPositionSideDialService {
+	return &GetFapiPositionSideDialService{c: c}
+}
+
+// NewGetPapiUmPositionSideDualService create service for getting Binance PAPI UM position side dual status
+func (c *Client) NewGetPapiUmPositionSideDualService() *GetPapiUmPositionSideDualService {
+	return &GetPapiUmPositionSideDualService{c: c}
+}
+
+// NewGetOkxAccountPositionsService create service for getting OKX account positions
+func (c *Client) NewGetOkxAccountPositionsService() *GetOkxAccountPositionsService {
+	return &GetOkxAccountPositionsService{c: c}
+}
+
+// NewGetOkxAccountMaxSizeService create service for getting OKX account max order size
+func (c *Client) NewGetOkxAccountMaxSizeService() *GetOkxAccountMaxSizeService {
+	return &GetOkxAccountMaxSizeService{c: c}
+}
+
+// NewGetLtpPositionService create service for getting LTP account positions
+func (c *Client) NewGetLtpPositionService() *GetLtpPositionService {
+	return &GetLtpPositionService{c: c}
+}
+
+// NewGetDeribitPositionService create service for getting Deribit account positions
+func (c *Client) NewGetDeribitPositionService() *GetDeribitPositionService {
+	return &GetDeribitPositionService{c: c}
+}
+
+// NewGetUmAccountService create service for getting Binance PAPI UM account
+func (c *Client) NewGetUmAccountService() *GetUmAccountService {
+	return &GetUmAccountService{c: c}
+}
+
+// NewGetCmAccountService create service for getting Binance PAPI CM account
+func (c *Client) NewGetCmAccountService() *GetCmAccountService {
+	return &GetCmAccountService{c: c}
+}
+
+// NewGetPv1AccountService create service for getting Binance PAPI PV1 account
+func (c *Client) NewGetPv1AccountService() *GetPv1AccountService {
+	return &GetPv1AccountService{c: c}
+}
+
+// NewGetDapiAccountService create service for getting Binance DAPI account
+func (c *Client) NewGetDapiAccountService() *GetDapiAccountService {
+	return &GetDapiAccountService{c: c}
+}
+
+// NewGetFapiAccountService create service for getting Binance FAPI account
+func (c *Client) NewGetFapiAccountService() *GetFapiAccountService {
+	return &GetFapiAccountService{c: c}
+}
+
+// NewGetCrossMarginAccountDetailService create service for getting Binance cross margin account detail
+func (c *Client) NewGetCrossMarginAccountDetailService() *GetCrossMarginAccountDetailService {
+	return &GetCrossMarginAccountDetailService{c: c}
+}
+
+// NewGetLtpAccountService create service for getting LTP account info
+func (c *Client) NewGetLtpAccountService() *GetLtpAccountService {
+	return &GetLtpAccountService{c: c}
+}
+
+// NewGetLtpPortfolioAssetService create service for getting LTP portfolio assets
+func (c *Client) NewGetLtpPortfolioAssetService() *GetLtpPortfolioAssetService {
+	return &GetLtpPortfolioAssetService{c: c}
+}
+
+// NewGetDeribitAccountService create service for getting Deribit account info
+func (c *Client) NewGetDeribitAccountService() *GetDeribitAccountService {
+	return &GetDeribitAccountService{c: c}
+}

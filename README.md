@@ -306,6 +306,897 @@ for _, api := range result.Items {
 }
 ```
 
+### 交易所余额/持仓/账户查询
+
+所有接口均需 HMAC-SHA256 签名鉴权，公共必传参数为 `bindingId`（交易所 API Key 绑定 UUID，通过"查询交易所 API 列表"接口获取）。
+
+**限频规则：** 同一 `bindingId` 10 分钟内最多 60 次请求。
+
+---
+
+#### 获取 Binance 现货账户余额
+
+**GET** `/user/exchange-apis/account-balance`
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| bindingId | string | 是 | 交易所 API Key 绑定 UUID |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| balances | array | 现货余额列表 |
+| ├─ asset | string | 资产符号（如 BTC、USDT） |
+| ├─ free | string | 可用余额 |
+| ├─ locked | string | 冻结余额 |
+| exchange | string | 交易所名称 |
+| accountType | string | 账户类型（SPOT） |
+| updateTime | string | 余额更新时间 |
+
+**示例代码：**
+
+```go
+result, err := client.NewGetAccountBalanceService().
+    BindingId("your-binding-id").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+for _, b := range result.Balances {
+    log.Printf("资产: %s, 可用: %s, 冻结: %s", b.Asset, b.Free, b.Locked)
+}
+```
+
+---
+
+#### 获取 Binance 合约账户余额
+
+**GET** `/user/exchange-apis/margin-balance`
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| bindingId | string | 是 | 交易所 API Key 绑定 UUID |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| balances | array | 合约余额列表 |
+| ├─ asset | string | 资产符号 |
+| ├─ walletBalance | string | 钱包余额 |
+| ├─ availableBalance | string | 可用余额 |
+| ├─ crossWalletBalance | string | 全仓钱包余额 |
+| ├─ crossUnPnl | string | 全仓未实现盈亏 |
+| ├─ marginBalance | string | 保证金余额 |
+| ├─ maxWithdrawAmount | string | 最大可转出余额 |
+| exchange | string | 交易所名称 |
+| accountType | string | 账户类型（FUTURES） |
+| updateTime | string | 余额更新时间 |
+
+**示例代码：**
+
+```go
+result, err := client.NewGetMarginBalanceService().
+    BindingId("your-binding-id").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+for _, b := range result.Balances {
+    log.Printf("资产: %s, 可用: %s", b.Asset, b.AvailableBalance)
+}
+```
+
+---
+
+#### 获取 Binance PAPI PV1 余额
+
+**GET** `/user/exchange-apis/pv1-balance`
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| bindingId | string | 是 | 交易所 API Key 绑定 UUID |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| exchange | string | 交易所名称 |
+| accountType | string | 账户类型 |
+| balances | array | 余额列表 |
+| ├─ asset | string | 资产符号 |
+| ├─ totalWalletBalance | string | 总钱包余额 |
+| ├─ crossMarginBorrowed | string | 全仓杠杆借入 |
+| ├─ crossMarginFree | string | 全仓杠杆可用 |
+| ├─ crossMarginInterest | string | 全仓杠杆利息 |
+| ├─ crossMarginLocked | string | 全仓杠杆锁定 |
+| ├─ umWalletBalance | string | U本位合约钱包余额 |
+| ├─ umUnrealizedPnl | string | U本位合约未实现盈亏 |
+| ├─ cmWalletBalance | string | 币本位合约钱包余额 |
+| ├─ cmUnrealizedPnl | string | 币本位合约未实现盈亏 |
+| ├─ updateTime | int64 | 更新时间（毫秒时间戳） |
+| ├─ negativeBalance | string | 负余额 |
+
+**示例代码：**
+
+```go
+result, err := client.NewGetPv1BalanceService().
+    BindingId("your-binding-id").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+for _, b := range result.Balances {
+    log.Printf("资产: %s, 总余额: %s", b.Asset, b.TotalWalletBalance)
+}
+```
+
+---
+
+#### 获取 OKX 账户余额
+
+**GET** `/user/exchange-apis/okx-account-balance`
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| bindingId | string | 是 | 交易所 API Key 绑定 UUID |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| data | array | OKX 账户余额信息列表 |
+| ├─ totalEq | string | 总权益 |
+| ├─ availEq | string | 可用权益 |
+| ├─ adjEq | string | 调整后权益 |
+| ├─ imr | string | 初始保证金 |
+| ├─ mmr | string | 维持保证金 |
+| ├─ mgnRatio | string | 保证金率 |
+| ├─ notionalUsd | string | 名义美元价值 |
+| ├─ ordFroz | string | 订单冻结 |
+| ├─ upl | string | 未实现盈亏 |
+| ├─ uTime | string | 更新时间 |
+| ├─ details | array | 各币种余额详情 |
+| │ ├─ ccy | string | 币种 |
+| │ ├─ eq | string | 权益 |
+| │ ├─ eqUsd | string | 权益（USD） |
+| │ ├─ availBal | string | 可用余额 |
+| │ ├─ availEq | string | 可用权益 |
+| │ ├─ cashBal | string | 现金余额 |
+| │ ├─ frozenBal | string | 冻结余额 |
+| │ ├─ upl | string | 未实现盈亏 |
+| │ ├─ liab | string | 负债 |
+| │ ├─ interest | string | 利息 |
+| exchange | string | 交易所名称 |
+
+**示例代码：**
+
+```go
+result, err := client.NewGetOkxAccountBalanceService().
+    BindingId("your-binding-id").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+for _, d := range result.Data {
+    log.Printf("总权益: %s, 可用权益: %s", d.TotalEq, d.AvailEq)
+}
+```
+
+---
+
+#### 获取 Binance FAPI 持仓方向双开状态
+
+**GET** `/user/exchange-apis/fapi-position-side-dial`
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| bindingId | string | 是 | 交易所 API Key 绑定 UUID |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| dualSidePosition | bool | 是否双向持仓（true=双向，false=单向） |
+| exchange | string | 交易所名称 |
+| accountType | string | 账户类型 |
+
+**示例代码：**
+
+```go
+result, err := client.NewGetFapiPositionSideDialService().
+    BindingId("your-binding-id").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+log.Printf("双向持仓: %v", result.DualSidePosition)
+```
+
+---
+
+#### 获取 Binance PAPI UM 持仓方向双开状态
+
+**GET** `/user/exchange-apis/papi-um-position-side-dual`
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| bindingId | string | 是 | 交易所 API Key 绑定 UUID |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| dualSidePosition | bool | 是否双向持仓 |
+| exchange | string | 交易所名称 |
+| accountType | string | 账户类型 |
+
+**示例代码：**
+
+```go
+result, err := client.NewGetPapiUmPositionSideDualService().
+    BindingId("your-binding-id").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+log.Printf("双向持仓: %v", result.DualSidePosition)
+```
+
+---
+
+#### 获取 OKX 持仓信息
+
+**GET** `/user/exchange-apis/okx-account-positions`
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| bindingId | string | 是 | 交易所 API Key 绑定 UUID |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| data | array | 持仓信息列表 |
+| ├─ instId | string | 产品 ID（如 BTC-USDT-SWAP） |
+| ├─ instType | string | 产品类型（SWAP/FUTURES/OPTION） |
+| ├─ pos | string | 持仓数量 |
+| ├─ posSide | string | 持仓方向（long/short/net） |
+| ├─ avgPx | string | 平均开仓价 |
+| ├─ markPx | string | 标记价格 |
+| ├─ liqPx | string | 预估强平价 |
+| ├─ upl | string | 未实现盈亏 |
+| ├─ uplRatio | string | 未实现盈亏率 |
+| ├─ lever | string | 杠杆倍数 |
+| ├─ mgnMode | string | 保证金模式（cross/isolated） |
+| ├─ imr | string | 初始保证金 |
+| ├─ mmr | string | 维持保证金 |
+| ├─ margin | string | 保证金 |
+| ├─ notionalUsd | string | 仓位美元价值 |
+| ├─ adl | string | 自动减仓指标 |
+| ├─ ccy | string | 币种 |
+| ├─ pnl | string | 平仓盈亏 |
+| ├─ realizedPnl | string | 已实现盈亏 |
+| ├─ fee | string | 手续费 |
+| ├─ fundingFee | string | 资金费 |
+| ├─ cTime | string | 创建时间 |
+| ├─ uTime | string | 更新时间 |
+| exchange | string | 交易所名称 |
+
+**示例代码：**
+
+```go
+result, err := client.NewGetOkxAccountPositionsService().
+    BindingId("your-binding-id").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+for _, p := range result.Data {
+    log.Printf("产品: %s, 持仓量: %s, 未实现盈亏: %s", p.InstId, p.Pos, p.Upl)
+}
+```
+
+---
+
+#### 获取 OKX 最大可开仓数量
+
+**GET** `/user/exchange-apis/okx-account-max-size`
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| bindingId | string | 是 | 交易所 API Key 绑定 UUID |
+| instId | string | 是 | 产品 ID（如 BTC-USDT-SWAP） |
+| tdMode | string | 是 | 交易模式：cross（全仓）、isolated（逐仓）、cash（现货） |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| data | array | 可开仓数量信息列表 |
+| ├─ ccy | string | 币种 |
+| ├─ instId | string | 产品 ID |
+| ├─ maxBuy | string | 最大可买数量 |
+| ├─ maxSell | string | 最大可卖数量 |
+| exchange | string | 交易所名称 |
+
+**示例代码：**
+
+```go
+result, err := client.NewGetOkxAccountMaxSizeService().
+    BindingId("your-binding-id").
+    InstId("BTC-USDT-SWAP").
+    TdMode("cross").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+for _, d := range result.Data {
+    log.Printf("最大买入: %s, 最大卖出: %s", d.MaxBuy, d.MaxSell)
+}
+```
+
+---
+
+#### 获取 LTP 持仓信息
+
+**GET** `/user/exchange-apis/ltp-position`
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| bindingId | string | 是 | 交易所 API Key 绑定 UUID |
+| sym | string | 否 | 交易对符号，不填则查询所有持仓 |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| data | array | 持仓信息列表 |
+| ├─ positionId | string | 持仓 ID |
+| ├─ portfolioId | string | 投资组合 ID |
+| ├─ sym | string | 交易对 |
+| ├─ positionSide | string | 持仓方向 |
+| ├─ positionQty | string | 持仓数量 |
+| ├─ positionValue | string | 持仓价值 |
+| ├─ positionMargin | string | 持仓保证金 |
+| ├─ positionMm | string | 持仓维持保证金 |
+| ├─ unrealizedPnl | string | 未实现盈亏 |
+| ├─ unrealizedPnlRate | string | 未实现盈亏率 |
+| ├─ avgPrice | string | 平均开仓价 |
+| ├─ markPrice | string | 标记价格 |
+| ├─ liqPrice | string | 强平价格 |
+| ├─ leverage | string | 杠杆倍数 |
+| ├─ maxLeverage | string | 最大杠杆 |
+| ├─ riskLevel | string | 风险等级 |
+| ├─ fee | string | 手续费 |
+| ├─ fundingFee | string | 资金费 |
+| ├─ tpslOrder | string | 止盈止损订单（JSON 字符串） |
+| ├─ createAt | string | 创建时间 |
+| ├─ updateAt | string | 更新时间 |
+| exchange | string | 交易所名称 |
+
+**示例代码：**
+
+```go
+// 查询所有持仓
+result, err := client.NewGetLtpPositionService().
+    BindingId("your-binding-id").
+    Do(context.Background())
+
+// 查询指定交易对持仓
+result, err = client.NewGetLtpPositionService().
+    BindingId("your-binding-id").
+    Sym("BTCUSDT").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+for _, p := range result.Data {
+    log.Printf("交易对: %s, 持仓量: %s", p.Sym, p.PositionQty)
+}
+```
+
+---
+
+#### 获取 Deribit 持仓信息
+
+**GET** `/user/exchange-apis/deribit-position`
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| bindingId | string | 是 | 交易所 API Key 绑定 UUID |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| data | array | 持仓信息列表 |
+| ├─ instrumentName | string | 合约名称 |
+| ├─ direction | string | 持仓方向（buy/sell） |
+| ├─ size | float64 | 持仓数量 |
+| ├─ averagePrice | float64 | 平均开仓价 |
+| ├─ markPrice | float64 | 标记价格 |
+| ├─ indexPrice | float64 | 指数价格 |
+| ├─ floatingProfitLoss | float64 | 浮动盈亏 |
+| ├─ totalProfitLoss | float64 | 总盈亏 |
+| ├─ initialMargin | float64 | 初始保证金 |
+| ├─ maintenanceMargin | float64 | 维持保证金 |
+| ├─ estimatedLiquidationPrice | float64 | 预估强平价格 |
+| ├─ leverage | int32 | 杠杆倍数 |
+| ├─ kind | string | 合约类型（future/option） |
+| ├─ sizeCurrency | float64 | 币本位持仓数量 |
+| ├─ delta | float64 | Delta |
+| ├─ realizedFunding | float64 | 已实现资金费 |
+| ├─ realizedProfitLoss | float64 | 已实现盈亏 |
+| ├─ settlementPrice | float64 | 结算价格 |
+| exchange | string | 交易所名称 |
+
+**示例代码：**
+
+```go
+result, err := client.NewGetDeribitPositionService().
+    BindingId("your-binding-id").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+for _, p := range result.Data {
+    log.Printf("合约: %s, 方向: %s, 数量: %f", p.InstrumentName, p.Direction, p.Size)
+}
+```
+
+---
+
+#### 获取 Binance PAPI UM 账户
+
+**GET** `/user/exchange-apis/um-account`
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| bindingId | string | 是 | 交易所 API Key 绑定 UUID |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| tradeGroupId | int32 | 交易组 ID |
+| assets | array | 资产列表 |
+| ├─ asset | string | 资产符号 |
+| ├─ crossWalletBalance | string | 全仓钱包余额 |
+| ├─ crossUnPnl | string | 全仓未实现盈亏 |
+| ├─ maintMargin | string | 维持保证金 |
+| ├─ initialMargin | string | 初始保证金 |
+| ├─ positionInitialMargin | string | 持仓初始保证金 |
+| ├─ openOrderInitialMargin | string | 挂单初始保证金 |
+| ├─ updateTime | int64 | 更新时间（毫秒时间戳） |
+| positions | array | 持仓列表 |
+| ├─ symbol | string | 交易对 |
+| ├─ positionAmt | string | 持仓数量 |
+| ├─ positionSide | string | 持仓方向 |
+| ├─ entryPrice | string | 开仓价 |
+| ├─ breakEvenPrice | string | 盈亏平衡价 |
+| ├─ unrealizedProfit | string | 未实现盈亏 |
+| ├─ leverage | string | 杠杆 |
+| ├─ initialMargin | string | 初始保证金 |
+| ├─ maintMargin | string | 维持保证金 |
+| exchange | string | 交易所名称 |
+| accountType | string | 账户类型 |
+| updateTime | string | 更新时间 |
+
+**示例代码：**
+
+```go
+result, err := client.NewGetUmAccountService().
+    BindingId("your-binding-id").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+log.Printf("交易组ID: %d, 持仓数: %d", result.TradeGroupId, len(result.Positions))
+```
+
+---
+
+#### 获取 Binance PAPI CM 账户
+
+**GET** `/user/exchange-apis/cm-account`
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| bindingId | string | 是 | 交易所 API Key 绑定 UUID |
+
+**响应字段：**
+
+与 PAPI UM 账户一致（不含 `tradeGroupId` 字段）。
+
+**示例代码：**
+
+```go
+result, err := client.NewGetCmAccountService().
+    BindingId("your-binding-id").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+log.Printf("资产数: %d, 持仓数: %d", len(result.Assets), len(result.Positions))
+```
+
+---
+
+#### 获取 Binance PAPI PV1 账户
+
+**GET** `/user/exchange-apis/pv1-account`
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| bindingId | string | 是 | 交易所 API Key 绑定 UUID |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| exchange | string | 交易所名称 |
+| accountType | string | 账户类型 |
+| uniMmr | string | 统一维持保证金率 |
+| accountEquity | string | 账户权益 |
+| actualEquity | string | 实际权益 |
+| accountInitialMargin | string | 账户初始保证金 |
+| accountMaintMargin | string | 账户维持保证金 |
+| accountStatus | string | 账户状态 |
+| virtualMaxWithdrawAmount | string | 虚拟最大可提取金额 |
+| totalAvailableBalance | string | 总可用余额 |
+| totalMarginOpenLoss | string | 总保证金未平仓亏损 |
+| updateTime | string | 更新时间 |
+
+**示例代码：**
+
+```go
+result, err := client.NewGetPv1AccountService().
+    BindingId("your-binding-id").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+log.Printf("账户权益: %s, 统一维持保证金率: %s", result.AccountEquity, result.UniMmr)
+```
+
+---
+
+#### 获取 Binance DAPI 账户
+
+**GET** `/user/exchange-apis/dapi-account`
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| bindingId | string | 是 | 交易所 API Key 绑定 UUID |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| assets | array | 资产列表 |
+| ├─ asset | string | 资产符号 |
+| ├─ walletBalance | string | 钱包余额 |
+| ├─ unrealizedProfit | string | 未实现盈亏 |
+| ├─ marginBalance | string | 保证金余额 |
+| ├─ availableBalance | string | 可用余额 |
+| ├─ maxWithdrawAmount | string | 最大可提取金额 |
+| ├─ crossWalletBalance | string | 全仓钱包余额 |
+| ├─ crossUnPnl | string | 全仓未实现盈亏 |
+| positions | array | 持仓列表 |
+| ├─ symbol | string | 交易对 |
+| ├─ positionAmt | string | 持仓数量 |
+| ├─ positionSide | string | 持仓方向 |
+| ├─ entryPrice | string | 开仓价 |
+| ├─ breakEvenPrice | string | 盈亏平衡价 |
+| ├─ unrealizedProfit | string | 未实现盈亏 |
+| ├─ leverage | string | 杠杆 |
+| ├─ isolated | bool | 是否逐仓 |
+| canDeposit | bool | 是否可充值 |
+| canTrade | bool | 是否可交易 |
+| canWithdraw | bool | 是否可提现 |
+| feeTier | int32 | 手续费等级 |
+| exchange | string | 交易所名称 |
+| accountType | string | 账户类型 |
+| updateTime | string | 更新时间 |
+
+**示例代码：**
+
+```go
+result, err := client.NewGetDapiAccountService().
+    BindingId("your-binding-id").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+log.Printf("资产数: %d, 持仓数: %d", len(result.Assets), len(result.Positions))
+```
+
+---
+
+#### 获取 Binance FAPI 账户
+
+**GET** `/user/exchange-apis/fapi-account`
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| bindingId | string | 是 | 交易所 API Key 绑定 UUID |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| totalWalletBalance | string | 总钱包余额 |
+| totalUnrealizedProfit | string | 总未实现盈亏 |
+| totalMarginBalance | string | 总保证金余额 |
+| availableBalance | string | 可用余额 |
+| maxWithdrawAmount | string | 最大可提取金额 |
+| totalInitialMargin | string | 总初始保证金 |
+| totalMaintMargin | string | 总维持保证金 |
+| totalCrossWalletBalance | string | 总全仓钱包余额 |
+| totalCrossUnPnl | string | 总全仓未实现盈亏 |
+| assets | array | 资产列表 |
+| ├─ asset | string | 资产符号 |
+| ├─ walletBalance | string | 钱包余额 |
+| ├─ unrealizedProfit | string | 未实现盈亏 |
+| ├─ marginBalance | string | 保证金余额 |
+| ├─ availableBalance | string | 可用余额 |
+| ├─ maxWithdrawAmount | string | 最大可提取金额 |
+| ├─ marginAvailable | bool | 是否可作保证金 |
+| positions | array | 持仓列表 |
+| ├─ symbol | string | 交易对 |
+| ├─ positionAmt | string | 持仓数量 |
+| ├─ positionSide | string | 持仓方向 |
+| ├─ entryPrice | string | 开仓价 |
+| ├─ breakEvenPrice | string | 盈亏平衡价 |
+| ├─ unrealizedProfit | string | 未实现盈亏 |
+| ├─ leverage | string | 杠杆 |
+| ├─ isolated | bool | 是否逐仓 |
+| ├─ notional | string | 名义价值 |
+| ├─ isolatedWallet | string | 逐仓钱包余额 |
+| exchange | string | 交易所名称 |
+| accountType | string | 账户类型 |
+
+**示例代码：**
+
+```go
+result, err := client.NewGetFapiAccountService().
+    BindingId("your-binding-id").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+log.Printf("总钱包余额: %s, 可用余额: %s", result.TotalWalletBalance, result.AvailableBalance)
+```
+
+---
+
+#### 获取 Binance 全仓杠杆账户详情
+
+**GET** `/user/exchange-apis/cross-margin-account-detail`
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| bindingId | string | 是 | 交易所 API Key 绑定 UUID |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| exchange | string | 交易所名称 |
+| accountType | string | 账户类型 |
+| borrowEnabled | bool | 是否允许借入 |
+| tradeEnabled | bool | 是否允许交易 |
+| transferEnabled | bool | 是否允许转账 |
+| marginLevel | string | 保证金水平 |
+| totalAssetOfBtc | string | 总资产（BTC 计） |
+| totalLiabilityOfBtc | string | 总负债（BTC 计） |
+| totalNetAssetOfBtc | string | 总净资产（BTC 计） |
+| userAssets | array | 各币种资产详情 |
+| ├─ asset | string | 资产符号 |
+| ├─ free | string | 可用余额 |
+| ├─ locked | string | 锁定余额 |
+| ├─ borrowed | string | 借入金额 |
+| ├─ interest | string | 利息 |
+| ├─ netAsset | string | 净资产 |
+
+**示例代码：**
+
+```go
+result, err := client.NewGetCrossMarginAccountDetailService().
+    BindingId("your-binding-id").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+log.Printf("保证金水平: %s, 总净资产(BTC): %s", result.MarginLevel, result.TotalNetAssetOfBtc)
+```
+
+---
+
+#### 获取 LTP 账户信息
+
+**GET** `/user/exchange-apis/ltp-account`
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| bindingId | string | 是 | 交易所 API Key 绑定 UUID |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| data | array | 账户信息列表 |
+| ├─ portfolioId | string | 投资组合 ID |
+| ├─ exchangeType | string | 交易所类型 |
+| ├─ equity | string | 权益 |
+| ├─ maintainMargin | string | 维持保证金 |
+| ├─ positionValue | string | 持仓价值 |
+| ├─ uniMmr | string | 统一维持保证金率 |
+| ├─ riskRatio | string | 风险率 |
+| ├─ accountStatus | string | 账户状态 |
+| ├─ availableMargin | string | 可用保证金 |
+| ├─ validMargin | string | 有效保证金 |
+| ├─ frozenMargin | string | 冻结保证金 |
+| ├─ upnl | string | 未实现盈亏 |
+| ├─ positionMode | string | 持仓模式 |
+| exchange | string | 交易所名称 |
+
+**示例代码：**
+
+```go
+result, err := client.NewGetLtpAccountService().
+    BindingId("your-binding-id").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+for _, a := range result.Data {
+    log.Printf("组合ID: %s, 权益: %s, 风险率: %s", a.PortfolioId, a.Equity, a.RiskRatio)
+}
+```
+
+---
+
+#### 获取 LTP 投资组合资产
+
+**GET** `/user/exchange-apis/ltp-portfolio-asset`
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| bindingId | string | 是 | 交易所 API Key 绑定 UUID |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| data | array | 资产信息列表 |
+| ├─ portfolioId | string | 投资组合 ID |
+| ├─ coin | string | 币种 |
+| ├─ exchangeType | string | 交易所类型 |
+| ├─ available | string | 可用余额 |
+| ├─ frozen | string | 冻结余额 |
+| ├─ equity | string | 权益 |
+| ├─ balance | string | 余额 |
+| ├─ borrow | string | 借币 |
+| ├─ debt | string | 负债 |
+| ├─ marginValue | string | 保证金价值 |
+| ├─ indexPrice | string | 指数价格 |
+| ├─ maxTransferable | string | 最大可转出金额 |
+| ├─ upnl | string | 未实现盈亏 |
+| ├─ equityValue | string | 权益价值 |
+| ├─ createAt | string | 创建时间 |
+| ├─ updateAt | string | 更新时间 |
+| exchange | string | 交易所名称 |
+
+**示例代码：**
+
+```go
+result, err := client.NewGetLtpPortfolioAssetService().
+    BindingId("your-binding-id").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+for _, a := range result.Data {
+    log.Printf("币种: %s, 可用: %s, 权益: %s", a.Coin, a.Available, a.Equity)
+}
+```
+
+---
+
+#### 获取 Deribit 账户信息
+
+**GET** `/user/exchange-apis/deribit-account`
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| bindingId | string | 是 | 交易所 API Key 绑定 UUID |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| data | array | 账户信息列表（按币种分组） |
+| ├─ currency | string | 币种（如 BTC、ETH） |
+| ├─ equity | float64 | 权益 |
+| ├─ balance | float64 | 余额 |
+| ├─ availableFunds | float64 | 可用资金 |
+| ├─ availableWithdrawalFunds | float64 | 可用提现资金 |
+| ├─ marginBalance | float64 | 保证金余额 |
+| ├─ initialMargin | float64 | 初始保证金 |
+| ├─ maintenanceMargin | float64 | 维持保证金 |
+| ├─ lockedBalance | float64 | 锁定余额 |
+| ├─ totalPl | float64 | 总盈亏 |
+| ├─ sessionUpl | float64 | 会话未实现盈亏 |
+| ├─ sessionRpl | float64 | 会话已实现盈亏 |
+| ├─ futuresPl | float64 | 期货盈亏 |
+| ├─ optionsValue | float64 | 期权价值 |
+| ├─ optionsDelta | float64 | 期权 Delta |
+| ├─ optionsGamma | float64 | 期权 Gamma |
+| ├─ optionsVega | float64 | 期权 Vega |
+| ├─ optionsTheta | float64 | 期权 Theta |
+| ├─ deltaTotal | float64 | 总 Delta |
+| ├─ marginModel | string | 保证金模型 |
+| ├─ portfolioMarginingEnabled | bool | 是否启用投资组合保证金 |
+| ├─ crossCollateralEnabled | bool | 是否启用交叉抵押 |
+| exchange | string | 交易所名称 |
+
+**示例代码：**
+
+```go
+result, err := client.NewGetDeribitAccountService().
+    BindingId("your-binding-id").
+    Do(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+for _, a := range result.Data {
+    log.Printf("币种: %s, 权益: %f, 可用资金: %f", a.Currency, a.Equity, a.AvailableFunds)
+}
+```
+
+---
+
 ### 交易订单管理
 
 #### 创建主订单
