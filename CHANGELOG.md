@@ -2,39 +2,6 @@
 
 本文件记录 `qe-connector-go` 的用户可见变更。
 
-## 1.1.25 - 2026-03-19
-
-### 新增
-- **交易所余额/持仓/账户查询接口**：新增 19 个 `GET /user/exchange-apis/` 子接口，覆盖 Binance、OKX、LTP、Deribit 四大交易所
-
-  **余额类（4个）：**
-  - `NewGetAccountBalanceService()` — Binance 现货账户余额（`/account-balance`）
-  - `NewGetMarginBalanceService()` — Binance 合约账户余额（`/margin-balance`）
-  - `NewGetPv1BalanceService()` — Binance PAPI PV1 余额（`/pv1-balance`）
-  - `NewGetOkxAccountBalanceService()` — OKX 账户余额（`/okx-account-balance`）
-
-  **持仓类（6个）：**
-  - `NewGetFapiPositionSideDialService()` — Binance FAPI 持仓方向双开状态（`/fapi-position-side-dial`）
-  - `NewGetPapiUmPositionSideDualService()` — Binance PAPI UM 持仓方向双开状态（`/papi-um-position-side-dual`）
-  - `NewGetOkxAccountPositionsService()` — OKX 持仓信息（`/okx-account-positions`）
-  - `NewGetOkxAccountMaxSizeService()` — OKX 最大可开仓数量（`/okx-account-max-size`），额外参数：`instId`、`tdMode`
-  - `NewGetLtpPositionService()` — LTP 持仓信息（`/ltp-position`），可选参数：`sym`
-  - `NewGetDeribitPositionService()` — Deribit 持仓信息（`/deribit-position`）
-
-  **账户类（9个）：**
-  - `NewGetUmAccountService()` — Binance PAPI UM 账户（`/um-account`）
-  - `NewGetCmAccountService()` — Binance PAPI CM 账户（`/cm-account`）
-  - `NewGetPv1AccountService()` — Binance PAPI PV1 账户（`/pv1-account`）
-  - `NewGetDapiAccountService()` — Binance DAPI 账户（`/dapi-account`）
-  - `NewGetFapiAccountService()` — Binance FAPI 账户（`/fapi-account`）
-  - `NewGetCrossMarginAccountDetailService()` — Binance 全仓杠杆账户详情（`/cross-margin-account-detail`）
-  - `NewGetLtpAccountService()` — LTP 账户信息（`/ltp-account`）
-  - `NewGetLtpPortfolioAssetService()` — LTP 投资组合资产（`/ltp-portfolio-asset`）
-  - `NewGetDeribitAccountService()` — Deribit 账户信息（`/deribit-account`）
-
-### 文档
-- README：新增"交易所余额/持仓/账户查询"章节，含全部 19 个接口的参数说明、响应字段与示例代码
-
 ## 1.1.24 - 2026-03-08
 
 ### 新增
