@@ -242,6 +242,15 @@ func (c *Client) NewCreateMasterOrderService() *CreateMasterOrderService {
 func (c *Client) NewCancelMasterOrderService() *CancelMasterOrderService {
 	return &CancelMasterOrderService{c: c}
 }
+func (c *Client) NewPauseMasterOrderService() *PauseMasterOrderService {
+	return &PauseMasterOrderService{c: c}
+}
+func (c *Client) NewResumeMasterOrderService() *ResumeMasterOrderService {
+	return &ResumeMasterOrderService{c: c}
+}
+func (c *Client) NewUpdateMasterOrderParamsService() *UpdateMasterOrderParamsService {
+	return &UpdateMasterOrderParamsService{c: c}
+}
 func (c *Client) NewCreateListenKeyService() *CreateListenKeyService {
 	return &CreateListenKeyService{c: c}
 }

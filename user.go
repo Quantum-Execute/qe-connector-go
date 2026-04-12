@@ -448,6 +448,10 @@ type OrderFillInfo struct {
 	Base             string  `json:"base"`
 	Quote            string  `json:"quote"`
 	Type             string  `json:"type"`
+	OrderId          string  `json:"orderId"`
+	Quantity         float64 `json:"quantity"`
+	CreatedAt        string  `json:"createdAt"`
+	UpdatedAt        string  `json:"updatedAt"`
 }
 
 // CreateMasterOrderService create master order
@@ -481,6 +485,7 @@ type CreateMasterOrderService struct {
 	isMargin                 *bool
 	enableMake               *bool
 	clientOrderId            *string
+	worstPrice               *float64
 }
 
 // Algorithm set algorithm
@@ -569,8 +574,19 @@ func (s *CreateMasterOrderService) EndTime(endTime string) *CreateMasterOrderSer
 }
 
 // LimitPrice set limitPrice
+//
+// Deprecated: Use WorstPrice instead. LimitPrice is kept for backward compatibility.
 func (s *CreateMasterOrderService) LimitPrice(limitPrice float64) *CreateMasterOrderService {
 	s.limitPrice = &limitPrice
+	return s
+}
+
+// WorstPrice set worstPrice (worst acceptable price)
+//
+// The worst acceptable trading price. For buy orders this is the maximum buy price;
+// for sell orders this is the minimum sell price. Use -1 for no limit.
+func (s *CreateMasterOrderService) WorstPrice(worstPrice float64) *CreateMasterOrderService {
+	s.worstPrice = &worstPrice
 	return s
 }
 
@@ -731,6 +747,9 @@ func (s *CreateMasterOrderService) Do(ctx context.Context, opts ...RequestOption
 	if s.limitPrice != nil {
 		m["limitPrice"] = *s.limitPrice
 	}
+	if s.worstPrice != nil {
+		m["worstPrice"] = *s.worstPrice
+	}
 	if s.mustComplete != nil {
 		m["mustComplete"] = *s.mustComplete
 	}
@@ -854,6 +873,269 @@ func (s *CancelMasterOrderService) Do(ctx context.Context, opts ...RequestOption
 
 // CancelMasterOrderReply cancel master order response
 type CancelMasterOrderReply struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+}
+
+// PauseMasterOrderService pause a running master order
+type PauseMasterOrderService struct {
+	c             *Client
+	masterOrderId string
+	reason        *string
+}
+
+// MasterOrderId set masterOrderId
+func (s *PauseMasterOrderService) MasterOrderId(masterOrderId string) *PauseMasterOrderService {
+	s.masterOrderId = masterOrderId
+	return s
+}
+
+// Reason set reason (optional)
+func (s *PauseMasterOrderService) Reason(reason string) *PauseMasterOrderService {
+	s.reason = &reason
+	return s
+}
+
+// Do send request
+func (s *PauseMasterOrderService) Do(ctx context.Context, opts ...RequestOption) (res *PauseMasterOrderReply, err error) {
+	r := &request{
+		method:   http.MethodPut,
+		endpoint: fmt.Sprintf("/user/trading/master-orders/%s/pause", s.masterOrderId),
+		secType:  secTypeSigned,
+	}
+	m := params{
+		"masterOrderId": s.masterOrderId,
+	}
+	if s.reason != nil {
+		m["reason"] = *s.reason
+	}
+	r.setParams(m)
+	data, err := s.c.callAPI(ctx, r, opts...)
+	if err != nil {
+		return nil, err
+	}
+	res = new(PauseMasterOrderReply)
+	err = json.Unmarshal(data, res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// PauseMasterOrderReply pause master order response
+type PauseMasterOrderReply struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+}
+
+// ResumeMasterOrderService resume a paused master order
+type ResumeMasterOrderService struct {
+	c             *Client
+	masterOrderId string
+}
+
+// MasterOrderId set masterOrderId
+func (s *ResumeMasterOrderService) MasterOrderId(masterOrderId string) *ResumeMasterOrderService {
+	s.masterOrderId = masterOrderId
+	return s
+}
+
+// Do send request
+func (s *ResumeMasterOrderService) Do(ctx context.Context, opts ...RequestOption) (res *ResumeMasterOrderReply, err error) {
+	r := &request{
+		method:   http.MethodPut,
+		endpoint: fmt.Sprintf("/user/trading/master-orders/%s/resume", s.masterOrderId),
+		secType:  secTypeSigned,
+	}
+	m := params{
+		"masterOrderId": s.masterOrderId,
+	}
+	r.setParams(m)
+	data, err := s.c.callAPI(ctx, r, opts...)
+	if err != nil {
+		return nil, err
+	}
+	res = new(ResumeMasterOrderReply)
+	err = json.Unmarshal(data, res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// ResumeMasterOrderReply resume master order response
+type ResumeMasterOrderReply struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+}
+
+// UpdateMasterOrderParamsService update parameters of a running master order
+type UpdateMasterOrderParamsService struct {
+	c                        *Client
+	masterOrderId            string
+	orderNotional            *float64
+	totalQuantity            *float64
+	upTolerance              *string
+	lowTolerance             *string
+	enableMake               *bool
+	makerRateLimit           *float64
+	strictUpBound            *bool
+	povLimit                 *float64
+	povMinLimit              *float64
+	limitPrice               *float64
+	tailOrderProtection      *bool
+	mustComplete             *bool
+	executionDurationSeconds *int32
+}
+
+// MasterOrderId set masterOrderId (required)
+func (s *UpdateMasterOrderParamsService) MasterOrderId(masterOrderId string) *UpdateMasterOrderParamsService {
+	s.masterOrderId = masterOrderId
+	return s
+}
+
+// OrderNotional set orderNotional
+func (s *UpdateMasterOrderParamsService) OrderNotional(orderNotional float64) *UpdateMasterOrderParamsService {
+	s.orderNotional = &orderNotional
+	return s
+}
+
+// TotalQuantity set totalQuantity
+func (s *UpdateMasterOrderParamsService) TotalQuantity(totalQuantity float64) *UpdateMasterOrderParamsService {
+	s.totalQuantity = &totalQuantity
+	return s
+}
+
+// UpTolerance set upTolerance
+func (s *UpdateMasterOrderParamsService) UpTolerance(upTolerance string) *UpdateMasterOrderParamsService {
+	s.upTolerance = &upTolerance
+	return s
+}
+
+// LowTolerance set lowTolerance
+func (s *UpdateMasterOrderParamsService) LowTolerance(lowTolerance string) *UpdateMasterOrderParamsService {
+	s.lowTolerance = &lowTolerance
+	return s
+}
+
+// EnableMake set enableMake
+func (s *UpdateMasterOrderParamsService) EnableMake(enableMake bool) *UpdateMasterOrderParamsService {
+	s.enableMake = &enableMake
+	return s
+}
+
+// MakerRateLimit set makerRateLimit
+func (s *UpdateMasterOrderParamsService) MakerRateLimit(makerRateLimit float64) *UpdateMasterOrderParamsService {
+	s.makerRateLimit = &makerRateLimit
+	return s
+}
+
+// StrictUpBound set strictUpBound
+func (s *UpdateMasterOrderParamsService) StrictUpBound(strictUpBound bool) *UpdateMasterOrderParamsService {
+	s.strictUpBound = &strictUpBound
+	return s
+}
+
+// PovLimit set povLimit
+func (s *UpdateMasterOrderParamsService) PovLimit(povLimit float64) *UpdateMasterOrderParamsService {
+	s.povLimit = &povLimit
+	return s
+}
+
+// PovMinLimit set povMinLimit
+func (s *UpdateMasterOrderParamsService) PovMinLimit(povMinLimit float64) *UpdateMasterOrderParamsService {
+	s.povMinLimit = &povMinLimit
+	return s
+}
+
+// LimitPrice set limitPrice
+func (s *UpdateMasterOrderParamsService) LimitPrice(limitPrice float64) *UpdateMasterOrderParamsService {
+	s.limitPrice = &limitPrice
+	return s
+}
+
+// TailOrderProtection set tailOrderProtection
+func (s *UpdateMasterOrderParamsService) TailOrderProtection(tailOrderProtection bool) *UpdateMasterOrderParamsService {
+	s.tailOrderProtection = &tailOrderProtection
+	return s
+}
+
+// MustComplete set mustComplete
+func (s *UpdateMasterOrderParamsService) MustComplete(mustComplete bool) *UpdateMasterOrderParamsService {
+	s.mustComplete = &mustComplete
+	return s
+}
+
+// ExecutionDurationSeconds set executionDurationSeconds
+func (s *UpdateMasterOrderParamsService) ExecutionDurationSeconds(executionDurationSeconds int32) *UpdateMasterOrderParamsService {
+	s.executionDurationSeconds = &executionDurationSeconds
+	return s
+}
+
+// Do send request
+func (s *UpdateMasterOrderParamsService) Do(ctx context.Context, opts ...RequestOption) (res *UpdateMasterOrderParamsReply, err error) {
+	r := &request{
+		method:   http.MethodPut,
+		endpoint: fmt.Sprintf("/user/trading/master-orders/%s/update", s.masterOrderId),
+		secType:  secTypeSigned,
+	}
+	m := params{
+		"masterOrderId": s.masterOrderId,
+	}
+	if s.orderNotional != nil {
+		m["orderNotional"] = *s.orderNotional
+	}
+	if s.totalQuantity != nil {
+		m["totalQuantity"] = *s.totalQuantity
+	}
+	if s.upTolerance != nil {
+		m["upTolerance"] = *s.upTolerance
+	}
+	if s.lowTolerance != nil {
+		m["lowTolerance"] = *s.lowTolerance
+	}
+	if s.enableMake != nil {
+		m["enableMake"] = *s.enableMake
+	}
+	if s.makerRateLimit != nil {
+		m["makerRateLimit"] = *s.makerRateLimit
+	}
+	if s.strictUpBound != nil {
+		m["strictUpBound"] = *s.strictUpBound
+	}
+	if s.povLimit != nil {
+		m["povLimit"] = *s.povLimit
+	}
+	if s.povMinLimit != nil {
+		m["povMinLimit"] = *s.povMinLimit
+	}
+	if s.limitPrice != nil {
+		m["limitPrice"] = *s.limitPrice
+	}
+	if s.tailOrderProtection != nil {
+		m["tailOrderProtection"] = *s.tailOrderProtection
+	}
+	if s.mustComplete != nil {
+		m["mustComplete"] = *s.mustComplete
+	}
+	if s.executionDurationSeconds != nil {
+		m["executionDurationSeconds"] = *s.executionDurationSeconds
+	}
+	r.setParams(m)
+	data, err := s.c.callAPI(ctx, r, opts...)
+	if err != nil {
+		return nil, err
+	}
+	res = new(UpdateMasterOrderParamsReply)
+	err = json.Unmarshal(data, res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// UpdateMasterOrderParamsReply update master order params response
+type UpdateMasterOrderParamsReply struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
 }

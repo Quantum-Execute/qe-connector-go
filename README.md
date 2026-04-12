@@ -126,7 +126,7 @@ log.Printf("服务器时间: %s", time.Unix(timestamp/1000, 0).Format("2006-01-0
 |--------|------|----------|------|
 | page | int32 | 否 | 页码 |
 | pageSize | int32 | 否 | 每页数量 |
-| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit |
+| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid |
 | marketType | string | 否 | 市场类型筛选，可选值：SPOT（现货）、FUTURES（合约） |
 | isCoin | bool | 否 | 是否查询币本位合约可用交易对。传 `true` 时返回币本位合约可用交易对，仅 Binance 可用 |
 
@@ -244,7 +244,7 @@ for _, pair := range pairs.Items {
 |--------|------|----------|------|
 | page | int32 | 否 | 页码 |
 | pageSize | int32 | 否 | 每页数量 |
-| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit |
+| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid |
 
 **响应字段：**
 
@@ -254,7 +254,7 @@ for _, pair := range pairs.Items {
 | ├─ id | string | API 记录的唯一标识 |
 | ├─ createdAt | string | API 添加时间 |
 | ├─ accountName | string | 账户名称（如：账户1、账户2） |
-| ├─ exchange | string | 交易所名称（如：Binance、OKX、LTP、Deribit） |
+| ├─ exchange | string | 交易所名称（如：Binance、OKX、LTP、Deribit、Hyperliquid） |
 | ├─ apiKey | string | 交易所 API Key（部分隐藏） |
 | ├─ verificationMethod | string | API 验证方式（如：OAuth、API） |
 | ├─ status | string | API 状态：正常、异常（不可用） |
@@ -319,7 +319,7 @@ for _, api := range result.Items {
 | **基础参数** |
 | strategyType | string  | 是 | 策略类型，可选值：TWAP-1、POV                                                                                                                                                                        |
 | algorithm | string  | 是 | 交易算法。strategyType=TWAP-1时，可选值：TWAP、VWAP、BoostVWAP、BoostTWAP；strategyType=POV时，可选值：POV                                                                                                      |
-| exchange | string  | 是 | 交易所名称，可选值：Binance、OKX、LTP、Deribit                                                                                                                                                          |
+| exchange | string  | 是 | 交易所名称，可选值：Binance、OKX、LTP、Deribit、Hyperliquid                                                                                                                                                          |
 | symbol | string  | 是 | 交易对符号（如：BTCUSDT）（可用交易对查询）                                                                                                                                                                  |
 | marketType | string  | 是 | 可选值：SPOT（现货）、PERP（永续合约）                                                                                                                                                                    |
 | side | string  | 是 | 1.如果isTargetPosition=False：side代表交易方向，可选值：buy（买入）、sell（卖出）；合约交易时可与reduceOnly组合，reduceOnly=True时：buy代表买入平空，sell代表卖出平多。2.如果isTargetPosition=True：side代表仓位方向，可选值：buy（多头）、sell（空头）。【仅合约交易时需传入】 |
@@ -337,7 +337,7 @@ for _, api := range result.Items {
 | mustComplete | bool    | 否 | 是否一定要在executionDuration之内执行完毕，选false则不会追赶进度，默认：true                                                                                                                                        |
 | makerRateLimit | float64  | 否 | 要求maker占比超过该值，范围：0-1（包含0和1。输入0.1代表10%），默认：-1(算法智能计算推荐值执行)                                                                                                                                  |
 | povLimit | string  | 否 | 占市场成交量比例上限，优先级低于mustComplete，范围：0-1（包含0和1。输入0.1代表10%），默认：0.8                                                                                                                               |
-| limitPrice | float64       | 否 | 最高/低允许交易的价格，买入时该字段象征最高买入价，卖出时该字段象征最低卖出价，若市价超出范围则停止交易，范围：>0，默认：-1，代表无限制                                                                                                                     |
+| worstPrice | float64       | 否 | 最高/低允许交易的价格，买入时该字段象征最高买入价，卖出时该字段象征最低卖出价，若市价超出范围则停止交易，范围：>0，默认：-1，代表无限制                                                                                                                     |
 | upTolerance | string  | 否 | 允许超出目标进度的最大容忍度，范围：0-1（不包含0和1，最小输入0.0001，最大输入0.9999。输入0.1代表可以超前目标进度10%），默认：-1（即无容忍）                                                                                                         |
 | lowTolerance | string  | 否 | 允许落后目标进度的最大容忍度，范围：0-1（不包含0和1，最小输入0.0001，最大输入0.9999。输入0.1代表可落后目标进度10%），默认：-1（即无容忍）                                                                                                          |
 | strictUpBound | bool    | 否 | 是否严格小于uptolerance，开启后会更加严格贴近交易进度执行，同时可能会把母单拆很细；如需严格控制交易进度则建议开启，其他场景建议不开启，默认：false                                                                                                          |
@@ -346,7 +346,7 @@ for _, api := range result.Items {
 | makerRateLimit | float64  | 否 | 要求maker占比超过该值（包含0和1，输入0.1代表10%），输入范围：0-1（输入0.1代表10%），默认：-1(算法智能计算推荐值执行)                                                                                                                    |
 | povLimit | string  | 否 | 占市场成交量比例上限（包含0和0.5，一般建议小于0.15），输入范围：0-0.5（povMinLimit < max(povLimit-0.01,0)），默认：0                                                                                                         |
 | povMinLimit | float64  | 否 | 占市场成交量比例下限，范围：小于max(POVLimit-0.01,0)，默认：0（即无下限）                                                                                                                                            |
-| limitPrice | float64       | 否 | 最高/低允许交易的价格，买入时该字段象征最高买入价，卖出时该字段象征最低卖出价，若市价超出范围则停止交易，范围：>0，默认：-1，代表无限制                                                                                                                     |
+| worstPrice | float64       | 否 | 最高/低允许交易的价格，买入时该字段象征最高买入价，卖出时该字段象征最低卖出价，若市价超出范围则停止交易，范围：>0，默认：-1，代表无限制                                                                                                                     |
 | strictUpBound | bool    | 否 | 是否追求严格小于povLimit，开启后可能会把很小的母单也拆的很细，比如50u拆成10个5u，不建议开启，算法的每个order会权衡盘口流动性，默认：false                                                                                                          |
 | tailOrderProtection | bool    | 否 | 订单余量小于交易所最小发单量时，是否必须taker扫完，如果false，则订单余量小于交易所最小发单量时，订单结束执行；如果true，则订单余量随最近一笔下单全额执行（可能会提高Taker率），默认：true                                                                                   |
 | **其他参数** |
@@ -392,7 +392,7 @@ result, err := client.NewCreateMasterOrderService().
     StartTime("2024-01-01T10:00:00Z").
     ExecutionDuration(30).             // 30 分钟
     MustComplete(true).
-    LimitPrice(60000).                 // 最高价格 $60,000
+    WorstPrice(60000).                 // 最高价格 $60,000
     UpTolerance("0.1").                // 允许超出 10%
     LowTolerance("0.1").               // 允许落后 10%
     StrictUpBound(false).              // 不追求严格小于uptolerance
@@ -425,7 +425,7 @@ result, err := client.NewCreateMasterOrderService().
     StartTime("2024-01-01T10:00:00Z").
     ExecutionDuration(60).                // 60 分钟
     MustComplete(true).
-    LimitPrice(65000).                    // 最高价格 $65,000
+    WorstPrice(65000).                    // 最高价格 $65,000
     UpTolerance("0.1").
     LowTolerance("0.1").
     StrictUpBound(false).                 // 不追求严格小于uptolerance
@@ -458,7 +458,7 @@ result, err := client.NewCreateMasterOrderService().
     PovLimit(0.1).                     // 占市场成交量 10%
     PovMinLimit(0.05).                 // 最低占市场成交量 5%
     StrictUpBound(false).              // 不追求严格小于povLimit
-    LimitPrice(65000).                 // 最高价格 $65,000
+    WorstPrice(65000).                 // 最高价格 $65,000
     TailOrderProtection(true).
     StrategyType(trading_enums.StrategyTypeTWAP1).
     Do(context.Background())
@@ -483,7 +483,7 @@ if result.Success {
 | page      | int32  | 否    | 页码                                  |
 | pageSize  | int32  | 否    | 每页数量                                |
 | status    | string | 否    | 订单状态筛选，可选值：NEW（执行中）、COMPLETED（已完成）  |
-| exchange  | string | 否    | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit |
+| exchange  | string | 否    | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid |
 | symbol    | string | 否    | 交易对筛选                               |
 | startTime | string | 否    | 开始时间筛选                              |
 | endTime   | string | 否    | 结束时间筛选                              |
@@ -697,6 +697,10 @@ log.Printf("母单详情: %+v", detail.MasterOrder)
 | ├─ base | string | 基础币种 |
 | ├─ quote | string | 计价币种 |
 | ├─ type | string | 订单类型 |
+| ├─ orderId | string | 子订单ID（交易所订单ID） |
+| ├─ quantity | float64 | 下单数量 |
+| ├─ createdAt | string | 数据创建时间 |
+| ├─ updatedAt | string | 最后修改时间 |
 | total | int32 | 总数 |
 | page | int32 | 当前页码 |
 | pageSize | int32 | 每页数量 |
@@ -915,6 +919,130 @@ if result.Success {
     log.Println("订单取消成功")
 } else {
     log.Printf("订单取消失败：%s", result.Message)
+}
+```
+
+#### 暂停母单
+
+暂停指定的正在执行的母单。
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| masterOrderId | string | 是 | 要暂停的母单 ID |
+| reason | string | 否 | 暂停原因 |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| success | bool | 暂停是否成功 |
+| message | string | 暂停结果消息 |
+
+**示例代码：**
+
+```go
+result, err := client.NewPauseMasterOrderService().
+    MasterOrderId("your-master-order-id").
+    Reason("市场波动").
+    Do(context.Background())
+
+if err != nil {
+    log.Fatal(err)
+}
+
+if result.Success {
+    log.Println("母单暂停成功")
+} else {
+    log.Printf("母单暂停失败：%s", result.Message)
+}
+```
+
+#### 恢复母单
+
+恢复指定的已暂停母单。
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| masterOrderId | string | 是 | 要恢复的母单 ID |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| success | bool | 恢复是否成功 |
+| message | string | 恢复结果消息 |
+
+**示例代码：**
+
+```go
+result, err := client.NewResumeMasterOrderService().
+    MasterOrderId("your-master-order-id").
+    Do(context.Background())
+
+if err != nil {
+    log.Fatal(err)
+}
+
+if result.Success {
+    log.Println("母单恢复成功")
+} else {
+    log.Printf("母单恢复失败：%s", result.Message)
+}
+```
+
+#### 修改母单参数
+
+在线修改运行中母单的参数。母单ID必填，其余字段传哪个修改哪个。
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| masterOrderId | string | 是 | 要修改的母单 ID |
+| orderNotional | float64 | 否 | 订单金额（USDT） |
+| totalQuantity | float64 | 否 | 要交易的总数量 |
+| upTolerance | string | 否 | 上容忍度 |
+| lowTolerance | string | 否 | 下容忍度 |
+| enableMake | bool | 否 | 是否启用 Maker 订单 |
+| makerRateLimit | float64 | 否 | 最低 Maker 率（0-1） |
+| strictUpBound | bool | 否 | 严格上界 |
+| povLimit | float64 | 否 | 最大市场成交量占比（0-1） |
+| povMinLimit | float64 | 否 | 占市场成交量比例下限 |
+| limitPrice | float64 | 否 | 最高/低允许交易的价格，-1表示不限制 |
+| tailOrderProtection | bool | 否 | 尾单保护 |
+| mustComplete | bool | 否 | 是否必须完成 |
+| executionDurationSeconds | int32 | 否 | 执行时长（秒），必须大于10秒 |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| success | bool | 修改是否成功 |
+| message | string | 修改结果消息 |
+
+**示例代码：**
+
+```go
+result, err := client.NewUpdateMasterOrderParamsService().
+    MasterOrderId("your-master-order-id").
+    WorstPrice(50000).
+    TotalQuantity(1.5).
+    MustComplete(true).
+    ExecutionDurationSeconds(600).
+    Do(context.Background())
+
+if err != nil {
+    log.Fatal(err)
+}
+
+if result.Success {
+    log.Println("母单参数修改成功")
+} else {
+    log.Printf("母单参数修改失败：%s", result.Message)
 }
 ```
 
@@ -1642,6 +1770,7 @@ handlers := &qe.WebSocketEventHandlers{
 | `trading_enums.ExchangeOKX` | OKX | OKX |
 | `trading_enums.ExchangeLTP` | LTP | LTP |
 | `trading_enums.ExchangeDeribit` | Deribit | Deribit |
+| `trading_enums.ExchangeHyperliquid` | Hyperliquid | Hyperliquid |
 
 **保证金类型 (MarginType)：**
 

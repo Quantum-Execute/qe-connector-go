@@ -2,6 +2,26 @@
 
 本文件记录 `qe-connector-go` 的用户可见变更。
 
+## 1.1.25 - 2026-04-12
+
+### 新增
+- **Hyperliquid 支持**：`Exchange` 枚举新增 `ExchangeHyperliquid = "Hyperliquid"`
+- **暂停母单接口**：新增 `PauseMasterOrderService`，支持 `PUT /user/trading/master-orders/{masterOrderId}/pause`
+  - 参数：`masterOrderId`（必填）、`reason`（可选）
+  - 工厂方法：`client.NewPauseMasterOrderService()`
+- **恢复母单接口**：新增 `ResumeMasterOrderService`，支持 `PUT /user/trading/master-orders/{masterOrderId}/resume`
+  - 参数：`masterOrderId`（必填）
+  - 工厂方法：`client.NewResumeMasterOrderService()`
+- **修改母单参数接口**：新增 `UpdateMasterOrderParamsService`，支持 `PUT /user/trading/master-orders/{masterOrderId}/update`
+  - 必填参数：`masterOrderId`
+  - 可选参数：`orderNotional`、`totalQuantity`、`upTolerance`、`lowTolerance`、`enableMake`、`makerRateLimit`、`strictUpBound`、`povLimit`、`povMinLimit`、`limitPrice`、`tailOrderProtection`、`mustComplete`、`executionDurationSeconds`
+  - 工厂方法：`client.NewUpdateMasterOrderParamsService()`
+- **创建母单入参**：`CreateMasterOrderService` 新增 `WorstPrice()` 方法，作为 `LimitPrice()` 的推荐替代
+
+### 变更
+- **成交记录响应**：`OrderFillInfo` 新增字段 `OrderId`（子订单ID）、`Quantity`（下单数量）、`CreatedAt`（数据创建时间）、`UpdatedAt`（最后修改时间）
+- **`LimitPrice()` 标记为 Deprecated**：建议使用 `WorstPrice()` 替代，`LimitPrice()` 保留以兼容旧版本
+
 ## 1.1.24 - 2026-03-08
 
 ### 新增
