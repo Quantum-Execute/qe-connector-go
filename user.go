@@ -321,6 +321,7 @@ type GetOrderFillsService struct {
 	pageSize      *int32
 	masterOrderId *string
 	subOrderId    *string
+	orderId       *string
 	symbol        *string
 	status        *string
 	startTime     *string
@@ -348,6 +349,12 @@ func (s *GetOrderFillsService) MasterOrderId(masterOrderId string) *GetOrderFill
 // SubOrderId set subOrderId
 func (s *GetOrderFillsService) SubOrderId(subOrderId string) *GetOrderFillsService {
 	s.subOrderId = &subOrderId
+	return s
+}
+
+// OrderId set orderId (exchange order ID filter)
+func (s *GetOrderFillsService) OrderId(orderId string) *GetOrderFillsService {
+	s.orderId = &orderId
 	return s
 }
 
@@ -394,6 +401,9 @@ func (s *GetOrderFillsService) Do(ctx context.Context, opts ...RequestOption) (r
 	}
 	if s.subOrderId != nil {
 		m["subOrderId"] = *s.subOrderId
+	}
+	if s.orderId != nil {
+		m["orderId"] = *s.orderId
 	}
 	if s.symbol != nil {
 		m["symbol"] = *s.symbol
