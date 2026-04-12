@@ -366,3 +366,13 @@ func (c *Client) NewGetLtpPortfolioAssetService() *GetLtpPortfolioAssetService {
 func (c *Client) NewGetDeribitAccountService() *GetDeribitAccountService {
 	return &GetDeribitAccountService{c: c}
 }
+
+// NewGetHyperliquidSpotBalanceService create service for getting Hyperliquid spot balance
+func (c *Client) NewGetHyperliquidSpotBalanceService() *GetHyperliquidSpotBalanceService {
+	return &GetHyperliquidSpotBalanceService{c: c}
+}
+
+// NewGetHyperliquidPositionsService create service for getting Hyperliquid perpetual positions
+func (c *Client) NewGetHyperliquidPositionsService() *GetHyperliquidPositionsService {
+	return &GetHyperliquidPositionsService{c: c}
+}

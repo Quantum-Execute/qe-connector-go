@@ -1132,3 +1132,114 @@ type DeribitAccountItem struct {
 	PortfolioMarginingEnabled   bool    `json:"portfolioMarginingEnabled"`
 	CrossCollateralEnabled      bool    `json:"crossCollateralEnabled"`
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Hyperliquid
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GetHyperliquidSpotBalanceService get Hyperliquid spot account balance
+type GetHyperliquidSpotBalanceService struct {
+	c         *Client
+	bindingId string
+}
+
+// BindingId set bindingId
+func (s *GetHyperliquidSpotBalanceService) BindingId(v string) *GetHyperliquidSpotBalanceService {
+	s.bindingId = v
+	return s
+}
+
+// Do send request
+func (s *GetHyperliquidSpotBalanceService) Do(ctx context.Context, opts ...RequestOption) (res *HyperliquidSpotBalanceReply, err error) {
+	r := &request{
+		method:   http.MethodGet,
+		endpoint: "/user/exchange-apis/hyperliquid-spot-balance",
+		secType:  secTypeSigned,
+	}
+	r.setParam("bindingId", s.bindingId)
+	data, err := s.c.callAPI(ctx, r, opts...)
+	if err != nil {
+		return nil, err
+	}
+	res = new(HyperliquidSpotBalanceReply)
+	err = json.Unmarshal(data, res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// HyperliquidSpotBalanceReply Hyperliquid spot balance response
+type HyperliquidSpotBalanceReply struct {
+	Balances        []HyperliquidSpotBalanceItem `json:"balances"`
+	Exchange        string                       `json:"exchange"`
+	AvailableMargin string                       `json:"availableMargin"`
+}
+
+// HyperliquidSpotBalanceItem single asset balance in Hyperliquid spot account
+type HyperliquidSpotBalanceItem struct {
+	Coin       string `json:"coin"`
+	Total      string `json:"total"`
+	Hold       string `json:"hold"`
+	Available  string `json:"available"`
+	TotalValue string `json:"totalValue"`
+	Price      string `json:"price"`
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GetHyperliquidPositionsService get Hyperliquid perpetual positions
+type GetHyperliquidPositionsService struct {
+	c         *Client
+	bindingId string
+}
+
+// BindingId set bindingId
+func (s *GetHyperliquidPositionsService) BindingId(v string) *GetHyperliquidPositionsService {
+	s.bindingId = v
+	return s
+}
+
+// Do send request
+func (s *GetHyperliquidPositionsService) Do(ctx context.Context, opts ...RequestOption) (res *HyperliquidPositionsReply, err error) {
+	r := &request{
+		method:   http.MethodGet,
+		endpoint: "/user/exchange-apis/hyperliquid-positions",
+		secType:  secTypeSigned,
+	}
+	r.setParam("bindingId", s.bindingId)
+	data, err := s.c.callAPI(ctx, r, opts...)
+	if err != nil {
+		return nil, err
+	}
+	res = new(HyperliquidPositionsReply)
+	err = json.Unmarshal(data, res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// HyperliquidPositionsReply Hyperliquid perpetual positions response
+type HyperliquidPositionsReply struct {
+	Positions       []HyperliquidPositionItem `json:"positions"`
+	Exchange        string                    `json:"exchange"`
+	Withdrawable    string                    `json:"withdrawable"`
+	AccountValue    string                    `json:"accountValue"`
+	TotalMarginUsed string                    `json:"totalMarginUsed"`
+	TotalNtlPos     string                    `json:"totalNtlPos"`
+}
+
+// HyperliquidPositionItem single position in Hyperliquid account
+type HyperliquidPositionItem struct {
+	Coin           string `json:"coin"`
+	Szi            string `json:"szi"`
+	PositionValue  string `json:"positionValue"`
+	EntryPx        string `json:"entryPx"`
+	UnrealizedPnl  string `json:"unrealizedPnl"`
+	LeverageType   string `json:"leverageType"`
+	LeverageValue  int32  `json:"leverageValue"`
+	LiquidationPx  string `json:"liquidationPx"`
+	MarginUsed     string `json:"marginUsed"`
+	ReturnOnEquity string `json:"returnOnEquity"`
+}
