@@ -32,4 +32,5 @@ type TCAAnalysisResponse struct {
 	VwapSlippagePctFartouch float64 `json:"VWAP_Slippage_pct_Fartouch"`
 	IntervalReturn          float64 `json:"IntervalReturn"`
 	ParticipationRate       float64 `json:"ParticipationRate"`
+	FeeSavingPct            float64 `json:"FeeSaving_pct"`
 }

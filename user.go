@@ -312,6 +312,7 @@ type MasterOrderInfo struct {
 	TradingAccount           string  `json:"tradingAccount"`
 	EnableMake               bool    `json:"enableMake"`
 	ClientOrderId            string  `json:"clientOrderId"`
+	FinishedMs               int64   `json:"finishedMs"`
 }
 
 // GetOrderFillsService get order fills

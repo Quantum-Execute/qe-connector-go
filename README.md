@@ -538,6 +538,7 @@ if result.Success {
 | ├─ enableMake          | bool    | 是否允许挂单                                                                                                                                                 |
 | ├─ makerRate           | float64 | 被动成交率                                                                                                                                                  |
 | ├─ clientOrderId       | string  | 用户自定义的订单ID                                                                                                                                              |
+| ├─ finishedMs          | int64   | 母单结束时间（epoch毫秒），0表示未结束                                                                                                                              |
 | total                  | int32   | 总数                                                                                                                                                     |
 | page                   | int32   | 当前页码                                                                                                                                                   |
 | pageSize               | int32   | 每页数量                                                                                                                                                   |
@@ -828,6 +829,7 @@ log.Printf("总成交额: $%.2f, 总手续费: $%.2f", totalValue, totalFee)
 | VWAP_Slippage_pct_Fartouch | float64 | VWAP滑点（相比对手价） |
 | IntervalReturn | float64 | 区间理论收益率 |
 | ParticipationRate | float64 | 市场参与率 |
+| FeeSaving_pct | float64 | 手续费节省率 |
 
 **示例代码：**
 
