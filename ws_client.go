@@ -195,62 +195,112 @@ func (ws *WebSocketService) handleMessage(data []byte) {
 			ws.handlers.OnError(fmt.Errorf("server error: %s", clientMsg.Data))
 		}
 
-	case ClientMasterDetailType, ClientOrderFillDetailType:
-		// 解析第三方消息类型
-		var baseMsg BaseThirdPartyMessage
-		if err := json.Unmarshal([]byte(clientMsg.Data), &baseMsg); err != nil {
-			ws.c.debug("Failed to unmarshal base message: %v", err)
+	case ClientMasterDetailType:
+		ws.handleMasterDetailMessage(clientMsg.Data)
+
+	case ClientOrderFillDetailType:
+		ws.handleOrderFillDetailMessage(clientMsg.Data)
+	}
+}
+
+// handleMasterDetailMessage 处理 master_data 类型消息
+func (ws *WebSocketService) handleMasterDetailMessage(data string) {
+	// 服务端推送的是 MasterOrderDTO（无内层 type 字段），优先用 OnMasterOrderDetail 回调
+	if ws.handlers.OnMasterOrderDetail != nil {
+		var msg WsMasterOrderDetail
+		if err := json.Unmarshal([]byte(data), &msg); err != nil {
+			ws.c.debug("Failed to unmarshal master order detail: %v", err)
 			if ws.handlers.OnError != nil {
 				ws.handlers.OnError(err)
 			}
 			return
 		}
+		if err := ws.handlers.OnMasterOrderDetail(&msg); err != nil {
+			ws.c.debug("Master order detail handler error: %v", err)
+		}
+		return
+	}
 
-		// 根据第三方消息类型分发
-		switch baseMsg.Type {
-		case MasterOrderType:
-			if ws.handlers.OnMasterOrder != nil {
-				var msg MasterOrderMessage
-				if err := json.Unmarshal([]byte(clientMsg.Data), &msg); err != nil {
-					ws.c.debug("Failed to unmarshal master order message: %v", err)
-					if ws.handlers.OnError != nil {
-						ws.handlers.OnError(err)
-					}
-					return
-				}
-				if err := ws.handlers.OnMasterOrder(&msg); err != nil {
-					ws.c.debug("Master order handler error: %v", err)
-				}
+	// 向后兼容：尝试按内层 type 分发到旧回调
+	ws.handleLegacyThirdPartyMessage(data)
+}
+
+// handleOrderFillDetailMessage 处理 order_data 类型消息
+func (ws *WebSocketService) handleOrderFillDetailMessage(data string) {
+	// 服务端推送的是 OrderFillDTO（无内层 type 字段），优先用 OnOrderFillDetail 回调
+	if ws.handlers.OnOrderFillDetail != nil {
+		var msg WsOrderFillDetail
+		if err := json.Unmarshal([]byte(data), &msg); err != nil {
+			ws.c.debug("Failed to unmarshal order fill detail: %v", err)
+			if ws.handlers.OnError != nil {
+				ws.handlers.OnError(err)
 			}
+			return
+		}
+		if err := ws.handlers.OnOrderFillDetail(&msg); err != nil {
+			ws.c.debug("Order fill detail handler error: %v", err)
+		}
+		return
+	}
 
-		case OrderType:
-			if ws.handlers.OnOrder != nil {
-				var msg OrderMessage
-				if err := json.Unmarshal([]byte(clientMsg.Data), &msg); err != nil {
-					ws.c.debug("Failed to unmarshal order message: %v", err)
-					if ws.handlers.OnError != nil {
-						ws.handlers.OnError(err)
-					}
-					return
+	// 向后兼容：尝试按内层 type 分发到旧回调
+	ws.handleLegacyThirdPartyMessage(data)
+}
+
+// handleLegacyThirdPartyMessage 向后兼容：按内层 type 字段分发到旧版回调
+func (ws *WebSocketService) handleLegacyThirdPartyMessage(data string) {
+	var baseMsg BaseThirdPartyMessage
+	if err := json.Unmarshal([]byte(data), &baseMsg); err != nil {
+		ws.c.debug("Failed to unmarshal base message: %v", err)
+		if ws.handlers.OnError != nil {
+			ws.handlers.OnError(err)
+		}
+		return
+	}
+
+	switch baseMsg.Type {
+	case MasterOrderType:
+		if ws.handlers.OnMasterOrder != nil {
+			var msg MasterOrderMessage
+			if err := json.Unmarshal([]byte(data), &msg); err != nil {
+				ws.c.debug("Failed to unmarshal master order message: %v", err)
+				if ws.handlers.OnError != nil {
+					ws.handlers.OnError(err)
 				}
-				if err := ws.handlers.OnOrder(&msg); err != nil {
-					ws.c.debug("Order handler error: %v", err)
-				}
+				return
 			}
+			if err := ws.handlers.OnMasterOrder(&msg); err != nil {
+				ws.c.debug("Master order handler error: %v", err)
+			}
+		}
 
-		case FillType:
-			if ws.handlers.OnFill != nil {
-				var msg FillMessage
-				if err := json.Unmarshal([]byte(clientMsg.Data), &msg); err != nil {
-					ws.c.debug("Failed to unmarshal fill message: %v", err)
-					if ws.handlers.OnError != nil {
-						ws.handlers.OnError(err)
-					}
-					return
+	case OrderType:
+		if ws.handlers.OnOrder != nil {
+			var msg OrderMessage
+			if err := json.Unmarshal([]byte(data), &msg); err != nil {
+				ws.c.debug("Failed to unmarshal order message: %v", err)
+				if ws.handlers.OnError != nil {
+					ws.handlers.OnError(err)
 				}
-				if err := ws.handlers.OnFill(&msg); err != nil {
-					ws.c.debug("Fill handler error: %v", err)
+				return
+			}
+			if err := ws.handlers.OnOrder(&msg); err != nil {
+				ws.c.debug("Order handler error: %v", err)
+			}
+		}
+
+	case FillType:
+		if ws.handlers.OnFill != nil {
+			var msg FillMessage
+			if err := json.Unmarshal([]byte(data), &msg); err != nil {
+				ws.c.debug("Failed to unmarshal fill message: %v", err)
+				if ws.handlers.OnError != nil {
+					ws.handlers.OnError(err)
 				}
+				return
+			}
+			if err := ws.handlers.OnFill(&msg); err != nil {
+				ws.c.debug("Fill handler error: %v", err)
 			}
 		}
 	}
