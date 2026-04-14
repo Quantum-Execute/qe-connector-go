@@ -344,8 +344,8 @@ for _, api := range result.Items {
 | tailOrderProtection | bool    | 否 | 订单余量小于交易所最小发单量时，是否必须taker扫完，如果false，则订单余量小于交易所最小发单量时，订单结束执行；如果true，则订单余量随最近一笔下单全额执行（可能会提高Taker率），默认：true                                                                                   |
 | **POV 算法参数** |
 | makerRateLimit | float64  | 否 | 要求maker占比超过该值（包含0和1，输入0.1代表10%），输入范围：0-1（输入0.1代表10%），默认：-1(算法智能计算推荐值执行)                                                                                                                    |
-| povLimit | string  | 否 | 占市场成交量比例上限（包含0和0.5，一般建议小于0.15），输入范围：0-0.5（povMinLimit < max(povLimit-0.01,0)），默认：0                                                                                                         |
-| povMinLimit | float64  | 否 | 占市场成交量比例下限，范围：小于max(POVLimit-0.01,0)，默认：0（即无下限）                                                                                                                                            |
+| povLimit | string  | 否 | 占市场成交量比例上限（包含0和0.5，一般建议小于0.15），输入范围：0-0.5（povMinLimit <= max(povLimit-0.01,0)），默认：0                                                                                                         |
+| povMinLimit | float64  | 否 | 占市场成交量比例下限，范围：大于等于0，小于等于max(POVLimit-0.01,0)，默认：0（即无下限）                                                                                                                                            |
 | worstPrice | float64       | 否 | 最高/低允许交易的价格，买入时该字段象征最高买入价，卖出时该字段象征最低卖出价，若市价超出范围则停止交易，范围：>0，默认：-1，代表无限制                                                                                                                     |
 | strictUpBound | bool    | 否 | 是否追求严格小于povLimit，开启后可能会把很小的母单也拆的很细，比如50u拆成10个5u，不建议开启，算法的每个order会权衡盘口流动性，默认：false                                                                                                          |
 | tailOrderProtection | bool    | 否 | 订单余量小于交易所最小发单量时，是否必须taker扫完，如果false，则订单余量小于交易所最小发单量时，订单结束执行；如果true，则订单余量随最近一笔下单全额执行（可能会提高Taker率），默认：true                                                                                   |
@@ -1874,7 +1874,7 @@ handlers := &qe.WebSocketEventHandlers{
 
 ### 6. 新增字段说明
 
-- `povMinLimit`：POV算法专用，占市场成交量比例下限，范围：小于max(POVLimit-0.01,0)
+- `povMinLimit`：POV算法专用，占市场成交量比例下限，范围：大于等于0，小于等于max(POVLimit-0.01,0)
 - `tailOrderProtection`：尾单保护，如果为true则尾单必须taker扫完，如果false则允许省一点，小于交易所最小发单量
 
 ### 7. ListenKey 相关说明
