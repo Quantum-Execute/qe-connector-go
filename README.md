@@ -318,7 +318,7 @@ for _, api := range result.Items {
 |--------|---------|--------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **基础参数** |
 | strategyType | string  | 是 | 策略类型，可选值：TWAP-1、POV                                                                                                                                                                        |
-| algorithm | string  | 是 | 交易算法。strategyType=TWAP-1时，可选值：TWAP、VWAP、BoostVWAP、BoostTWAP；strategyType=POV时，可选值：POV                                                                                                      |
+| algorithm | string  | 是 | 交易算法。strategyType=TWAP-1时，可选值：TWAP、VWAP；strategyType=POV时，可选值：POV                                                                                                      |
 | exchange | string  | 是 | 交易所名称，可选值：Binance、OKX、LTP、Deribit、Hyperliquid                                                                                                                                                          |
 | symbol | string  | 是 | 交易对符号（如：BTCUSDT）（可用交易对查询）                                                                                                                                                                  |
 | marketType | string  | 是 | 可选值：SPOT（现货）、PERP（永续合约）                                                                                                                                                                    |
@@ -360,8 +360,6 @@ for _, api := range result.Items {
 *注：totalQuantity 和 orderNotional 必须传其中一个，但当 isTargetPosition 为 true 时，totalQuantity 必填代表目标仓位数量且 orderNotional 不可填  
 *注：当使用 Deribit 账户下单 BTCUSD 或 ETHUSD 合约时，只能使用 totalQuantity 作为数量输入字段，且数量单位为 USD；orderNotional 当前不可用。  
 *注：当使用 Binance 账户下单 `perp_cm`（币本位合约）时，只能使用 totalQuantity 作为数量输入字段，数量单位为张，且输入值必须为整数；orderNotional 当前不可用。  
-*注：使用BoostVWAP、BoostTWAP时，代表使用高频alpha发单。仅Binance交易所可用，不适用于其他交易所。现货支持的交易对：BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,LTCUSDT,AVAXUSDT,XLMUSDT,XRPUSDT,DOGEUSDT,CRVUSDT。永续合约支持的交易对：BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,LTCUSDT,AVAXUSDT,XLMUSDT,XRPUSDT,DOGEUSDT,ADAUSDT,BCHUSDT,FILUSDT,1000SATSUSDT,CRVUSDT。
-
 **响应字段：**
 
 | 字段名 | 类型 | 描述 |
@@ -539,6 +537,7 @@ if result.Success {
 | ├─ makerRate           | float64 | 被动成交率                                                                                                                                                  |
 | ├─ clientOrderId       | string  | 用户自定义的订单ID                                                                                                                                              |
 | ├─ finishedMs          | int64   | 母单结束时间（epoch毫秒），0表示未结束                                                                                                                              |
+| ├─ worstPrice          | float64 | 最高/低允许交易的价格，买入时为最高价，卖出时为最低价。-1表示不限制                                                                                                   |
 | total                  | int32   | 总数                                                                                                                                                     |
 | page                   | int32   | 当前页码                                                                                                                                                   |
 | pageSize               | int32   | 每页数量                                                                                                                                                   |
@@ -618,7 +617,59 @@ for _, order := range orders.Items {
 
 **响应字段：**
 
-成功时返回 `masterOrder` 字段（结构与 `MasterOrderInfo` 一致）。
+成功时返回 `masterOrder` 字段，结构如下：
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| masterOrderId | string | 主订单 ID |
+| algorithm | string | 算法 |
+| algorithmType | string | 算法类型 |
+| exchange | string | 交易所 |
+| symbol | string | 交易对 |
+| marketType | string | 市场类型 |
+| side | string | 买卖方向 |
+| totalQuantity | float64 | 按币数下单的总数量，按金额下单时，该值为0，下单数量应查看orderNotional字段 |
+| filledQuantity | float64 | 1.按币数下单时，该字段代表已成交币数。2.按金额下单时，该字段值代表已成交金额 |
+| averagePrice | float64 | 平均成交价 |
+| status | string | 状态：NEW（创建，未执行）、WAITING（等待中）、PROCESSING（执行中，且未完成）、PAUSED（已暂停）、CANCEL（取消中）、CANCELLED（已取消）、COMPLETED（已完成）、REJECTED（已拒绝）、EXPIRED（已过期）、CANCEL_REJECT（取消被拒绝） |
+| executionDuration | int32 | 执行时长（分钟） |
+| executionDurationSeconds | int32 | 执行时长（秒，仅 TWAP-1 使用；当提供且>0时优先使用；必须>10秒） |
+| priceLimit | float64 | 价格限制 |
+| startTime | string | 开始时间 |
+| endTime | string | 结束时间 |
+| createdAt | string | 创建时间 |
+| updatedAt | string | 更新时间 |
+| notes | string | 备注 |
+| marginType | string | 保证金类型（U:U本位，C:币本位） |
+| reduceOnly | bool | 是否仅减仓 |
+| strategyType | string | 策略类型 |
+| orderNotional | string | 订单金额（按成交额提交的下单数量） |
+| mustComplete | bool | 是否必须完成 |
+| makerRateLimit | float64 | 最低 Maker 率 |
+| povLimit | float64 | 最大市场成交量占比 |
+| clientId | string | 客户端 ID |
+| date | string | 发单日期（格式：YYYYMMDD） |
+| ticktimeInt | string | 发单时间（格式：093000000 表示 9:30:00.000） |
+| limitPriceString | string | 限价（字符串） |
+| upTolerance | string | 上容忍度 |
+| lowTolerance | string | 下容忍度 |
+| strictUpBound | bool | 严格上界 |
+| ticktimeMs | string | 发单时间戳（epoch 毫秒） |
+| category | string | 交易品种（spot、perp 或 perp_cm，其中 perp_cm 表示 Binance 币本位合约） |
+| filledAmount | float64 | 成交币数 |
+| totalValue | float64 | 成交总值 |
+| base | string | 基础币种 |
+| quote | string | 计价币种 |
+| completionProgress | float64 | 完成进度（0-100）返回50代表50% |
+| reason | string | 原因（如取消原因） |
+| takerMakerRate | float64 | Taker/Maker 比率 |
+| makerRate | float64 | 被动成交率 |
+| tailOrderProtection | bool | 尾单保护开关 |
+| tradingAccount | string | 交易账户 |
+| enableMake | bool | 是否允许挂单 |
+| clientOrderId | string | 用户自定义的订单ID |
+| finishedMs | int64 | 母单结束时间（epoch毫秒），0表示未结束 |
+| worstPrice | float64 | 最高/低允许交易的价格，买入时为最高价，卖出时为最低价。-1表示不限制 |
 
 **示例代码：**
 
@@ -1015,7 +1066,8 @@ if result.Success {
 | strictUpBound | bool | 否 | 严格上界 |
 | povLimit | float64 | 否 | 最大市场成交量占比（0-1） |
 | povMinLimit | float64 | 否 | 占市场成交量比例下限 |
-| limitPrice | float64 | 否 | 最高/低允许交易的价格，-1表示不限制 |
+| limitPrice | float64 | 否 | 最高/低允许交易的价格，-1表示不限制（已废弃，建议使用 worstPrice） |
+| worstPrice | float64 | 否 | 最高/低允许交易的价格，买入时为最高价，卖出时为最低价。-1表示不限制 |
 | tailOrderProtection | bool | 否 | 尾单保护 |
 | mustComplete | bool | 否 | 是否必须完成 |
 | executionDurationSeconds | int32 | 否 | 执行时长（秒），必须大于10秒 |
@@ -1748,8 +1800,6 @@ handlers := &qe.WebSocketEventHandlers{
 | `trading_enums.AlgorithmTWAP` | TWAP | TWAP算法 |
 | `trading_enums.AlgorithmVWAP` | VWAP | VWAP算法 |
 | `trading_enums.AlgorithmPOV` | POV | POV算法 |
-| `trading_enums.AlgorithmBoostVWAP` | BoostVWAP | BoostVWAP算法（高频alpha发单） |
-| `trading_enums.AlgorithmBoostTWAP` | BoostTWAP | BoostTWAP算法（高频alpha发单） |
 
 **市场类型 (MarketType)：**
 

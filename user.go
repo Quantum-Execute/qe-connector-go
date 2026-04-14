@@ -313,6 +313,7 @@ type MasterOrderInfo struct {
 	EnableMake               bool    `json:"enableMake"`
 	ClientOrderId            string  `json:"clientOrderId"`
 	FinishedMs               int64   `json:"finishedMs"`
+	WorstPrice               float64 `json:"worstPrice"`
 }
 
 // GetOrderFillsService get order fills
@@ -994,6 +995,7 @@ type UpdateMasterOrderParamsService struct {
 	povLimit                 *float64
 	povMinLimit              *float64
 	limitPrice               *float64
+	worstPrice               *float64
 	tailOrderProtection      *bool
 	mustComplete             *bool
 	executionDurationSeconds *int32
@@ -1065,6 +1067,12 @@ func (s *UpdateMasterOrderParamsService) LimitPrice(limitPrice float64) *UpdateM
 	return s
 }
 
+// WorstPrice set worstPrice
+func (s *UpdateMasterOrderParamsService) WorstPrice(worstPrice float64) *UpdateMasterOrderParamsService {
+	s.worstPrice = &worstPrice
+	return s
+}
+
 // TailOrderProtection set tailOrderProtection
 func (s *UpdateMasterOrderParamsService) TailOrderProtection(tailOrderProtection bool) *UpdateMasterOrderParamsService {
 	s.tailOrderProtection = &tailOrderProtection
@@ -1122,6 +1130,9 @@ func (s *UpdateMasterOrderParamsService) Do(ctx context.Context, opts ...Request
 	}
 	if s.limitPrice != nil {
 		m["limitPrice"] = *s.limitPrice
+	}
+	if s.worstPrice != nil {
+		m["worstPrice"] = *s.worstPrice
 	}
 	if s.tailOrderProtection != nil {
 		m["tailOrderProtection"] = *s.tailOrderProtection
