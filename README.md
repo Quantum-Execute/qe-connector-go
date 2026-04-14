@@ -1070,7 +1070,8 @@ if result.Success {
 | worstPrice | float64 | 否 | 最高/低允许交易的价格，买入时为最高价，卖出时为最低价。-1表示不限制 |
 | tailOrderProtection | bool | 否 | 尾单保护 |
 | mustComplete | bool | 否 | 是否必须完成 |
-| executionDurationSeconds | int32 | 否 | 执行时长（秒），必须大于10秒 |
+| executionDurationSeconds | int32 | 否 | 执行时长（秒），必须大于10秒。与 executionDuration 互斥 |
+| executionDuration | int32 | 否 | 执行时长（分钟），范围>=1。与 executionDurationSeconds 互斥 |
 
 **响应字段：**
 
@@ -1080,6 +1081,8 @@ if result.Success {
 | message | string | 修改结果消息 |
 
 **示例代码：**
+
+以秒为单位修改时长：
 
 ```go
 result, err := client.NewUpdateMasterOrderParamsService().
@@ -1099,6 +1102,15 @@ if result.Success {
 } else {
     log.Printf("母单参数修改失败：%s", result.Message)
 }
+```
+
+以分钟为单位修改时长：
+
+```go
+result, err := client.NewUpdateMasterOrderParamsService().
+    MasterOrderId("your-master-order-id").
+    ExecutionDuration(10).
+    Do(context.Background())
 ```
 
 #### 创建 ListenKey
