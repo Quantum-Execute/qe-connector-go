@@ -332,7 +332,7 @@ for _, api := range result.Items {
 | **时间参数** |
 | startTime | string  | 否 | 交易执行的启动时间，传入格式：ISO 8601(2025-09-03T01:30:00+08:00)，若不传入，则立即执行                                                                                                                              |
 | executionDuration | int32     | 否 | 订单最大执行时长，分钟，范围>=1                                                                                                                                                                          |
-| executionDurationSeconds | int32     | 否 | 执行时长（秒），仅 TWAP-1 使用。当提供此字段且>0时，优先使用此字段。必须大于10秒                                                                                                                                                     |
+| executionDurationSeconds | int32     | 否 | 执行时长（秒），所有策略（TWAP-1 / POV）均可使用。当提供此字段且>0时，优先使用此字段。必须大于10秒                                                                                                                                                     |
 | **TWAP/VWAP 算法参数** |
 | mustComplete | bool    | 否 | 是否一定要在executionDuration之内执行完毕，选false则不会追赶进度，默认：true                                                                                                                                        |
 | makerRateLimit | float64  | 否 | 要求maker占比超过该值，范围：0-1（包含0和1。输入0.1代表10%），默认：-1(算法智能计算推荐值执行)                                                                                                                                  |
@@ -503,7 +503,7 @@ if result.Success {
 | ├─ averagePrice        | float64 | 平均成交价                                                                                                                                                  |
 | ├─ status              | string  | 状态：NEW（创建，未执行）、WAITING（等待中）、PROCESSING（执行中，且未完成）、PAUSED（已暂停）、CANCEL（取消中）、CANCELLED（已取消）、COMPLETED（已完成）、REJECTED（已拒绝）、EXPIRED（已过期）、CANCEL_REJECT（取消被拒绝） |
 | ├─ executionDuration   | int32   | 执行时长（分钟）                                                                                                                                               |
-| ├─ executionDurationSeconds | int32   | 执行时长（秒，仅 TWAP-1 使用；当提供且>0时优先使用；必须>10秒）                                                                                                                         |
+| ├─ executionDurationSeconds | int32   | 执行时长（秒，所有策略均可使用；当提供且>0时优先使用；必须>10秒）                                                                                                                         |
 | ├─ priceLimit          | float64 | 价格限制                                                                                                                                                   |
 | ├─ startTime           | string  | 开始时间                                                                                                                                                   |
 | ├─ endTime             | string  | 结束时间                                                                                                                                                   |
@@ -633,7 +633,7 @@ for _, order := range orders.Items {
 | averagePrice | float64 | 平均成交价 |
 | status | string | 状态：NEW（创建，未执行）、WAITING（等待中）、PROCESSING（执行中，且未完成）、PAUSED（已暂停）、CANCEL（取消中）、CANCELLED（已取消）、COMPLETED（已完成）、REJECTED（已拒绝）、EXPIRED（已过期）、CANCEL_REJECT（取消被拒绝） |
 | executionDuration | int32 | 执行时长（分钟） |
-| executionDurationSeconds | int32 | 执行时长（秒，仅 TWAP-1 使用；当提供且>0时优先使用；必须>10秒） |
+| executionDurationSeconds | int32 | 执行时长（秒，所有策略均可使用；当提供且>0时优先使用；必须>10秒） |
 | priceLimit | float64 | 价格限制 |
 | startTime | string | 开始时间 |
 | endTime | string | 结束时间 |
@@ -1856,7 +1856,6 @@ handlers := &qe.WebSocketEventHandlers{
 | 枚举常量 | 枚举值 | 描述 |
 |----------|--------|------|
 | `trading_enums.StrategyTypeTWAP1` | TWAP-1 | TWAP策略版本1 |
-| `trading_enums.StrategyTypeTWAP2` | TWAP-2 | TWAP策略版本2 |
 | `trading_enums.StrategyTypePOV` | POV | POV策略 |
 
 **交易对市场类型 (TradingPairMarketType)：**

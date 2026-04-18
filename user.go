@@ -569,7 +569,7 @@ func (s *CreateMasterOrderService) ExecutionDuration(executionDuration int32) *C
 
 // ExecutionDurationSeconds set executionDurationSeconds
 //
-// Note: Only used for TWAP-1. When provided and > 0, it takes precedence over executionDuration (minutes).
+// Note: Available for all strategies (TWAP-1 / POV). When provided and > 0, it takes precedence over executionDuration (minutes).
 // It must be greater than 10 seconds.
 func (s *CreateMasterOrderService) ExecutionDurationSeconds(executionDurationSeconds int32) *CreateMasterOrderService {
 	s.executionDurationSeconds = &executionDurationSeconds
