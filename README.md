@@ -501,6 +501,7 @@ if result.Success {
 | ├─ totalQuantity       | float64 | 按币数下单的总数量，按金额下单时，该值为0，下单数量应查看orderNotional字段                                                                                                           |         
 | ├─ filledQuantity      | float64 | 1.按币数下单时，该字段代表已成交币数。2.按金额下单时，该字段值代表已成交金额                                                                                                               |      
 | ├─ averagePrice        | float64 | 平均成交价                                                                                                                                                  |
+| ├─ commission          | map[string]string | 手续费，key 为手续费单位，value 为数量；无手续费时为空                                                                                                                    |
 | ├─ status              | string  | 状态：NEW（创建，未执行）、WAITING（等待中）、PROCESSING（执行中，且未完成）、PAUSED（已暂停）、CANCEL（取消中）、CANCELLED（已取消）、COMPLETED（已完成）、REJECTED（已拒绝）、EXPIRED（已过期）、CANCEL_REJECT（取消被拒绝） |
 | ├─ executionDuration   | int32   | 执行时长（分钟）                                                                                                                                               |
 | ├─ executionDurationSeconds | int32   | 执行时长（秒，所有策略均可使用；当提供且>0时优先使用；必须>10秒）                                                                                                                         |
@@ -631,6 +632,7 @@ for _, order := range orders.Items {
 | totalQuantity | float64 | 按币数下单的总数量，按金额下单时，该值为0，下单数量应查看orderNotional字段 |
 | filledQuantity | float64 | 1.按币数下单时，该字段代表已成交币数。2.按金额下单时，该字段值代表已成交金额 |
 | averagePrice | float64 | 平均成交价 |
+| commission | map[string]string | 手续费，key 为手续费单位，value 为数量；无手续费时为空 |
 | status | string | 状态：NEW（创建，未执行）、WAITING（等待中）、PROCESSING（执行中，且未完成）、PAUSED（已暂停）、CANCEL（取消中）、CANCELLED（已取消）、COMPLETED（已完成）、REJECTED（已拒绝）、EXPIRED（已过期）、CANCEL_REJECT（取消被拒绝） |
 | executionDuration | int32 | 执行时长（分钟） |
 | executionDurationSeconds | int32 | 执行时长（秒，所有策略均可使用；当提供且>0时优先使用；必须>10秒） |

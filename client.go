@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -66,6 +67,35 @@ func (c *Client) debug(format string, v ...interface{}) {
 	}
 }
 
+// newDefaultHTTPClient 返回一个针对 QE 服务端做了连接复用优化的 *http.Client。
+//
+// 调整动机：标准库的 http.DefaultClient/DefaultTransport 默认 MaxIdleConnsPerHost=2，
+// 在 SDK 高频调用 /strategy-api 时，超过 2 个并发就会落到"每次新建 TCP+TLS"的慢路径，
+// 单次 TLS 握手在跨 region 场景可贡献 100ms+ 的尾延迟。
+//
+// 这里把每 host 的空闲连接池放到 64，复用 90s，配合 NGINX 侧的 keepalive 64
+// 与 TLS session resumption（ssl_session_cache 50m / timeout 1d）形成完整闭环。
+func newDefaultHTTPClient() *http.Client {
+	transport := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   10 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          200,
+		MaxIdleConnsPerHost:   64,
+		MaxConnsPerHost:       0,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+	return &http.Client{
+		Timeout:   30 * time.Second,
+		Transport: transport,
+	}
+}
+
 // NewClient Create client function for initialising new QE client
 func NewClient(apiKey string, secretKey string, baseURL ...string) *Client {
 	u := "https://api.quantumexecute.com"
@@ -78,7 +108,7 @@ func NewClient(apiKey string, secretKey string, baseURL ...string) *Client {
 		APIKey:     apiKey,
 		SecretKey:  secretKey,
 		BaseURL:    u,
-		HTTPClient: http.DefaultClient,
+		HTTPClient: newDefaultHTTPClient(),
 		Logger:     log.New(os.Stderr, Name, log.LstdFlags),
 	}
 }
@@ -95,7 +125,7 @@ func NewTestClient(apiKey string, secretKey string, baseURL ...string) *Client {
 		APIKey:     apiKey,
 		SecretKey:  secretKey,
 		BaseURL:    u,
-		HTTPClient: http.DefaultClient,
+		HTTPClient: newDefaultHTTPClient(),
 		Logger:     log.New(os.Stderr, Name, log.LstdFlags),
 		Debug:      true,
 	}
