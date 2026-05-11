@@ -53,6 +53,16 @@ func main() {
 
 ## API 参考
 
+> **关于 V2 strategy-api 接口**：从 v1.2.0 起，SDK 同时支持 V1 与 V2 两套接口。V1 方法 / 类型完全保留，V2 方法统一加 `V2` 后缀（如 `NewCreateMasterOrderV2Service`、`MasterOrderV2Info`）。新业务建议使用 V2，旧业务无需改动。V2 字段约定与 [`backend-server/docs/frontend-v2-api-upgrade.md`](https://github.com/Quantum-Execute/backend-server) 完全一致：
+>
+> - JSON 命名使用 lowerCamelCase；
+> - Decimal 类字段（数量、金额、价格、比例）以 `string` 传输；
+> - 创建母单使用 `startTimeMs`（epoch 毫秒），列表查询时间用 RFC3339 字符串；
+> - `pageSize` 最大 100（SDK 自动 clamp）；
+> - 母单状态枚举：`NEW`、`WAITING`、`PROCESSING`、`PAUSED`、`CANCELLED`、`COMPLETED`、`REJECTED`、`EXPIRED`。
+
+详见下文 “V2 strategy-api 接口” 章节。
+
 ### 公共接口
 
 #### 服务器连通性测试
@@ -1162,6 +1172,125 @@ if result.Success {
 - 每个用户同时只能有一个有效的 ListenKey
 - ListenKey 用于 WebSocket 连接，可以实时接收交易数据推送
 - 建议在应用启动时创建 ListenKey，并在接近过期时重新创建
+
+## V2 strategy-api 接口
+
+V2 在 `/strategy-api/.../v2/...` 下独立提供一套出入参更整洁、命名更统一的接口；V1 不受影响。下表汇总 V2 SDK 入口：
+
+| 方法 | HTTP | 路径 | 用途 |
+| --- | --- | --- | --- |
+| `client.NewListExchangeApisV2Service()` | GET | `/strategy-api/user/exchange/v2/exchange-apis` | 查询绑定的交易所 API Key（V2，隐藏 `verificationMethod`/`balance`） |
+| `client.NewCreateMasterOrderV2Service()` | POST | `/strategy-api/user/trading/v2/master-orders` | 创建母单（V2，去掉 `algorithmType/strategyType`，统一 `executionDurationSeconds`、`startTimeMs`、`worstPrice`） |
+| `client.NewGetMasterOrdersV2Service()` | GET | `/strategy-api/user/trading/v2/master-orders` | 母单列表（V2 字段） |
+| `client.NewGetMasterOrderDetailV2Service()` | GET | `/strategy-api/user/trading/v2/master-orders/{id}` | 母单详情（V2 字段） |
+| `client.NewGetMasterOrderDetailByClientOrderIdV2Service()` | GET | `/strategy-api/user/trading/v2/master-orders/by-client-order-id/{id}` | 通过 `clientOrderId` 查母单 |
+| `client.NewGetOrderFillsV2Service()` | GET | `/strategy-api/user/trading/v2/order-fills` | 子单 / 成交列表（V2 字段） |
+| `client.NewCancelMasterOrderV2Service()` | PUT | `/strategy-api/user/trading/v2/master-orders/{id}/cancel` | 取消母单 |
+| `client.NewPauseMasterOrderV2Service()` | PUT | `/strategy-api/user/trading/v2/master-orders/{id}/pause` | 暂停母单 |
+| `client.NewResumeMasterOrderV2Service()` | PUT | `/strategy-api/user/trading/v2/master-orders/{id}/resume` | 恢复母单 |
+| `client.NewUpdateMasterOrderParamsV2Service()` | PUT | `/strategy-api/user/trading/v2/master-orders/{id}/update` | 修改运行中母单参数 |
+| `client.NewBatchCancelMasterOrdersV2Service()` | PUT | `/strategy-api/user/trading/v2/master-orders/batch-cancel` | 批量取消母单 |
+
+### 字段约定
+
+- **Decimal 字符串**：`totalQuantity`、`orderNotional`、`worstPrice`、`makerRateLimit`、`povLimit`、`povMinLimit`、`upTolerance`、`lowTolerance` 等以字符串传输（`"0.5"`、`"70000"`）。
+- **时间**：创建母单 `startTimeMs` 为 `int64`（epoch 毫秒）；列表 / 成交列表查询用 `startTime` / `endTime` RFC3339 字符串。
+- **母单状态**：使用 `qe.MasterOrderStatusV2` 枚举（`NEW` / `WAITING` / `PROCESSING` / `PAUSED` / `CANCELLED` / `COMPLETED` / `REJECTED` / `EXPIRED`）。
+- **价格字段**：建议只用 `WorstPrice("...")`；旧的 `LimitPrice` / `LimitPriceString` 在 V2 仍被接受但已废弃。
+- **`pageSize` 最大 100**：SDK 自动 clamp，超过会按 100 处理。
+- **请求方式**：V2 POST/PUT 走 `application/json` body，签名规则与 V1（`HMAC-SHA256(secret, "<key1>=<v1>&...timestamp=...">`）一致——SDK 内部把 JSON 顶层字段与 query 中的 `timestamp` 合并后再 `Encode()` 签名，对调用者透明。
+
+### 创建母单 V2 → 查询 → 取消（端到端示例）
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"time"
+
+	qe "github.com/Quantum-Execute/qe-connector-go"
+	"github.com/Quantum-Execute/qe-connector-go/constant/enums/trading_enums"
+)
+
+func main() {
+	ctx := context.Background()
+	client := qe.NewClient("your-api-key", "your-api-secret")
+
+	// 1) 创建一个 V2 TWAP 母单（SPOT，120s，按数量 1000 DOGE 卖出）
+	created, err := client.NewCreateMasterOrderV2Service().
+		ApiKeyId("binding-uuid").
+		Exchange(trading_enums.ExchangeBinance).
+		MarketType(trading_enums.MarketTypeSpot).
+		Symbol("DOGEUSDT").
+		Side(trading_enums.OrderSideSell).
+		Algorithm(trading_enums.AlgorithmTWAP).
+		ExecutionDurationSeconds(120).
+		// 立即执行：不设 StartTimeMs。
+		TotalQuantity("1000").
+		WorstPrice("0.05").
+		MustComplete(true).
+		ClientOrderId(fmt.Sprintf("GO-V2-%d", time.Now().UnixMilli())).
+		Notes("v2 sdk demo").
+		Do(ctx)
+	if err != nil {
+		log.Fatalf("create v2: %v", err)
+	}
+	log.Printf("created masterOrderId=%s status=%s clientOrderId=%s",
+		created.MasterOrderId, created.Status, created.ClientOrderId)
+
+	// 2) 查询正在执行的 V2 母单列表
+	list, err := client.NewGetMasterOrdersV2Service().
+		Page(1).
+		PageSize(20).
+		Status(qe.MasterOrderStatusV2Processing).
+		Do(ctx)
+	if err != nil {
+		log.Fatalf("list v2: %v", err)
+	}
+	for _, o := range list.Items {
+		log.Printf("- %s %s %s/%s side=%s status=%s cumFilled=%s/%s avg=%s",
+			o.MasterOrderId, o.Algorithm, o.BaseCurrency, o.QuoteCurrency,
+			o.Side, o.Status, o.CumFilledQty, o.TotalQuantity, o.AvgFilledPrice)
+	}
+
+	// 3) 取消该母单
+	cancelled, err := client.NewCancelMasterOrderV2Service().
+		MasterOrderId(created.MasterOrderId).
+		Reason("end-to-end demo cleanup").
+		Do(ctx)
+	if err != nil {
+		log.Fatalf("cancel v2: %v", err)
+	}
+	log.Printf("cancel v2: success=%t message=%s", cancelled.Success, cancelled.Message)
+}
+```
+
+### 修改运行中母单参数 V2
+
+```go
+result, err := client.NewUpdateMasterOrderParamsV2Service().
+    MasterOrderId("mo_xxx").
+    WorstPrice("65000").
+    UpTolerance("0.1").
+    ExecutionDurationSeconds(600).
+    Do(ctx)
+```
+
+### 批量取消 V2
+
+```go
+result, err := client.NewBatchCancelMasterOrdersV2Service().
+    MasterOrderIds([]string{"mo_a", "mo_b", "mo_c"}).
+    Reason("portfolio rebalance").
+    Do(ctx)
+log.Printf("ok=%d failed=%d", result.SuccessCount, len(result.FailedOrders))
+for _, f := range result.FailedOrders {
+    log.Printf("  - %s: %s", f.MasterOrderId, f.Reason)
+}
+```
 
 ## 错误处理
 

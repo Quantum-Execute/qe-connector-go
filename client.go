@@ -406,3 +406,72 @@ func (c *Client) NewGetHyperliquidSpotBalanceService() *GetHyperliquidSpotBalanc
 func (c *Client) NewGetHyperliquidPositionsService() *GetHyperliquidPositionsService {
 	return &GetHyperliquidPositionsService{c: c}
 }
+
+// ============================================================================
+//  V2 service constructors (`/strategy-api/.../v2/...`).
+//
+//  V2 is additive: V1 services keep working unchanged. See user_v2.go for
+//  the V2 request/response types and `frontend-v2-api-upgrade.md` for the
+//  field-by-field reference.
+// ============================================================================
+
+// NewListExchangeApisV2Service creates a service for `GET /user/exchange/v2/exchange-apis`.
+func (c *Client) NewListExchangeApisV2Service() *ListExchangeApisV2Service {
+	return &ListExchangeApisV2Service{c: c}
+}
+
+// NewCreateMasterOrderV2Service creates a service for `POST /user/trading/v2/master-orders`.
+func (c *Client) NewCreateMasterOrderV2Service() *CreateMasterOrderV2Service {
+	return &CreateMasterOrderV2Service{c: c}
+}
+
+// NewGetMasterOrdersV2Service creates a service for `GET /user/trading/v2/master-orders`.
+func (c *Client) NewGetMasterOrdersV2Service() *GetMasterOrdersV2Service {
+	return &GetMasterOrdersV2Service{c: c}
+}
+
+// NewGetMasterOrderDetailV2Service creates a service for `GET /user/trading/v2/master-orders/{masterOrderId}`.
+func (c *Client) NewGetMasterOrderDetailV2Service() *GetMasterOrderDetailV2Service {
+	return &GetMasterOrderDetailV2Service{c: c}
+}
+
+// NewGetMasterOrderDetailByClientOrderIdV2Service creates a service for
+// `GET /user/trading/v2/master-orders/by-client-order-id/{clientOrderId}`.
+func (c *Client) NewGetMasterOrderDetailByClientOrderIdV2Service() *GetMasterOrderDetailByClientOrderIdV2Service {
+	return &GetMasterOrderDetailByClientOrderIdV2Service{c: c}
+}
+
+// NewGetOrderFillsV2Service creates a service for `GET /user/trading/v2/order-fills`.
+func (c *Client) NewGetOrderFillsV2Service() *GetOrderFillsV2Service {
+	return &GetOrderFillsV2Service{c: c}
+}
+
+// NewCancelMasterOrderV2Service creates a service for
+// `PUT /user/trading/v2/master-orders/{masterOrderId}/cancel`.
+func (c *Client) NewCancelMasterOrderV2Service() *CancelMasterOrderV2Service {
+	return &CancelMasterOrderV2Service{c: c}
+}
+
+// NewPauseMasterOrderV2Service creates a service for
+// `PUT /user/trading/v2/master-orders/{masterOrderId}/pause`.
+func (c *Client) NewPauseMasterOrderV2Service() *PauseMasterOrderV2Service {
+	return &PauseMasterOrderV2Service{c: c}
+}
+
+// NewResumeMasterOrderV2Service creates a service for
+// `PUT /user/trading/v2/master-orders/{masterOrderId}/resume`.
+func (c *Client) NewResumeMasterOrderV2Service() *ResumeMasterOrderV2Service {
+	return &ResumeMasterOrderV2Service{c: c}
+}
+
+// NewUpdateMasterOrderParamsV2Service creates a service for
+// `PUT /user/trading/v2/master-orders/{masterOrderId}/update`.
+func (c *Client) NewUpdateMasterOrderParamsV2Service() *UpdateMasterOrderParamsV2Service {
+	return &UpdateMasterOrderParamsV2Service{c: c}
+}
+
+// NewBatchCancelMasterOrdersV2Service creates a service for
+// `PUT /user/trading/v2/master-orders/batch-cancel`.
+func (c *Client) NewBatchCancelMasterOrdersV2Service() *BatchCancelMasterOrdersV2Service {
+	return &BatchCancelMasterOrdersV2Service{c: c}
+}
