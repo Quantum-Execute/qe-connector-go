@@ -187,6 +187,75 @@ func TestV2SignAlignment_BatchCancel(t *testing.T) {
 	}
 }
 
+func TestGetMasterOrdersV2DecodesTradingAccount(t *testing.T) {
+	const apiKey = "test-api-key"
+	const secret = "test-secret"
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"code":200,"message":{"items":[{"masterOrderId":"mo_account","tradingAccount":"pm-account","status":"PROCESSING"}],"total":1,"page":1,"pageSize":20}}`))
+	}))
+	defer srv.Close()
+
+	client := NewClient(apiKey, secret, srv.URL)
+	reply, err := client.NewGetMasterOrdersV2Service().
+		Page(1).
+		PageSize(20).
+		Do(context.Background())
+	if err != nil {
+		t.Fatalf("Do() error = %v", err)
+	}
+	if len(reply.Items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(reply.Items))
+	}
+	if reply.Items[0].TradingAccount != "pm-account" {
+		t.Fatalf("TradingAccount = %q, want %q", reply.Items[0].TradingAccount, "pm-account")
+	}
+}
+
+func TestV2ListServicesRejectOversizedPageSize(t *testing.T) {
+	c := NewClient("k", "s", "http://localhost:0")
+
+	cases := []struct {
+		name string
+		run  func() error
+	}{
+		{
+			name: "exchange APIs",
+			run: func() error {
+				_, err := c.NewListExchangeApisV2Service().PageSize(101).Do(context.Background())
+				return err
+			},
+		},
+		{
+			name: "master orders",
+			run: func() error {
+				_, err := c.NewGetMasterOrdersV2Service().PageSize(101).Do(context.Background())
+				return err
+			},
+		},
+		{
+			name: "order fills",
+			run: func() error {
+				_, err := c.NewGetOrderFillsV2Service().PageSize(101).Do(context.Background())
+				return err
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.run()
+			if err == nil {
+				t.Fatal("expected oversized pageSize error")
+			}
+			if !strings.Contains(err.Error(), "pageSize 101 exceeds V2 limit 100") {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+	}
+}
+
 // TestCreateMasterOrderV2Validation covers SDK-side validation messages so
 // callers fail fast before hitting the network.
 func TestCreateMasterOrderV2Validation(t *testing.T) {

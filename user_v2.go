@@ -68,8 +68,16 @@ const (
 	MasterOrderStatusV2Expired   MasterOrderStatusV2 = "EXPIRED"
 )
 
-// pageSizeMaxV2 is the V2 list-endpoint page size cap (server clamps to 100).
+// pageSizeMaxV2 is the V2 list-endpoint page size cap. Values above this
+// limit are rejected by V2 APIs instead of being silently clamped.
 const pageSizeMaxV2 = 100
+
+func validatePageSizeV2(pageSize *int32) error {
+	if pageSize != nil && *pageSize > pageSizeMaxV2 {
+		return fmt.Errorf("pageSize %d exceeds V2 limit %d", *pageSize, pageSizeMaxV2)
+	}
+	return nil
+}
 
 // callAPIV2WithJSONBody sends a V2 POST/PUT request with a JSON body and
 // signs the request the same way the backend's `apiAuth.CollectParamsAndBodyForSign`
@@ -253,11 +261,8 @@ func (s *ListExchangeApisV2Service) Page(page int32) *ListExchangeApisV2Service 
 	return s
 }
 
-// PageSize sets the number of items per page (server caps at 100).
+// PageSize sets the number of items per page. Values above 100 are rejected.
 func (s *ListExchangeApisV2Service) PageSize(pageSize int32) *ListExchangeApisV2Service {
-	if pageSize > pageSizeMaxV2 {
-		pageSize = pageSizeMaxV2
-	}
 	s.pageSize = &pageSize
 	return s
 }
@@ -270,6 +275,9 @@ func (s *ListExchangeApisV2Service) Exchange(exchange trading_enums.Exchange) *L
 
 // Do sends the request.
 func (s *ListExchangeApisV2Service) Do(ctx context.Context, opts ...RequestOption) (res *ListExchangeApisV2Reply, err error) {
+	if err := validatePageSizeV2(s.pageSize); err != nil {
+		return nil, err
+	}
 	r := &request{
 		method:   http.MethodGet,
 		endpoint: v2ExchangeApisEndpoint,
@@ -726,11 +734,8 @@ func (s *GetMasterOrdersV2Service) Page(page int32) *GetMasterOrdersV2Service {
 	return s
 }
 
-// PageSize sets the per-page count (server caps at 100).
+// PageSize sets the per-page count. Values above 100 are rejected.
 func (s *GetMasterOrdersV2Service) PageSize(pageSize int32) *GetMasterOrdersV2Service {
-	if pageSize > pageSizeMaxV2 {
-		pageSize = pageSizeMaxV2
-	}
 	s.pageSize = &pageSize
 	return s
 }
@@ -790,6 +795,9 @@ func (s *GetMasterOrdersV2Service) MasterOrderId(id string) *GetMasterOrdersV2Se
 
 // Do sends the request.
 func (s *GetMasterOrdersV2Service) Do(ctx context.Context, opts ...RequestOption) (res *GetMasterOrdersV2Reply, err error) {
+	if err := validatePageSizeV2(s.pageSize); err != nil {
+		return nil, err
+	}
 	r := &request{
 		method:   http.MethodGet,
 		endpoint: v2MasterOrdersEndpoint,
@@ -847,14 +855,15 @@ type GetMasterOrdersV2Reply struct {
 }
 
 // MasterOrderV2Info is the V2 master order DTO. Fields hidden by V2
-// (`apiKey`, `apiKeyName`, `tradingAccount`, `ticktimeInt`, `ticktimeMs`,
-// `submitTimeMs`, `algoStartTimeMs`, ...) are intentionally absent.
+// (`apiKey`, `apiKeyName`, `ticktimeInt`, `ticktimeMs`, `submitTimeMs`,
+// `algoStartTimeMs`, ...) are intentionally absent.
 type MasterOrderV2Info struct {
 	CreatedAt                string            `json:"createdAt"`
 	UpdatedAt                string            `json:"updatedAt"`
 	MasterOrderId            string            `json:"masterOrderId"`
 	ClientOrderId            string            `json:"clientOrderId"`
 	ApiKeyUuid               string            `json:"apiKeyUuid"`
+	TradingAccount           string            `json:"tradingAccount"`
 	Exchange                 string            `json:"exchange"`
 	MarketType               string            `json:"marketType"`
 	Category                 string            `json:"category"`
@@ -989,11 +998,8 @@ func (s *GetOrderFillsV2Service) Page(page int32) *GetOrderFillsV2Service {
 	return s
 }
 
-// PageSize sets the per-page count (server caps at 100).
+// PageSize sets the per-page count. Values above 100 are rejected.
 func (s *GetOrderFillsV2Service) PageSize(pageSize int32) *GetOrderFillsV2Service {
-	if pageSize > pageSizeMaxV2 {
-		pageSize = pageSizeMaxV2
-	}
 	s.pageSize = &pageSize
 	return s
 }
@@ -1042,6 +1048,9 @@ func (s *GetOrderFillsV2Service) EndTime(endTime string) *GetOrderFillsV2Service
 
 // Do sends the request.
 func (s *GetOrderFillsV2Service) Do(ctx context.Context, opts ...RequestOption) (res *GetOrderFillsV2Reply, err error) {
+	if err := validatePageSizeV2(s.pageSize); err != nil {
+		return nil, err
+	}
 	r := &request{
 		method:   http.MethodGet,
 		endpoint: v2OrderFillsEndpoint,
