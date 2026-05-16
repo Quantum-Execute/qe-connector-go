@@ -841,7 +841,7 @@ func (s *GetMasterOrdersV2Service) Do(ctx context.Context, opts ...RequestOption
 // GetMasterOrdersV2Reply is the response of `GET /user/trading/v2/master-orders`.
 type GetMasterOrdersV2Reply struct {
 	Items    []MasterOrderV2Info `json:"items"`
-	Total    string              `json:"total"`
+	Total    int32               `json:"total"`
 	Page     int32               `json:"page"`
 	PageSize int32               `json:"pageSize"`
 }
@@ -1090,7 +1090,7 @@ func (s *GetOrderFillsV2Service) Do(ctx context.Context, opts ...RequestOption) 
 // GetOrderFillsV2Reply is the response of `GET /user/trading/v2/order-fills`.
 type GetOrderFillsV2Reply struct {
 	Items    []OrderFillV2Info `json:"items"`
-	Total    string            `json:"total"`
+	Total    int32             `json:"total"`
 	Page     int32             `json:"page"`
 	PageSize int32             `json:"pageSize"`
 }

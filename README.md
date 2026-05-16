@@ -158,7 +158,7 @@ log.Printf("服务器时间: %s", time.Unix(timestamp/1000, 0).Format("2006-01-0
 | ├─ updatedAt | string | 更新时间 |
 | page | int | 当前页码 |
 | pageSize | int | 每页数量 |
-| total | string | 总数 |
+| total | int | 总数 |
 
 **示例代码：**
 
