@@ -35,9 +35,9 @@ const (
 //
 // 母单状态在 V2 接口里的语义按用途分两类：
 //
-//  1. 详情 / 推送返回：保留全部 8 个细分状态（NEW / WAITING / PROCESSING /
-//     PAUSED / CANCELLED / COMPLETED / REJECTED / EXPIRED），SDK 接收端按需
-//     展示。
+//  1. 详情 / 推送返回：保留全部 9 个细分状态（NEW / WAITING / PROCESSING /
+//     PAUSED / CANCELLED / COMPLETED / COMPLETED_WITHTAIL / REJECTED /
+//     EXPIRED），SDK 接收端按需展示。
 //  2. 列表查询过滤（GetMasterOrdersV2Service.Status）：后端只接受 2 个聚合
 //     值：
 //     - `NEW`       → 所有"运行中"母单（NEW / WAITING / PROCESSING / PAUSED
@@ -63,9 +63,10 @@ const (
 	// MasterOrderStatusV2Completed 在列表查询里表示"非运行中"聚合（包含
 	// CANCELLED / COMPLETED / COMPLETED_WITHTAIL / REJECTED / EXPIRED）；
 	// 在详情/推送里只代表"正常完成"。
-	MasterOrderStatusV2Completed MasterOrderStatusV2 = "COMPLETED"
-	MasterOrderStatusV2Rejected  MasterOrderStatusV2 = "REJECTED"
-	MasterOrderStatusV2Expired   MasterOrderStatusV2 = "EXPIRED"
+	MasterOrderStatusV2Completed         MasterOrderStatusV2 = "COMPLETED"
+	MasterOrderStatusV2CompletedWithTail MasterOrderStatusV2 = "COMPLETED_WITHTAIL"
+	MasterOrderStatusV2Rejected          MasterOrderStatusV2 = "REJECTED"
+	MasterOrderStatusV2Expired           MasterOrderStatusV2 = "EXPIRED"
 )
 
 // pageSizeMaxV2 is the V2 list-endpoint page size cap. Values above this
@@ -201,7 +202,13 @@ func (c *Client) callAPIV2WithJSONBody(ctx context.Context, method, endpoint str
 		return nil, err
 	}
 	if respData.Code != 200 {
-		return nil, errors.New(respData.Reason)
+		return nil, &handlers.APIError{
+			Code:       respData.Code,
+			Reason:     respData.Reason,
+			Message:    respData.Message,
+			TraceId:    respData.TraceId,
+			ServerTime: respData.ServerTime,
+		}
 	}
 	return json.Marshal(respData.Message)
 }
@@ -241,6 +248,21 @@ func scalarToSignString(v interface{}) (string, bool) {
 	default:
 		return "", false
 	}
+}
+
+func defaultPovLimitForAlgorithmV2(algorithm trading_enums.Algorithm) string {
+	if algorithm == trading_enums.AlgorithmPOV {
+		return "0.05"
+	}
+	return "1"
+}
+
+func validatePovLimitV2(value string) error {
+	f, err := strconv.ParseFloat(value, 64)
+	if err != nil || f < 0 || f > 1 {
+		return errors.New("povLimit must be between 0 and 1")
+	}
+	return nil
 }
 
 // =============================================================================
@@ -353,8 +375,6 @@ type CreateMasterOrderV2Service struct {
 	reduceOnly               *bool
 	isMargin                 *bool
 	worstPrice               *string
-	limitPrice               *string
-	limitPriceString         *string
 	mustComplete             *bool
 	makerRateLimit           *string
 	povLimit                 *string
@@ -451,29 +471,9 @@ func (s *CreateMasterOrderV2Service) IsMargin(isMargin bool) *CreateMasterOrderV
 	return s
 }
 
-// WorstPrice sets the worst acceptable price as a decimal string. V2 prefers
-// `worstPrice`; the legacy `limitPrice` / `limitPriceString` fields are still
-// accepted for back-compat but should not be used by new code.
+// WorstPrice sets the worst acceptable price as a decimal string.
 func (s *CreateMasterOrderV2Service) WorstPrice(price string) *CreateMasterOrderV2Service {
 	s.worstPrice = &price
-	return s
-}
-
-// LimitPrice (legacy compat) sets the worst price as a decimal string. Use
-// `WorstPrice` in new code.
-//
-// Deprecated: use WorstPrice in V2.
-func (s *CreateMasterOrderV2Service) LimitPrice(price string) *CreateMasterOrderV2Service {
-	s.limitPrice = &price
-	return s
-}
-
-// LimitPriceString (legacy compat) — kept only because the V2 backend still
-// accepts it; new code should use `WorstPrice`.
-//
-// Deprecated: use WorstPrice in V2.
-func (s *CreateMasterOrderV2Service) LimitPriceString(price string) *CreateMasterOrderV2Service {
-	s.limitPriceString = &price
 	return s
 }
 
@@ -587,17 +587,15 @@ func (s *CreateMasterOrderV2Service) Do(ctx context.Context, opts ...RequestOpti
 	if s.worstPrice != nil {
 		m["worstPrice"] = *s.worstPrice
 	}
-	if s.limitPrice != nil {
-		m["limitPrice"] = *s.limitPrice
-	}
-	if s.limitPriceString != nil {
-		m["limitPriceString"] = *s.limitPriceString
-	}
 	if s.mustComplete != nil {
 		m["mustComplete"] = *s.mustComplete
 	}
 	if s.makerRateLimit != nil {
 		m["makerRateLimit"] = *s.makerRateLimit
+	}
+	if s.povLimit == nil {
+		defaultPovLimit := defaultPovLimitForAlgorithmV2(s.algorithm)
+		s.povLimit = &defaultPovLimit
 	}
 	if s.povLimit != nil {
 		m["povLimit"] = *s.povLimit
@@ -665,6 +663,11 @@ func (s *CreateMasterOrderV2Service) validate() error {
 	}
 	if *s.executionDurationSeconds <= 10 {
 		return errors.New("executionDurationSeconds must be greater than 10")
+	}
+	if s.povLimit != nil {
+		if err := validatePovLimitV2(*s.povLimit); err != nil {
+			return err
+		}
 	}
 	hasQty := s.totalQuantity != nil
 	hasNotional := s.orderNotional != nil
@@ -744,7 +747,7 @@ func (s *GetMasterOrdersV2Service) PageSize(pageSize int32) *GetMasterOrdersV2Se
 //
 // 注意：列表查询的过滤只接受聚合值 MasterOrderStatusV2New（=运行中所有状态）
 // 或 MasterOrderStatusV2Completed（=非运行中所有状态）。传其它细分状态会被
-// 后端按字面值匹配，结果通常为空——这一点与详情/推送里返回的 8 种细分状态
+// 后端按字面值匹配，结果通常为空——这一点与详情/推送里返回的 9 种细分状态
 // 不同（详见 `MasterOrderStatusV2` 类型注释）。
 func (s *GetMasterOrdersV2Service) Status(status MasterOrderStatusV2) *GetMasterOrdersV2Service {
 	s.status = &status
@@ -871,34 +874,34 @@ type MasterOrderV2Info struct {
 	BaseCurrency             string            `json:"baseCurrency"`
 	QuoteCurrency            string            `json:"quoteCurrency"`
 	Side                     string            `json:"side"`
-	MarginType               string            `json:"marginType"`
-	ReduceOnly               bool              `json:"reduceOnly"`
-	IsMargin                 bool              `json:"isMargin"`
+	MarginType               *string           `json:"marginType,omitempty"`
+	ReduceOnly               *bool             `json:"reduceOnly,omitempty"`
+	IsMargin                 *bool             `json:"isMargin,omitempty"`
 	Algorithm                string            `json:"algorithm"`
-	TotalQuantity            string            `json:"totalQuantity"`
-	OrderNotional            string            `json:"orderNotional"`
-	StartTimeMs              FlexInt64         `json:"startTimeMs"`
-	ExecutionDurationSeconds FlexInt64         `json:"executionDurationSeconds"`
-	WorstPrice               string            `json:"worstPrice"`
-	MustComplete             bool              `json:"mustComplete"`
-	MakerRateLimit           string            `json:"makerRateLimit"`
-	PovLimit                 string            `json:"povLimit"`
-	PovMinLimit              string            `json:"povMinLimit"`
-	UpTolerance              string            `json:"upTolerance"`
-	LowTolerance             string            `json:"lowTolerance"`
-	StrictUpBound            bool              `json:"strictUpBound"`
-	TailOrderProtection      bool              `json:"tailOrderProtection"`
-	EnableMake               bool              `json:"enableMake"`
-	IsTargetPosition         bool              `json:"isTargetPosition"`
+	TotalQuantity            *string           `json:"totalQuantity,omitempty"`
+	OrderNotional            *string           `json:"orderNotional,omitempty"`
+	StartTimeMs              *FlexInt64        `json:"startTimeMs,omitempty"`
+	ExecutionDurationSeconds *FlexInt64        `json:"executionDurationSeconds,omitempty"`
+	WorstPrice               *string           `json:"worstPrice,omitempty"`
+	MustComplete             *bool             `json:"mustComplete,omitempty"`
+	MakerRateLimit           *string           `json:"makerRateLimit,omitempty"`
+	PovLimit                 *string           `json:"povLimit,omitempty"`
+	PovMinLimit              *string           `json:"povMinLimit,omitempty"`
+	UpTolerance              *string           `json:"upTolerance,omitempty"`
+	LowTolerance             *string           `json:"lowTolerance,omitempty"`
+	StrictUpBound            *bool             `json:"strictUpBound,omitempty"`
+	TailOrderProtection      *bool             `json:"tailOrderProtection,omitempty"`
+	EnableMake               *bool             `json:"enableMake,omitempty"`
+	IsTargetPosition         *bool             `json:"isTargetPosition,omitempty"`
 	Notes                    string            `json:"notes"`
 	Status                   string            `json:"status"`
 	RejectReason             string            `json:"rejectReason"`
-	FinishedMs               FlexInt64         `json:"finishedMs"`
-	CumFilledQty             string            `json:"cumFilledQty"`
-	CumFilledNotional        string            `json:"cumFilledNotional"`
-	AvgFilledPrice           string            `json:"avgFilledPrice"`
-	MakerRate                string            `json:"makerRate"`
-	CompletedQuantity        string            `json:"completedQuantity"`
+	FinishedMs               *FlexInt64        `json:"finishedMs,omitempty"`
+	CumFilledQty             *string           `json:"cumFilledQty,omitempty"`
+	CumFilledNotional        *string           `json:"cumFilledNotional,omitempty"`
+	AvgFilledPrice           *string           `json:"avgFilledPrice,omitempty"`
+	MakerRate                *string           `json:"makerRate,omitempty"`
+	CompletedQuantity        *string           `json:"completedQuantity,omitempty"`
 	Commission               map[string]string `json:"commission"`
 }
 
@@ -1277,7 +1280,6 @@ type UpdateMasterOrderParamsV2Service struct {
 	strictUpBound            *bool
 	povLimit                 *string
 	povMinLimit              *string
-	limitPrice               *string
 	worstPrice               *string
 	tailOrderProtection      *bool
 	mustComplete             *bool
@@ -1344,14 +1346,6 @@ func (s *UpdateMasterOrderParamsV2Service) PovMinLimit(rate string) *UpdateMaste
 	return s
 }
 
-// LimitPrice (legacy) updates the worst price (decimal string).
-//
-// Deprecated: prefer WorstPrice in V2.
-func (s *UpdateMasterOrderParamsV2Service) LimitPrice(price string) *UpdateMasterOrderParamsV2Service {
-	s.limitPrice = &price
-	return s
-}
-
 // WorstPrice updates the worst acceptable price (decimal string).
 func (s *UpdateMasterOrderParamsV2Service) WorstPrice(price string) *UpdateMasterOrderParamsV2Service {
 	s.worstPrice = &price
@@ -1384,6 +1378,11 @@ func (s *UpdateMasterOrderParamsV2Service) Do(ctx context.Context, opts ...Reque
 	if s.executionDurationSeconds != nil && *s.executionDurationSeconds <= 10 {
 		return nil, errors.New("executionDurationSeconds must be greater than 10")
 	}
+	if s.povLimit != nil {
+		if err := validatePovLimitV2(*s.povLimit); err != nil {
+			return nil, err
+		}
+	}
 	endpoint := fmt.Sprintf("%s/%s/update", v2MasterOrdersEndpoint, s.masterOrderId)
 	body := params{}
 	if s.totalQuantity != nil {
@@ -1412,9 +1411,6 @@ func (s *UpdateMasterOrderParamsV2Service) Do(ctx context.Context, opts ...Reque
 	}
 	if s.povMinLimit != nil {
 		body["povMinLimit"] = *s.povMinLimit
-	}
-	if s.limitPrice != nil {
-		body["limitPrice"] = *s.limitPrice
 	}
 	if s.worstPrice != nil {
 		body["worstPrice"] = *s.worstPrice
