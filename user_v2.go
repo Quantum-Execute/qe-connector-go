@@ -338,7 +338,9 @@ type ListExchangeApisV2Reply struct {
 // ExchangeApiV2Info is the per-row payload for V2 exchange API keys. V2 hides
 // `verificationMethod` and `balance` compared with V1.
 type ExchangeApiV2Info struct {
-	Id               string `json:"id"`
+	ApiKeyId         string `json:"apiKeyId"`
+	ApiKeyUuid       string `json:"-"` // Deprecated: use ApiKeyId.
+	Id               string `json:"-"` // Deprecated: use ApiKeyId.
 	CreatedAt        string `json:"createdAt"`
 	AccountName      string `json:"accountName"`
 	Exchange         string `json:"exchange"`
@@ -348,6 +350,37 @@ type ExchangeApiV2Info struct {
 	IsTradingEnabled bool   `json:"isTradingEnabled"`
 	IsDefault        bool   `json:"isDefault"`
 	IsPm             bool   `json:"isPm"`
+}
+
+func (i *ExchangeApiV2Info) UnmarshalJSON(data []byte) error {
+	type alias ExchangeApiV2Info
+	var aux struct {
+		*alias
+		LegacyApiKeyUuid string `json:"apiKeyUuid"`
+		LegacyId         string `json:"id"`
+	}
+	aux.alias = (*alias)(i)
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	if i.ApiKeyId == "" {
+		if aux.LegacyApiKeyUuid != "" {
+			i.ApiKeyId = aux.LegacyApiKeyUuid
+		} else {
+			i.ApiKeyId = aux.LegacyId
+		}
+	}
+	if i.ApiKeyUuid == "" {
+		i.ApiKeyUuid = i.ApiKeyId
+	}
+	if i.Id == "" {
+		if aux.LegacyId != "" {
+			i.Id = aux.LegacyId
+		} else {
+			i.Id = i.ApiKeyId
+		}
+	}
+	return nil
 }
 
 // =============================================================================
@@ -725,7 +758,7 @@ type GetMasterOrdersV2Service struct {
 	exchange      *string
 	symbol        *string
 	algorithm     *trading_enums.Algorithm
-	apiKeyUuid    *string
+	apiKeyId      *string
 	startTime     *string
 	endTime       *string
 	masterOrderId *string
@@ -772,10 +805,15 @@ func (s *GetMasterOrdersV2Service) Algorithm(algorithm trading_enums.Algorithm) 
 	return s
 }
 
-// ApiKeyUuid filters by exchange API key binding ID.
-func (s *GetMasterOrdersV2Service) ApiKeyUuid(uuid string) *GetMasterOrdersV2Service {
-	s.apiKeyUuid = &uuid
+// ApiKeyId filters by exchange API key binding ID.
+func (s *GetMasterOrdersV2Service) ApiKeyId(apiKeyId string) *GetMasterOrdersV2Service {
+	s.apiKeyId = &apiKeyId
 	return s
+}
+
+// ApiKeyUuid is kept for source compatibility. New code should use ApiKeyId.
+func (s *GetMasterOrdersV2Service) ApiKeyUuid(uuid string) *GetMasterOrdersV2Service {
+	return s.ApiKeyId(uuid)
 }
 
 // StartTime sets the lower bound (RFC3339 / ISO 8601).
@@ -825,8 +863,8 @@ func (s *GetMasterOrdersV2Service) Do(ctx context.Context, opts ...RequestOption
 	if s.algorithm != nil {
 		m["algorithm"] = string(*s.algorithm)
 	}
-	if s.apiKeyUuid != nil {
-		m["apiKeyUuid"] = *s.apiKeyUuid
+	if s.apiKeyId != nil {
+		m["apiKeyId"] = *s.apiKeyId
 	}
 	if s.startTime != nil {
 		m["startTime"] = *s.startTime
@@ -865,7 +903,8 @@ type MasterOrderV2Info struct {
 	UpdatedAt                string            `json:"updatedAt"`
 	MasterOrderId            string            `json:"masterOrderId"`
 	ClientOrderId            string            `json:"clientOrderId"`
-	ApiKeyUuid               string            `json:"apiKeyUuid"`
+	ApiKeyId                 string            `json:"apiKeyId"`
+	ApiKeyUuid               string            `json:"-"` // Deprecated: use ApiKeyId.
 	TradingAccount           string            `json:"tradingAccount"`
 	Exchange                 string            `json:"exchange"`
 	MarketType               string            `json:"marketType"`
@@ -903,6 +942,25 @@ type MasterOrderV2Info struct {
 	MakerRate                *string           `json:"makerRate,omitempty"`
 	CompletedQuantity        *string           `json:"completedQuantity,omitempty"`
 	Commission               map[string]string `json:"commission"`
+}
+
+func (i *MasterOrderV2Info) UnmarshalJSON(data []byte) error {
+	type alias MasterOrderV2Info
+	var aux struct {
+		*alias
+		LegacyApiKeyUuid string `json:"apiKeyUuid"`
+	}
+	aux.alias = (*alias)(i)
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	if i.ApiKeyId == "" {
+		i.ApiKeyId = aux.LegacyApiKeyUuid
+	}
+	if i.ApiKeyUuid == "" {
+		i.ApiKeyUuid = i.ApiKeyId
+	}
+	return nil
 }
 
 // GetMasterOrderDetailV2Service fetches a master order detail by `masterOrderId`.

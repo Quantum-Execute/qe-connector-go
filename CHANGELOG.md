@@ -48,7 +48,7 @@
   - 工厂方法：`client.NewCreateMasterOrderV2Service()`
 - **母单列表 V2**：新增 `GetMasterOrdersV2Service`、`GetMasterOrdersV2Reply`、`MasterOrderV2Info`，对应
   `GET /strategy-api/user/trading/v2/master-orders`。
-  - 出参 `apiKeyUuid` / `tradingAccount` / `baseCurrency` / `quoteCurrency` / `startTimeMs`(int64) / `worstPrice` /
+  - 出参 `apiKeyId` / `tradingAccount` / `baseCurrency` / `quoteCurrency` / `startTimeMs`(int64) / `worstPrice` /
     `cumFilledQty` / `cumFilledNotional` / `avgFilledPrice` / `finishedMs`(int64) /
     `commission`(map[string]string) / `rejectReason` 等；V2 隐藏字段（`apiKey`/`apiKeyName`/
     `ticktimeMs`/`completionProgress`/...）已不再返回。

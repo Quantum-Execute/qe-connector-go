@@ -197,7 +197,7 @@ func TestGetMasterOrdersV2DecodesTradingAccount(t *testing.T) {
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"code":200,"message":{"items":[{"masterOrderId":"mo_account","tradingAccount":"pm-account","status":"PROCESSING"}],"total":1,"page":1,"pageSize":20}}`))
+		_, _ = w.Write([]byte(`{"code":200,"message":{"items":[{"masterOrderId":"mo_account","apiKeyId":"binding-id","tradingAccount":"pm-account","status":"PROCESSING"}],"total":1,"page":1,"pageSize":20}}`))
 	}))
 	defer srv.Close()
 
@@ -214,6 +214,79 @@ func TestGetMasterOrdersV2DecodesTradingAccount(t *testing.T) {
 	}
 	if reply.Items[0].TradingAccount != "pm-account" {
 		t.Fatalf("TradingAccount = %q, want %q", reply.Items[0].TradingAccount, "pm-account")
+	}
+	if reply.Items[0].ApiKeyId != "binding-id" {
+		t.Fatalf("ApiKeyId = %q, want %q", reply.Items[0].ApiKeyId, "binding-id")
+	}
+}
+
+func TestV2InfoDecodesLegacyAPIKeyAliases(t *testing.T) {
+	var exchange ExchangeApiV2Info
+	if err := json.Unmarshal([]byte(`{"apiKeyUuid":"legacy-binding","id":"old-id"}`), &exchange); err != nil {
+		t.Fatalf("decode exchange api: %v", err)
+	}
+	if exchange.ApiKeyId != "legacy-binding" {
+		t.Fatalf("ApiKeyId = %q, want legacy-binding", exchange.ApiKeyId)
+	}
+	if exchange.ApiKeyUuid != "legacy-binding" {
+		t.Fatalf("ApiKeyUuid = %q, want legacy-binding", exchange.ApiKeyUuid)
+	}
+	if exchange.Id != "old-id" {
+		t.Fatalf("Id = %q, want old-id", exchange.Id)
+	}
+
+	var order MasterOrderV2Info
+	if err := json.Unmarshal([]byte(`{"apiKeyUuid":"legacy-order-binding","masterOrderId":"mo_legacy"}`), &order); err != nil {
+		t.Fatalf("decode master order: %v", err)
+	}
+	if order.ApiKeyId != "legacy-order-binding" {
+		t.Fatalf("ApiKeyId = %q, want legacy-order-binding", order.ApiKeyId)
+	}
+	if order.ApiKeyUuid != "legacy-order-binding" {
+		t.Fatalf("ApiKeyUuid = %q, want legacy-order-binding", order.ApiKeyUuid)
+	}
+
+	var currentExchange ExchangeApiV2Info
+	if err := json.Unmarshal([]byte(`{"apiKeyId":"binding-id"}`), &currentExchange); err != nil {
+		t.Fatalf("decode current exchange api: %v", err)
+	}
+	if currentExchange.ApiKeyUuid != "binding-id" || currentExchange.Id != "binding-id" {
+		t.Fatalf("legacy exchange aliases = (%q, %q), want binding-id", currentExchange.ApiKeyUuid, currentExchange.Id)
+	}
+
+	var currentOrder MasterOrderV2Info
+	if err := json.Unmarshal([]byte(`{"apiKeyId":"order-binding"}`), &currentOrder); err != nil {
+		t.Fatalf("decode current master order: %v", err)
+	}
+	if currentOrder.ApiKeyUuid != "order-binding" {
+		t.Fatalf("legacy order ApiKeyUuid = %q, want order-binding", currentOrder.ApiKeyUuid)
+	}
+}
+
+func TestGetMasterOrdersV2UsesApiKeyIdFilter(t *testing.T) {
+	const apiKey = "test-api-key"
+	const secret = "test-secret"
+
+	var gotQuery url.Values
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotQuery = r.URL.Query()
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"code":200,"message":{"items":[],"total":0,"page":1,"pageSize":20}}`))
+	}))
+	defer srv.Close()
+
+	client := NewClient(apiKey, secret, srv.URL)
+	_, err := client.NewGetMasterOrdersV2Service().
+		ApiKeyId("binding-id").
+		Do(context.Background())
+	if err != nil {
+		t.Fatalf("Do() error = %v", err)
+	}
+	if got := gotQuery.Get("apiKeyId"); got != "binding-id" {
+		t.Fatalf("apiKeyId query = %q, want binding-id; raw query=%s", got, gotQuery.Encode())
+	}
+	if got := gotQuery.Get("apiKeyUuid"); got != "" {
+		t.Fatalf("apiKeyUuid query should not be sent, got %q; raw query=%s", got, gotQuery.Encode())
 	}
 }
 
