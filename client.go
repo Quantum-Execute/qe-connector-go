@@ -6,7 +6,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -241,7 +240,13 @@ func (c *Client) callAPI(ctx context.Context, r *request, opts ...RequestOption)
 	}
 	if respData.Code != 200 {
 		c.debug("response status code: %d", respData.Code)
-		return nil, errors.New(respData.Reason)
+		return nil, &handlers.APIError{
+			Code:       respData.Code,
+			Reason:     respData.Reason,
+			Message:    respData.Message,
+			TraceId:    respData.TraceId,
+			ServerTime: respData.ServerTime,
+		}
 	}
 	return json.Marshal(respData.Message)
 }

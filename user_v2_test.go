@@ -6,6 +6,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -15,6 +16,9 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/Quantum-Execute/qe-connector-go/constant/enums/trading_enums"
+	"github.com/Quantum-Execute/qe-connector-go/handlers"
 )
 
 // signLikeBackend reproduces the backend's signing pipeline
@@ -311,5 +315,178 @@ func TestCreateMasterOrderV2Validation(t *testing.T) {
 				t.Fatalf("err = %v, want substring %q", err, tc.want)
 			}
 		})
+	}
+}
+
+func TestCreateMasterOrderV2AppliesAlgorithmPovLimitDefaults(t *testing.T) {
+	const apiKey = "test-api-key"
+	const secret = "test-secret"
+
+	cases := []struct {
+		name      string
+		algorithm trading_enums.Algorithm
+		want      string
+	}{
+		{name: "TWAP", algorithm: trading_enums.AlgorithmTWAP, want: "1"},
+		{name: "VWAP", algorithm: trading_enums.AlgorithmVWAP, want: "1"},
+		{name: "POV", algorithm: trading_enums.AlgorithmPOV, want: "0.05"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var body map[string]interface{}
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+					t.Fatalf("decode request body: %v", err)
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"code":200,"message":{"masterOrderId":"mo_default","status":"NEW","clientOrderId":"cli_default"}}`))
+			}))
+			defer srv.Close()
+
+			client := NewClient(apiKey, secret, srv.URL)
+			_, err := client.NewCreateMasterOrderV2Service().
+				ApiKeyId("binding-uuid").
+				Exchange(trading_enums.ExchangeBinance).
+				MarketType(trading_enums.MarketTypeSpot).
+				Symbol("DOGEUSDT").
+				Side(trading_enums.OrderSideBuy).
+				Algorithm(tc.algorithm).
+				ExecutionDurationSeconds(15).
+				OrderNotional("6").
+				Do(context.Background())
+			if err != nil {
+				t.Fatalf("Do() error = %v", err)
+			}
+			if got := body["povLimit"]; got != tc.want {
+				t.Fatalf("povLimit = %#v, want %q; body=%#v", got, tc.want, body)
+			}
+		})
+	}
+}
+
+func TestCreateMasterOrderV2RejectsPovLimitAboveOne(t *testing.T) {
+	c := NewClient("k", "s", "http://localhost:0")
+
+	_, err := c.NewCreateMasterOrderV2Service().
+		ApiKeyId("binding-uuid").
+		Exchange(trading_enums.ExchangeBinance).
+		MarketType(trading_enums.MarketTypeSpot).
+		Symbol("DOGEUSDT").
+		Side(trading_enums.OrderSideBuy).
+		Algorithm(trading_enums.AlgorithmTWAP).
+		ExecutionDurationSeconds(15).
+		OrderNotional("6").
+		PovLimit("1.01").
+		Do(context.Background())
+	if err == nil || !strings.Contains(err.Error(), "povLimit must be between 0 and 1") {
+		t.Fatalf("err = %v, want povLimit range error", err)
+	}
+}
+
+func TestMasterOrderStatusV2IncludesCompletedWithTail(t *testing.T) {
+	if MasterOrderStatusV2CompletedWithTail != MasterOrderStatusV2("COMPLETED_WITHTAIL") {
+		t.Fatalf("MasterOrderStatusV2CompletedWithTail = %q", MasterOrderStatusV2CompletedWithTail)
+	}
+}
+
+func TestV2JSONBodyBusinessErrorReturnsAPIErrorEnvelope(t *testing.T) {
+	const apiKey = "test-api-key"
+	const secret = "test-secret"
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"code":9004,"reason":"INVALID_PARAMETER","message":"master order not found","traceId":"trace-123","serverTime":1735372000000}`))
+	}))
+	defer srv.Close()
+
+	client := NewClient(apiKey, secret, srv.URL)
+	_, err := client.NewCancelMasterOrderV2Service().
+		MasterOrderId("DOGEUSDT-20990101-0000000000000000000").
+		Reason("go fake cancel").
+		Do(context.Background())
+	if err == nil {
+		t.Fatal("expected business API error")
+	}
+
+	var apiErr *handlers.APIError
+	if !errors.As(err, &apiErr) {
+		t.Fatalf("err type = %T, want *handlers.APIError", err)
+	}
+	if apiErr.Code != 9004 || apiErr.Reason != "INVALID_PARAMETER" ||
+		apiErr.Message != "master order not found" || apiErr.TraceId != "trace-123" ||
+		apiErr.ServerTime != 1735372000000 {
+		t.Fatalf("unexpected API error envelope: %#v", apiErr)
+	}
+}
+
+func TestV2GETBusinessErrorReturnsAPIErrorEnvelope(t *testing.T) {
+	const apiKey = "test-api-key"
+	const secret = "test-secret"
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"code":9004,"reason":"INVALID_PARAMETER","message":"master order not found","traceId":"trace-get-123","serverTime":1735372000001}`))
+	}))
+	defer srv.Close()
+
+	client := NewClient(apiKey, secret, srv.URL)
+	_, err := client.NewGetMasterOrderDetailV2Service().
+		MasterOrderId("DOGEUSDT-20990101-0000000000000000000").
+		Do(context.Background())
+	if err == nil {
+		t.Fatal("expected business API error")
+	}
+
+	var apiErr *handlers.APIError
+	if !errors.As(err, &apiErr) {
+		t.Fatalf("err type = %T, want *handlers.APIError", err)
+	}
+	if apiErr.Code != 9004 || apiErr.Reason != "INVALID_PARAMETER" ||
+		apiErr.Message != "master order not found" || apiErr.TraceId != "trace-get-123" ||
+		apiErr.ServerTime != 1735372000001 {
+		t.Fatalf("unexpected API error envelope: %#v", apiErr)
+	}
+}
+
+func TestMasterOrderV2InfoOptionalFieldsPreserveMissingVsZero(t *testing.T) {
+	raw := []byte(`{
+		"masterOrderId":"mo_spot",
+		"status":"COMPLETED",
+		"mustComplete":false,
+		"tailOrderProtection":true,
+		"enableMake":false,
+		"isTargetPosition":false,
+		"startTimeMs":"1735372000000",
+		"executionDurationSeconds":15
+	}`)
+
+	var info MasterOrderV2Info
+	if err := json.Unmarshal(raw, &info); err != nil {
+		t.Fatalf("Unmarshal() error = %v", err)
+	}
+
+	if info.MarginType != nil || info.ReduceOnly != nil || info.OrderNotional != nil ||
+		info.LowTolerance != nil || info.PovMinLimit != nil || info.StrictUpBound != nil ||
+		info.UpTolerance != nil {
+		t.Fatalf("optional absent fields should stay nil: %#v", info)
+	}
+	if info.MustComplete == nil || *info.MustComplete != false {
+		t.Fatalf("MustComplete = %#v, want explicit false pointer", info.MustComplete)
+	}
+	if info.TailOrderProtection == nil || *info.TailOrderProtection != true {
+		t.Fatalf("TailOrderProtection = %#v, want explicit true pointer", info.TailOrderProtection)
+	}
+	if info.EnableMake == nil || *info.EnableMake != false {
+		t.Fatalf("EnableMake = %#v, want explicit false pointer", info.EnableMake)
+	}
+	if info.IsTargetPosition == nil || *info.IsTargetPosition != false {
+		t.Fatalf("IsTargetPosition = %#v, want explicit false pointer", info.IsTargetPosition)
+	}
+	if info.StartTimeMs == nil || info.StartTimeMs.Int64() != 1735372000000 {
+		t.Fatalf("StartTimeMs = %#v, want 1735372000000", info.StartTimeMs)
+	}
+	if info.ExecutionDurationSeconds == nil || info.ExecutionDurationSeconds.Int64() != 15 {
+		t.Fatalf("ExecutionDurationSeconds = %#v, want 15", info.ExecutionDurationSeconds)
 	}
 }

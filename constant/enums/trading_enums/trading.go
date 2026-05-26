@@ -57,6 +57,7 @@ const (
 	ExchangeLTP         Exchange = "LTP"         // LTP
 	ExchangeDeribit     Exchange = "Deribit"     // Deribit
 	ExchangeHyperliquid Exchange = "Hyperliquid" // Hyperliquid
+	ExchangeBybit       Exchange = "Bybit"       // Bybit
 )
 
 // 币对品种枚举（与市场类型对应）
