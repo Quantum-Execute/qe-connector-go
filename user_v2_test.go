@@ -220,6 +220,66 @@ func TestGetMasterOrdersV2DecodesTradingAccount(t *testing.T) {
 	}
 }
 
+func TestGetTCAAnalysisV2SendsExpectedQueryAndDecodesFields(t *testing.T) {
+	const apiKey = "test-api-key"
+	const secret = "test-secret"
+
+	var rawQuery string
+	client := NewClient(apiKey, secret, "https://example.test")
+	client.do = func(r *http.Request) (*http.Response, error) {
+		rawQuery = r.URL.RawQuery
+		if r.URL.Path != "/user/trading/v2/tca-analysis" {
+			t.Fatalf("path = %s, want /user/trading/v2/tca-analysis", r.URL.Path)
+		}
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+			Body:       io.NopCloser(strings.NewReader(`{"code":200,"message":[{"masterOrderId":"mo_tca","strategy":"TWAP","category":"perp","orderQuantity":0.5,"orderNotional":48500,"executionRate":1,"filledQuantity":0.5,"takerFilledNotional":12000,"makerFilledNotional":36500,"filledNotional":48500,"makerRate":0.75,"childOrderCount":12,"averageFillPrice":97000,"Slippage":1.2,"Slippage_pct":0.0001,"TWAP_Slippage_pct":0.0002,"VWAP_Slippage_pct":0.0003,"Spread":0.0004,"Slippage_pct_Fartouch":0.0005,"TWAP_Slippage_pct_Fartouch":0.0006,"VWAP_Slippage_pct_Fartouch":0.0007,"IntervalReturn":0.001,"ParticipationRate":0.02,"FeeSaving_pct":0.0008,"Date":"20260527"}]}`)),
+		}, nil
+	}
+
+	items, err := client.NewGetTCAAnalysisV2Service().
+		Symbol("BTCUSDT").
+		Category("perp").
+		Strategy("TWAP").
+		ApiKeyId("binding-id").
+		StartTime(1735372000000).
+		EndTime(1735458400000).
+		Do(context.Background())
+	if err != nil {
+		t.Fatalf("Do() error = %v", err)
+	}
+	query, err := url.ParseQuery(rawQuery)
+	if err != nil {
+		t.Fatalf("parse query: %v", err)
+	}
+	for key, want := range map[string]string{
+		"symbol":    "BTCUSDT",
+		"category":  "perp",
+		"strategy":  "TWAP",
+		"apiKeyId":  "binding-id",
+		"startTime": "1735372000000",
+		"endTime":   "1735458400000",
+	} {
+		if got := query.Get(key); got != want {
+			t.Fatalf("query %s = %q, want %q (raw %s)", key, got, want, rawQuery)
+		}
+	}
+	if len(items) != 1 {
+		t.Fatalf("expected 1 TCA item, got %d", len(items))
+	}
+	item := items[0]
+	if item.MasterOrderId != "mo_tca" || item.Strategy != "TWAP" || item.Category != "perp" {
+		t.Fatalf("unexpected TCA identity fields: %#v", item)
+	}
+	if item.OrderQuantity != 0.5 || item.ChildOrderCount != 12 || item.SlippagePct != 0.0001 || item.TwapSlippagePct != 0.0002 {
+		t.Fatalf("unexpected TCA numeric fields: %#v", item)
+	}
+	if item.Date != "20260527" {
+		t.Fatalf("Date = %q, want 20260527", item.Date)
+	}
+}
+
 func TestV2InfoDecodesLegacyAPIKeyAliases(t *testing.T) {
 	var exchange ExchangeApiV2Info
 	if err := json.Unmarshal([]byte(`{"apiKeyUuid":"legacy-binding","id":"old-id"}`), &exchange); err != nil {

@@ -451,6 +451,11 @@ func (c *Client) NewGetOrderFillsV2Service() *GetOrderFillsV2Service {
 	return &GetOrderFillsV2Service{c: c}
 }
 
+// NewGetTCAAnalysisV2Service creates a service for `GET /user/trading/v2/tca-analysis`.
+func (c *Client) NewGetTCAAnalysisV2Service() *GetTCAAnalysisV2Service {
+	return &GetTCAAnalysisV2Service{c: c}
+}
+
 // NewCancelMasterOrderV2Service creates a service for
 // `PUT /user/trading/v2/master-orders/{masterOrderId}/cancel`.
 func (c *Client) NewCancelMasterOrderV2Service() *CancelMasterOrderV2Service {

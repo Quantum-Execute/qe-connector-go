@@ -26,6 +26,7 @@ const (
 	v2ExchangeApisEndpoint   = "/user/exchange/v2/exchange-apis"
 	v2MasterOrdersEndpoint   = "/user/trading/v2/master-orders"
 	v2OrderFillsEndpoint     = "/user/trading/v2/order-fills"
+	v2TCAAnalysisEndpoint    = "/user/trading/v2/tca-analysis"
 	v2BatchCancelEndpoint    = "/user/trading/v2/master-orders/batch-cancel"
 	v2MasterOrdersByClientId = "/user/trading/v2/master-orders/by-client-order-id"
 )
@@ -1193,6 +1194,138 @@ type OrderFillV2Info struct {
 	Quantity         FlexDecimalString `json:"quantity"`
 	CreatedAt        string            `json:"createdAt"`
 	UpdatedAt        string            `json:"updatedAt"`
+}
+
+// =============================================================================
+//  /user/trading/v2/tca-analysis (GET)
+// =============================================================================
+
+// GetTCAAnalysisV2Service queries post-trade TCA analysis results.
+type GetTCAAnalysisV2Service struct {
+	c         *Client
+	symbol    *string
+	category  *string
+	strategy  *string
+	apiKeyId  *string
+	startTime *int64
+	endTime   *int64
+}
+
+// Symbol filters by trading pair.
+func (s *GetTCAAnalysisV2Service) Symbol(symbol string) *GetTCAAnalysisV2Service {
+	s.symbol = &symbol
+	return s
+}
+
+// Category filters by trading category: spot, perp, or perp_cm.
+func (s *GetTCAAnalysisV2Service) Category(category string) *GetTCAAnalysisV2Service {
+	s.category = &category
+	return s
+}
+
+// Strategy filters by execution algorithm: TWAP, VWAP, or POV.
+func (s *GetTCAAnalysisV2Service) Strategy(strategy string) *GetTCAAnalysisV2Service {
+	s.strategy = &strategy
+	return s
+}
+
+// ApiKeyId filters by exchange API key binding ID. Comma-separated IDs are
+// supported by the backend.
+func (s *GetTCAAnalysisV2Service) ApiKeyId(apiKeyId string) *GetTCAAnalysisV2Service {
+	s.apiKeyId = &apiKeyId
+	return s
+}
+
+// ApiKeyUuid is kept for source compatibility. New code should use ApiKeyId.
+func (s *GetTCAAnalysisV2Service) ApiKeyUuid(uuid string) *GetTCAAnalysisV2Service {
+	return s.ApiKeyId(uuid)
+}
+
+// StartTime sets the lower bound in epoch milliseconds.
+func (s *GetTCAAnalysisV2Service) StartTime(startTime int64) *GetTCAAnalysisV2Service {
+	s.startTime = &startTime
+	return s
+}
+
+// EndTime sets the upper bound in epoch milliseconds.
+func (s *GetTCAAnalysisV2Service) EndTime(endTime int64) *GetTCAAnalysisV2Service {
+	s.endTime = &endTime
+	return s
+}
+
+// Do sends the request. Successful strategy-api responses return the TCA
+// result array directly from `message`.
+func (s *GetTCAAnalysisV2Service) Do(ctx context.Context, opts ...RequestOption) (res []*TCAAnalysisV2Info, err error) {
+	r := &request{
+		method:   http.MethodGet,
+		endpoint: v2TCAAnalysisEndpoint,
+		secType:  secTypeSigned,
+	}
+	m := params{}
+	if s.symbol != nil {
+		m["symbol"] = *s.symbol
+	}
+	if s.category != nil {
+		m["category"] = *s.category
+	}
+	if s.strategy != nil {
+		m["strategy"] = *s.strategy
+	}
+	if s.apiKeyId != nil {
+		m["apiKeyId"] = *s.apiKeyId
+	}
+	if s.startTime != nil {
+		m["startTime"] = *s.startTime
+	}
+	if s.endTime != nil {
+		m["endTime"] = *s.endTime
+	}
+	r.setParams(m)
+	data, err := s.c.callAPI(ctx, r, opts...)
+	if err != nil {
+		return nil, err
+	}
+	res = make([]*TCAAnalysisV2Info, 0)
+	if len(data) == 0 {
+		return res, nil
+	}
+	if err := json.Unmarshal(data, &res); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// TCAAnalysisV2Info is a single V2 TCA analysis row.
+type TCAAnalysisV2Info struct {
+	MasterOrderId           string  `json:"masterOrderId"`
+	StartTime               string  `json:"startTime"`
+	EndTime                 string  `json:"endTime"`
+	FinishedTime            string  `json:"finishedTime"`
+	Strategy                string  `json:"strategy"`
+	Category                string  `json:"category"`
+	OrderQuantity           float64 `json:"orderQuantity"`
+	OrderNotional           float64 `json:"orderNotional"`
+	ArrivalPrice            float64 `json:"arrivalPrice"`
+	ExecutionRate           float64 `json:"executionRate"`
+	FilledQuantity          float64 `json:"filledQuantity"`
+	TakerFilledNotional     float64 `json:"takerFilledNotional"`
+	MakerFilledNotional     float64 `json:"makerFilledNotional"`
+	FilledNotional          float64 `json:"filledNotional"`
+	MakerRate               float64 `json:"makerRate"`
+	ChildOrderCount         int32   `json:"childOrderCount"`
+	AverageFillPrice        float64 `json:"averageFillPrice"`
+	Slippage                float64 `json:"Slippage"`
+	SlippagePct             float64 `json:"Slippage_pct"`
+	TwapSlippagePct         float64 `json:"TWAP_Slippage_pct"`
+	VwapSlippagePct         float64 `json:"VWAP_Slippage_pct"`
+	Spread                  float64 `json:"Spread"`
+	SlippagePctFartouch     float64 `json:"Slippage_pct_Fartouch"`
+	TwapSlippagePctFartouch float64 `json:"TWAP_Slippage_pct_Fartouch"`
+	VwapSlippagePctFartouch float64 `json:"VWAP_Slippage_pct_Fartouch"`
+	IntervalReturn          float64 `json:"IntervalReturn"`
+	ParticipationRate       float64 `json:"ParticipationRate"`
+	FeeSavingPct            float64 `json:"FeeSaving_pct"`
+	Date                    string  `json:"Date"`
 }
 
 // =============================================================================
