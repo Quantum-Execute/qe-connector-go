@@ -4,6 +4,7 @@ import "time"
 
 // ClientMessageType 客户端消息类型
 type ClientMessageType string
+type ClientProtocolVersion string
 
 const (
 	ClientDataType            ClientMessageType = "data"
@@ -11,6 +12,9 @@ const (
 	ClientErrorType           ClientMessageType = "error"
 	ClientMasterDetailType    ClientMessageType = "master_data"
 	ClientOrderFillDetailType ClientMessageType = "order_data"
+
+	ClientProtocolV1 ClientProtocolVersion = "v1"
+	ClientProtocolV2 ClientProtocolVersion = "v2"
 )
 
 // ClientPushMessage 客户端推送消息

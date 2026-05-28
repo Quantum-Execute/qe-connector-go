@@ -1208,6 +1208,34 @@ type CreateListenKeyReply struct {
 	Message   string `json:"message"`
 }
 
+// CreateListenKeyV2Service creates a listen key through the V2 route.
+type CreateListenKeyV2Service struct {
+	c *Client
+}
+
+func (s *CreateListenKeyV2Service) endpoint() string {
+	return "/user/trading/v2/listen-key"
+}
+
+// Do send request.
+func (s *CreateListenKeyV2Service) Do(ctx context.Context, opts ...RequestOption) (res *CreateListenKeyReply, err error) {
+	r := &request{
+		method:   http.MethodPost,
+		endpoint: s.endpoint(),
+		secType:  secTypeSigned,
+	}
+	data, err := s.c.callAPI(ctx, r, opts...)
+	if err != nil {
+		return nil, err
+	}
+	res = new(CreateListenKeyReply)
+	err = json.Unmarshal(data, res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 // GetTcaAnalysisService get TCA analysis full data list
 type GetTcaAnalysisService struct {
 	c         *Client

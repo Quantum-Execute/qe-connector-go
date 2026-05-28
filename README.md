@@ -1147,8 +1147,8 @@ result, err := client.NewUpdateMasterOrderParamsService().
 **示例代码：**
 
 ```go
-// 创建 ListenKey
-result, err := client.NewCreateListenKeyService().
+// 创建 V2 ListenKey
+result, err := client.NewCreateListenKeyV2Service().
     Do(context.Background())
 
 if err != nil {
@@ -1160,8 +1160,9 @@ if result.Success {
     log.Printf("ListenKey: %s", result.ListenKey)
     log.Printf("过期时间: %s", result.ExpireAt)
     
-    // 使用 ListenKey 建立 WebSocket 连接
-    // wsURL := fmt.Sprintf("wss://api.quantumexecute.com/ws/%s", result.ListenKey)
+    // NewWebSocketService 默认连接 /api/ws/v2
+    // wsService := client.NewWebSocketService()
+    // _ = wsService.Connect(result.ListenKey)
 } else {
     log.Printf("ListenKey创建失败：%s", result.Message)
 }
@@ -1620,9 +1621,9 @@ func NewListenKeyManager(client *qe.Client) *ListenKeyManager {
 	return m
 }
 
-// 创建或刷新 ListenKey
+// 创建或刷新 V2 ListenKey
 func (m *ListenKeyManager) createListenKey() error {
-	result, err := m.client.NewCreateListenKeyService().
+	result, err := m.client.NewCreateListenKeyV2Service().
 		Do(context.Background())
 
 	if err != nil {
@@ -1886,7 +1887,7 @@ wsService := client.NewWebSocketService().
 
 **注意事项：**
 - Host 地址必须包含协议（`wss://` 或 `ws://`）
-- 确保自定义host支持相同的API路径格式：`/api/ws?listen_key={listenKey}`
+- 确保自定义host支持相同的API路径格式：`/api/ws/v2?listen_key={listenKey}`
 - 如果未设置自定义host，将使用默认地址：`wss://test.quantumexecute.com`
 
 #### 连接状态管理
@@ -2043,7 +2044,7 @@ handlers := &qe.WebSocketEventHandlers{
 ### 8. WebSocket 相关说明
 
 **WebSocket 连接地址：**
-- `wss://test.quantumexecute.com/api/ws?listen_key={listenKey}`
+- `wss://test.quantumexecute.com/api/ws/v2?listen_key={listenKey}`
 
 **支持的消息类型：**
 - 主订单状态更新（`master_order`）

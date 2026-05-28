@@ -289,6 +289,9 @@ func (c *Client) NewUpdateMasterOrderParamsService() *UpdateMasterOrderParamsSer
 func (c *Client) NewCreateListenKeyService() *CreateListenKeyService {
 	return &CreateListenKeyService{c: c}
 }
+func (c *Client) NewCreateListenKeyV2Service() *CreateListenKeyV2Service {
+	return &CreateListenKeyV2Service{c: c}
+}
 func (c *Client) NewGetTcaAnalysisService() *GetTcaAnalysisService {
 	return &GetTcaAnalysisService{c: c}
 }

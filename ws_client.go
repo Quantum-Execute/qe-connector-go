@@ -16,6 +16,7 @@ type WebSocketService struct {
 	c              *Client
 	listenKey      string
 	host           string
+	version        ClientProtocolVersion
 	conn           *websocket.Conn
 	handlers       *WebSocketEventHandlers
 	isConnected    bool
@@ -37,6 +38,7 @@ func NewWebSocketService(c *Client, host ...string) *WebSocketService {
 		reconnectDelay: 5 * time.Second,
 		pingInterval:   1 * time.Second,
 		pongTimeout:    10 * time.Second,
+		version:        ClientProtocolV2,
 		ctx:            ctx,
 		cancel:         cancel,
 	}
@@ -46,6 +48,14 @@ func NewWebSocketService(c *Client, host ...string) *WebSocketService {
 		ws.host = host[0]
 	}
 
+	return ws
+}
+
+// UseV1 switches the WebSocket service to the legacy /api/ws endpoint.
+func (ws *WebSocketService) UseV1() *WebSocketService {
+	ws.mu.Lock()
+	defer ws.mu.Unlock()
+	ws.version = ClientProtocolV1
 	return ws
 }
 
@@ -123,7 +133,11 @@ func (ws *WebSocketService) getWebSocketURL() string {
 		baseURL = ws.host
 	}
 
-	return fmt.Sprintf("%s/api/ws?listen_key=%s", baseURL, ws.listenKey)
+	path := "/api/ws/v2"
+	if ws.version == ClientProtocolV1 {
+		path = "/api/ws"
+	}
+	return fmt.Sprintf("%s%s?listen_key=%s", baseURL, path, ws.listenKey)
 }
 
 // readMessages 读取消息
