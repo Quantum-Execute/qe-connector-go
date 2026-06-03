@@ -1,7 +1,5 @@
 package qe_connector
 
-import "time"
-
 // ClientMessageType 客户端消息类型
 type ClientMessageType string
 type ClientProtocolVersion string
@@ -101,103 +99,78 @@ type BaseThirdPartyMessage struct {
 // WebSocketHandler 处理函数类型定义
 type WebSocketHandler func(data []byte) error
 
-// ---- 服务端推送的 DTO 结构（对应 backend MasterOrderDTO / OrderFillDTO） ----
+// ---- 服务端 V2 推送的 DTO 结构（对应 V2 API master_data / order_data 契约） ----
 
-// WsMasterOrderDetail 服务端通过 WS 推送的母单详情（master_data）
-// 字段与 backend-server MasterOrderDTO 一一对应，使用 snake_case JSON tag。
+// WsMasterOrderDetail 服务端通过 WS 推送的 V2 母单详情（master_data）。
+// 字段与 V2 API 契约一致，使用 lowerCamelCase JSON tag。
 type WsMasterOrderDetail struct {
-	ID                       uint64            `json:"id"`
-	CreatedAt                time.Time         `json:"created_at"`
-	UpdatedAt                time.Time         `json:"updated_at"`
-	MasterOrderID            string            `json:"master_order_id"`
-	UserUid                  uint64            `json:"user_uid"`
-	Algorithm                string            `json:"algorithm"`
+	CreatedAt                string            `json:"createdAt"`
+	UpdatedAt                string            `json:"updatedAt"`
+	MasterOrderID            string            `json:"masterOrderId"`
+	ClientOrderID            string            `json:"clientOrderId"`
+	ApiKeyID                 string            `json:"apiKeyId"`
+	TradingAccount           string            `json:"tradingAccount"`
 	Exchange                 string            `json:"exchange"`
-	MarketType               string            `json:"market_type"`
-	TradingAccount           string            `json:"trading_account"`
-	AccountName              *string           `json:"account_name"`
-	BaseCurrency             string            `json:"base_currency"`
-	QuoteCurrency            string            `json:"quote_currency"`
-	TradingPair              string            `json:"trading_pair"`
-	Side                     string            `json:"side"`
-	IsClosePosition          bool              `json:"is_close_position"`
-	TotalQuantity            float64           `json:"total_quantity"`
-	OrderNotional            float64           `json:"order_notional"`
-	StartTime                *time.Time        `json:"start_time"`
-	EndTime                  *time.Time        `json:"end_time"`
-	ExecutionDuration        int64             `json:"execution_duration"`
-	ExecutionDurationSeconds *int64            `json:"execution_duration_seconds,omitempty"`
-	AlgorithmType            string            `json:"algorithm_type"`
-	StrategyType             string            `json:"strategy_type"`
-	Status                   string            `json:"status"`
-	SubmitTime               time.Time         `json:"submit_time"`
-	CompletedQuantity        float64           `json:"completed_quantity"`
-	CompletionProgress       float64           `json:"completion_progress"`
-	FilledAmount             float64           `json:"filled_amount"`
-	TotalValue               float64           `json:"total_value"`
-	AvgPrice                 float64           `json:"avg_price"`
-	RejectReason             *string           `json:"reject_reason"`
-	MarginType               string            `json:"margin_type"`
-	ReduceOnly               bool              `json:"reduce_only"`
-	LimitPrice               float64           `json:"limit_price"`
-	WorstPrice               float64           `json:"worst_price"`
-	MustComplete             bool              `json:"must_complete"`
-	MakerRateLimit           float64           `json:"maker_rate_limit"`
-	POVLimit                 float64           `json:"pov_limit"`
-	POVMinLimit              float64           `json:"pov_min_limit"`
-	ClientID                 *string           `json:"client_id"`
-	ClientOrderID            *string           `json:"client_order_id"`
-	Date                     int64             `json:"date"`
-	TicktimeInt              *int64            `json:"ticktime_int"`
-	TicktimeMs               *int64            `json:"ticktime_ms"`
-	DurationSecs             *float64          `json:"duration_secs"`
-	MidPrice                 *float64          `json:"mid_price"`
+	MarketType               string            `json:"marketType"`
 	Category                 string            `json:"category"`
-	LimitPriceString         string            `json:"limit_price_string"`
-	UpTolerance              string            `json:"up_tolerance"`
-	LowTolerance             string            `json:"low_tolerance"`
-	StrictUpBound            bool              `json:"strict_up_bound"`
-	TakerMakerRate           float64           `json:"taker_maker_rate"`
-	TailOrderProtection      bool              `json:"tail_order_protection"`
-	IsMargin                 bool              `json:"is_margin"`
-	EnableMake               bool              `json:"enable_make"`
-	FinishedMs               int64             `json:"finished_ms"`
-	FinishedMsSynced         bool              `json:"finished_ms_synced"`
+	Symbol                   string            `json:"symbol"`
+	BaseCurrency             string            `json:"baseCurrency"`
+	QuoteCurrency            string            `json:"quoteCurrency"`
+	Side                     string            `json:"side"`
+	MarginType               string            `json:"marginType"`
+	ReduceOnly               bool              `json:"reduceOnly"`
+	IsMargin                 bool              `json:"isMargin"`
+	Algorithm                string            `json:"algorithm"`
+	TotalQuantity            FlexDecimalString `json:"totalQuantity"`
+	OrderNotional            FlexDecimalString `json:"orderNotional"`
+	StartTimeMs              FlexInt64         `json:"startTimeMs"`
+	ExecutionDurationSeconds FlexInt64         `json:"executionDurationSeconds"`
+	WorstPrice               FlexDecimalString `json:"worstPrice"`
+	MustComplete             bool              `json:"mustComplete"`
+	MakerRateLimit           FlexDecimalString `json:"makerRateLimit"`
+	POVLimit                 FlexDecimalString `json:"povLimit"`
+	POVMinLimit              FlexDecimalString `json:"povMinLimit"`
+	UpTolerance              FlexDecimalString `json:"upTolerance"`
+	LowTolerance             FlexDecimalString `json:"lowTolerance"`
+	StrictUpBound            bool              `json:"strictUpBound"`
+	TailOrderProtection      bool              `json:"tailOrderProtection"`
+	EnableMake               bool              `json:"enableMake"`
+	IsTargetPosition         bool              `json:"isTargetPosition"`
+	Notes                    string            `json:"notes"`
+	Status                   string            `json:"status"`
+	RejectReason             string            `json:"rejectReason"`
+	FinishedMs               FlexInt64         `json:"finishedMs"`
+	CumFilledQty             FlexDecimalString `json:"cumFilledQty"`
+	CumFilledNotional        FlexDecimalString `json:"cumFilledNotional"`
+	AvgFilledPrice           FlexDecimalString `json:"avgFilledPrice"`
+	MakerRate                FlexDecimalString `json:"makerRate"`
+	CompletedQuantity        FlexDecimalString `json:"completedQuantity"`
 	Commission               map[string]string `json:"commission,omitempty"`
 }
 
-// WsOrderFillDetail 服务端通过 WS 推送的子单/成交详情（order_data）
-// 字段与 backend-server OrderFillDTO 一一对应，使用 snake_case JSON tag。
+// WsOrderFillDetail 服务端通过 WS 推送的 V2 子单/成交详情（order_data）。
+// 字段与 V2 API 契约一致，使用 lowerCamelCase JSON tag。
 type WsOrderFillDetail struct {
-	ID        uint64    `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-
-	MasterOrderID    string  `json:"master_order_id"`
-	BaseCurrency     string  `json:"base_currency"`
-	QuoteCurrency    string  `json:"quote_currency"`
-	OrderID          string  `json:"order_id"`
-	Symbol           string  `json:"symbol"`
-	Category         string  `json:"category"`
-	Side             string  `json:"side"`
-	Price            float64 `json:"price"`
-	Quantity         float64 `json:"quantity"`
-	Status           string  `json:"status"`
-	RejectReason     *string `json:"reject_reason"`
-	OrderType        string  `json:"order_type"`
-	OrderCreatedTime *int64  `json:"order_created_time"`
-
-	FilledQuantity float64 `json:"filled_quantity"`
-	FilledValue    float64 `json:"filled_value"`
-	AvgPrice       float64 `json:"avg_price"`
-
-	Exchange       string  `json:"exchange"`
-	TradingAccount string  `json:"trading_account"`
-	AccountName    *string `json:"account_name"`
-
-	FillPrice float64   `json:"fill_price"`
-	FilledQty float64   `json:"filled_qty"`
-	FillTime  time.Time `json:"fill_time"`
+	ID               string            `json:"id"`
+	OrderCreatedTime string            `json:"orderCreatedTime"`
+	MasterOrderID    string            `json:"masterOrderId"`
+	Exchange         string            `json:"exchange"`
+	Category         string            `json:"category"`
+	Symbol           string            `json:"symbol"`
+	Side             string            `json:"side"`
+	FilledNotional   FlexDecimalString `json:"filledNotional"`
+	FilledQuantity   FlexDecimalString `json:"filledQuantity"`
+	AveragePrice     FlexDecimalString `json:"averagePrice"`
+	Price            FlexDecimalString `json:"price"`
+	Status           string            `json:"status"`
+	RejectReason     string            `json:"rejectReason"`
+	BaseCurrency     string            `json:"baseCurrency"`
+	QuoteCurrency    string            `json:"quoteCurrency"`
+	OrderType        string            `json:"orderType"`
+	OrderID          string            `json:"orderId"`
+	Quantity         FlexDecimalString `json:"quantity"`
+	CreatedAt        string            `json:"createdAt"`
+	UpdatedAt        string            `json:"updatedAt"`
 }
 
 // WebSocketEventHandlers 事件处理器集合
@@ -207,7 +180,7 @@ type WebSocketEventHandlers struct {
 	OnOrder       func(msg *OrderMessage) error
 	OnFill        func(msg *FillMessage) error
 
-	// 服务端推送 DTO 回调（对应 WS 实际推送的 DB 查询结果）
+	// 服务端推送 DTO 回调（对应 WS 实际推送的 V2 API 字段）
 	OnMasterOrderDetail func(msg *WsMasterOrderDetail) error
 	OnOrderFillDetail   func(msg *WsOrderFillDetail) error
 

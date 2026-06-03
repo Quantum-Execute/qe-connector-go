@@ -234,7 +234,7 @@ func TestGetTCAAnalysisV2SendsExpectedQueryAndDecodesFields(t *testing.T) {
 		return &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header{"Content-Type": []string{"application/json"}},
-			Body:       io.NopCloser(strings.NewReader(`{"code":200,"message":[{"masterOrderId":"mo_tca","strategy":"TWAP","category":"perp","orderQuantity":0.5,"orderNotional":48500,"executionRate":1,"filledQuantity":0.5,"takerFilledNotional":12000,"makerFilledNotional":36500,"filledNotional":48500,"makerRate":0.75,"childOrderCount":12,"averageFillPrice":97000,"Slippage":1.2,"Slippage_pct":0.0001,"TWAP_Slippage_pct":0.0002,"VWAP_Slippage_pct":0.0003,"Spread":0.0004,"Slippage_pct_Fartouch":0.0005,"TWAP_Slippage_pct_Fartouch":0.0006,"VWAP_Slippage_pct_Fartouch":0.0007,"IntervalReturn":0.001,"ParticipationRate":0.02,"FeeSaving_pct":0.0008,"Date":"20260527"}]}`)),
+			Body:       io.NopCloser(strings.NewReader(`{"code":200,"message":[{"masterOrderId":"mo_tca","strategy":"TWAP","category":"perp","orderQuantity":0.5,"orderNotional":48500,"executionRate":1,"filledQuantity":0.5,"takerFilledNotional":12000,"makerFilledNotional":36500,"filledNotional":48500,"makerRate":0.75,"childOrderCount":12,"averageFillPrice":97000,"slippage":1.2,"slippagePct":0.0001,"twapSlippagePct":0.0002,"vwapSlippagePct":0.0003,"spread":0.0004,"slippagePctFarTouch":0.0005,"twapSlippagePctFarTouch":0.0006,"vwapSlippagePctFarTouch":0.0007,"intervalReturn":0.001,"participationRate":0.02,"feeSavingPct":0.0008,"date":"20260527"}]}`)),
 		}, nil
 	}
 
@@ -277,6 +277,34 @@ func TestGetTCAAnalysisV2SendsExpectedQueryAndDecodesFields(t *testing.T) {
 	}
 	if item.Date != "20260527" {
 		t.Fatalf("Date = %q, want 20260527", item.Date)
+	}
+}
+
+func TestTCAAnalysisV2InfoDecodesLowerCamelCaseFields(t *testing.T) {
+	var item TCAAnalysisV2Info
+	if err := json.Unmarshal([]byte(`{
+		"masterOrderId":"mo_tca",
+		"slippage":-0.005,
+		"slippagePct":-0.000055,
+		"twapSlippagePct":0.00009807,
+		"vwapSlippagePct":0.00008807,
+		"spread":0.0003,
+		"slippagePctFarTouch":0.0004,
+		"twapSlippagePctFarTouch":0.0005,
+		"vwapSlippagePctFarTouch":0.0006,
+		"intervalReturn":0.0007,
+		"participationRate":0.12,
+		"feeSavingPct":0.00011736,
+		"date":"20260403"
+	}`), &item); err != nil {
+		t.Fatalf("decode TCA: %v", err)
+	}
+
+	if item.Slippage != -0.005 || item.SlippagePct != -0.000055 || item.TwapSlippagePct != 0.00009807 {
+		t.Fatalf("unexpected slippage fields: %#v", item)
+	}
+	if item.FeeSavingPct != 0.00011736 || item.Date != "20260403" {
+		t.Fatalf("unexpected fee/date fields: %#v", item)
 	}
 }
 

@@ -1314,18 +1314,18 @@ type TCAAnalysisV2Info struct {
 	MakerRate               float64 `json:"makerRate"`
 	ChildOrderCount         int32   `json:"childOrderCount"`
 	AverageFillPrice        float64 `json:"averageFillPrice"`
-	Slippage                float64 `json:"Slippage"`
-	SlippagePct             float64 `json:"Slippage_pct"`
-	TwapSlippagePct         float64 `json:"TWAP_Slippage_pct"`
-	VwapSlippagePct         float64 `json:"VWAP_Slippage_pct"`
-	Spread                  float64 `json:"Spread"`
-	SlippagePctFartouch     float64 `json:"Slippage_pct_Fartouch"`
-	TwapSlippagePctFartouch float64 `json:"TWAP_Slippage_pct_Fartouch"`
-	VwapSlippagePctFartouch float64 `json:"VWAP_Slippage_pct_Fartouch"`
-	IntervalReturn          float64 `json:"IntervalReturn"`
-	ParticipationRate       float64 `json:"ParticipationRate"`
-	FeeSavingPct            float64 `json:"FeeSaving_pct"`
-	Date                    string  `json:"Date"`
+	Slippage                float64 `json:"slippage"`
+	SlippagePct             float64 `json:"slippagePct"`
+	TwapSlippagePct         float64 `json:"twapSlippagePct"`
+	VwapSlippagePct         float64 `json:"vwapSlippagePct"`
+	Spread                  float64 `json:"spread"`
+	SlippagePctFartouch     float64 `json:"slippagePctFarTouch"`
+	TwapSlippagePctFartouch float64 `json:"twapSlippagePctFarTouch"`
+	VwapSlippagePctFartouch float64 `json:"vwapSlippagePctFarTouch"`
+	IntervalReturn          float64 `json:"intervalReturn"`
+	ParticipationRate       float64 `json:"participationRate"`
+	FeeSavingPct            float64 `json:"feeSavingPct"`
+	Date                    string  `json:"date"`
 }
 
 // =============================================================================
