@@ -526,6 +526,61 @@ func TestCreateMasterOrderV2AppliesAlgorithmPovLimitDefaults(t *testing.T) {
 	}
 }
 
+func TestCreateMasterOrderV2AllowsBybitTargetPositionPayload(t *testing.T) {
+	const apiKey = "test-api-key"
+	const secret = "test-secret"
+
+	var body map[string]interface{}
+	client := NewClient(apiKey, secret, "https://example.test")
+	client.do = func(r *http.Request) (*http.Response, error) {
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decode request body: %v", err)
+		}
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{"code":200,"message":{"masterOrderId":"mo_bybit_target","status":"NEW","clientOrderId":"cli_bybit_target"}}`)),
+			Header:     make(http.Header),
+		}, nil
+	}
+
+	reply, err := client.NewCreateMasterOrderV2Service().
+		ApiKeyId("bybit-api-key-id").
+		Exchange(trading_enums.ExchangeBybit).
+		MarketType(trading_enums.MarketTypePerp).
+		Symbol("BTCUSDT").
+		Side(trading_enums.OrderSideBuy).
+		Algorithm(trading_enums.AlgorithmTWAP).
+		ExecutionDurationSeconds(600).
+		TotalQuantity("0").
+		MarginType(trading_enums.MarginTypeU).
+		IsTargetPosition(true).
+		Do(context.Background())
+	if err != nil {
+		t.Fatalf("Do() error = %v", err)
+	}
+	if reply.MasterOrderId != "mo_bybit_target" {
+		t.Fatalf("MasterOrderId = %q, want mo_bybit_target", reply.MasterOrderId)
+	}
+	if got := body["exchange"]; got != string(trading_enums.ExchangeBybit) {
+		t.Fatalf("exchange = %#v, want %q; body=%#v", got, trading_enums.ExchangeBybit, body)
+	}
+	if got := body["marketType"]; got != string(trading_enums.MarketTypePerp) {
+		t.Fatalf("marketType = %#v, want %q; body=%#v", got, trading_enums.MarketTypePerp, body)
+	}
+	if got := body["marginType"]; got != string(trading_enums.MarginTypeU) {
+		t.Fatalf("marginType = %#v, want %q; body=%#v", got, trading_enums.MarginTypeU, body)
+	}
+	if got := body["totalQuantity"]; got != "0" {
+		t.Fatalf("totalQuantity = %#v, want %q; body=%#v", got, "0", body)
+	}
+	if _, ok := body["orderNotional"]; ok {
+		t.Fatalf("orderNotional must be omitted in target-position mode; body=%#v", body)
+	}
+	if got := body["isTargetPosition"]; got != true {
+		t.Fatalf("isTargetPosition = %#v, want true; body=%#v", got, body)
+	}
+}
+
 func TestCreateMasterOrderV2RejectsPovLimitAboveOne(t *testing.T) {
 	c := NewClient("k", "s", "http://localhost:0")
 

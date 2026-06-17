@@ -2,11 +2,12 @@
 
 本文件记录 `qe-connector-go` 的用户可见变更。
 
-## 1.3.0 - 2026-05-23
+## 1.3.1 - 2026-06-17
 
 ### 新增
 
 - **Bybit 支持**：`Exchange` 枚举新增 `ExchangeBybit = "Bybit"`，可用于交易对、API Key 列表和母单创建等接受交易所枚举的接口。
+- **Bybit 目标仓位下单说明**：V2 创建母单支持 `ExchangeBybit` 搭配 `IsTargetPosition(true)`；数量规则与其它交易所一致，目标仓位模式必须传 `TotalQuantity(...)`，且不可传 `OrderNotional(...)`。
 
 ## 1.2.1 - 2026-05-11
 
