@@ -2,6 +2,17 @@
 
 本文件记录 `qe-connector-go` 的用户可见变更。
 
+## Unreleased
+
+### 新增
+
+- **Bitget 支持**：新增 `trading_enums.ExchangeBitget = "Bitget"`，V1/V2 母单创建和公共交易对查询均可使用该枚举，订单字段保持现有契约不变。
+- **公共交易对 V2**：新增 `client.NewTradingPairsV2Service()`，对应 `GET /pub/v2/trading-pairs`，支持 `exchange`、`marketType=SPOT/PERP`、`isCoin`，并使用无分页、无内部记录字段的 V2 响应类型。
+
+### 文档
+
+- `perp_cm` 和 `isCoin=true` 的说明更新为同时适用于 Binance 与 Bitget；`TradingPairPerp = "PERP"` 作为当前交易对合约筛选值，旧 `TradingPairFutures` 保留兼容。
+
 ## 1.3.1 - 2026-06-17
 
 ### 新增

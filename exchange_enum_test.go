@@ -11,3 +11,9 @@ func TestExchangeBybitEnumValue(t *testing.T) {
 		t.Fatalf("ExchangeBybit = %q, want %q", got, "Bybit")
 	}
 }
+
+func TestExchangeBitgetEnumValue(t *testing.T) {
+	if got := string(trading_enums.ExchangeBitget); got != "Bitget" {
+		t.Fatalf("ExchangeBitget = %q, want %q", got, "Bitget")
+	}
+}

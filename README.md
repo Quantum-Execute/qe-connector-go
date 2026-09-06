@@ -136,9 +136,9 @@ log.Printf("服务器时间: %s", time.Unix(timestamp/1000, 0).Format("2006-01-0
 |--------|------|----------|------|
 | page | int32 | 否 | 页码 |
 | pageSize | int32 | 否 | 每页数量 |
-| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit |
-| marketType | string | 否 | 市场类型筛选，可选值：SPOT（现货）、FUTURES（合约） |
-| isCoin | bool | 否 | 是否查询币本位合约可用交易对。传 `true` 时返回币本位合约可用交易对，仅 Binance 可用 |
+| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit、Bitget |
+| marketType | string | 否 | 市场类型筛选，可选值：SPOT（现货）、PERP（永续合约）；`FUTURES` 仅用于兼容旧版 V1 服务 |
+| isCoin | bool | 否 | 是否查询币本位合约可用交易对。传 `true` 时返回 Binance 或 Bitget 的币本位合约交易对 |
 
 **响应字段：**
 
@@ -150,7 +150,7 @@ log.Printf("服务器时间: %s", time.Unix(timestamp/1000, 0).Format("2006-01-0
 | ├─ baseAsset | string | 基础币种（如：BTC） |
 | ├─ quoteAsset | string | 计价币种（如：USDT） |
 | ├─ exchange | string | 交易所名称 |
-| ├─ marketType | string | 市场类型（SPOT/FUTURES） |
+| ├─ marketType | string | 市场类型（SPOT/PERP） |
 | ├─ contractType | string | 合约类型（仅合约交易对） |
 | ├─ deliveryDate | string | 交割日期（仅合约交易对） |
 | ├─ status | string | 交易对状态 |
@@ -193,15 +193,17 @@ pairs, err := client.NewTradingPairsService().
     PageSize(50).
     Do(context.Background())
 
-// 获取合约交易对
+// 获取永续合约交易对
 pairs, err := client.NewTradingPairsService().
-    MarketType(trading_enums.TradingPairFutures).
+    MarketType(trading_enums.TradingPairPerp).
     Page(1).
     PageSize(100).
     Do(context.Background())
 
-// 获取币本位合约可用交易对（仅 Binance）
+// 获取 Bitget 币本位合约交易对
 pairs, err := client.NewTradingPairsService().
+    Exchange(trading_enums.ExchangeBitget).
+    MarketType(trading_enums.TradingPairPerp).
     IsCoin(true).
     Page(1).
     PageSize(100).
@@ -233,7 +235,7 @@ for _, pair := range pairs.Items {
     )
     
     // 如果是合约交易对，显示额外信息
-    if pair.MarketType == "FUTURES" {
+    if pair.MarketType == "PERP" {
         log.Printf("    合约类型: %s", pair.ContractType)
         if pair.DeliveryDate != "" {
             log.Printf("    交割日期: %s", pair.DeliveryDate)
@@ -254,7 +256,7 @@ for _, pair := range pairs.Items {
 |--------|------|----------|------|
 | page | int32 | 否 | 页码 |
 | pageSize | int32 | 否 | 每页数量 |
-| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit |
+| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit、Bitget |
 
 **响应字段：**
 
@@ -264,7 +266,7 @@ for _, pair := range pairs.Items {
 | ├─ id | string | API 记录的唯一标识 |
 | ├─ createdAt | string | API 添加时间 |
 | ├─ accountName | string | 账户名称（如：账户1、账户2） |
-| ├─ exchange | string | 交易所名称（如：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit） |
+| ├─ exchange | string | 交易所名称（如：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit、Bitget） |
 | ├─ apiKey | string | 交易所 API Key（部分隐藏） |
 | ├─ verificationMethod | string | API 验证方式（如：OAuth、API） |
 | ├─ status | string | API 状态：正常、异常（不可用） |
@@ -329,10 +331,10 @@ for _, api := range result.Items {
 | **基础参数** |
 | strategyType | string  | 是 | 策略类型，可选值：TWAP-1、POV                                                                                                                                                                        |
 | algorithm | string  | 是 | 交易算法。strategyType=TWAP-1时，可选值：TWAP、VWAP；strategyType=POV时，可选值：POV                                                                                                      |
-| exchange | string  | 是 | 交易所名称，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit                                                                                                                                                   |
+| exchange | string  | 是 | 交易所名称，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit、Bitget                                                                                                                                            |
 | symbol | string  | 是 | 交易对符号（如：BTCUSDT）（可用交易对查询）                                                                                                                                                                  |
 | marketType | string  | 是 | 可选值：SPOT（现货）、PERP（永续合约）                                                                                                                                                                    |
-| side | string  | 是 | 1.如果isTargetPosition=False：side代表交易方向，可选值：buy（买入）、sell（卖出）；合约交易时可与reduceOnly组合，reduceOnly=True时：buy代表买入平空，sell代表卖出平多。2.如果isTargetPosition=True：side代表仓位方向，可选值：buy（多头）、sell（空头）。【仅合约交易时需传入】 |
+| side | string  | 是 | 1.如果isTargetPosition=False：side代表交易方向，可选值：buy（买入）、sell（卖出）；合约交易时可与reduceOnly组合，reduceOnly=True时：buy代表买入平空，sell代表卖出平多。2.如果isTargetPosition=True：合约以及 Bitget 杠杆现货中 side 代表目标方向，buy 为正向/多头目标，sell 为负向/空头目标；非杠杆现货目标仓位不使用 side 表示目标符号。 |
 | apiKeyId | string  | 是 | 指定使用的 API Key ID，这将决定您本次下单使用哪个交易所账户执行                                                                                                                                                      |
 | **数量参数（二选一）** |
 | totalQuantity | float64 | 否* | 要交易的总数量，与 orderNotional 二选一，输入范围：>0。Deribit 下单 BTCUSD/ETHUSD 时该字段单位为 USD；Binance 下单 `perp_cm` 时该字段单位为张，且必须为整数                                                                                                       |
@@ -361,7 +363,7 @@ for _, api := range result.Items {
 | tailOrderProtection | bool    | 否 | 订单余量小于交易所最小发单量时，是否必须taker扫完，如果false，则订单余量小于交易所最小发单量时，订单结束执行；如果true，则订单余量随最近一笔下单全额执行（可能会提高Taker率），默认：true                                                                                   |
 | **其他参数** |
 | reduceOnly | bool    | 否 | 合约交易时是否仅减仓，默认值：false                                                                                                                                                                       |
-| marginType | string  | 否* | **永续合约必传参数** - 合约交易保证金类型，可选值：U（U本位）、C（币本位）。当 marketType 为 PERP（永续合约）时必传；其中 `C` 对应 Binance 币本位合约                                                                                                      |
+| marginType | string  | 否* | **永续合约必传参数** - 合约交易保证金类型，可选值：U（U本位）、C（币本位）。当 marketType 为 PERP（永续合约）时必传；Binance 和 Bitget 均支持 `C` 币本位分类                                                                                              |
 | isMargin | bool    | 否 | 是否使用现货杠杆。- 默认为false - 仅现货可使用该字段                                                                                                                                                            |
 | notes | string  | 否 | 订单备注                                                                                                                                                                                       |
 | enableMake | bool  | 否 | 是否允许挂单，如果关闭则全部吃单 - 默认：true                                                                                                                                                                          |
@@ -491,7 +493,7 @@ if result.Success {
 | page      | int32  | 否    | 页码                                  |
 | pageSize  | int32  | 否    | 每页数量                                |
 | status    | string | 否    | 订单状态筛选，可选值：NEW（执行中）、COMPLETED（已完成）  |
-| exchange  | string | 否    | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit |
+| exchange  | string | 否    | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit、Bitget |
 | symbol    | string | 否    | 交易对筛选                               |
 | startTime | string | 否    | 开始时间筛选                              |
 | endTime   | string | 否    | 结束时间筛选                              |
@@ -536,7 +538,7 @@ if result.Success {
 | ├─ lowTolerance        | string  | 下容忍度                                                                                                                                                   |
 | ├─ strictUpBound       | bool    | 严格上界                                                                                                                                                   |
 | ├─ ticktimeMs          | string  | 发单时间戳（epoch 毫秒）                                                                                                                                        |   
-| ├─ category            | string  | 交易品种（spot、perp 或 perp_cm，其中 perp_cm 表示 Binance 币本位合约）                                                                                     |   
+| ├─ category            | string  | 交易品种（spot、perp 或 perp_cm，其中 perp_cm 表示 Binance 或 Bitget 币本位合约）                                                                           |
 | ├─ filledAmount        | float64 | 成交币数                                                                                                                                                   |
 | ├─ totalValue          | float64 | 成交总值                                                                                                                                                   |
 | ├─ base                | string  | 基础币种                                                                                                                                                   |
@@ -667,7 +669,7 @@ for _, order := range orders.Items {
 | lowTolerance | string | 下容忍度 |
 | strictUpBound | bool | 严格上界 |
 | ticktimeMs | string | 发单时间戳（epoch 毫秒） |
-| category | string | 交易品种（spot、perp 或 perp_cm，其中 perp_cm 表示 Binance 币本位合约） |
+| category | string | 交易品种（spot、perp 或 perp_cm，其中 perp_cm 表示 Binance 或 Bitget 币本位合约） |
 | filledAmount | float64 | 成交币数 |
 | totalValue | float64 | 成交总值 |
 | base | string | 基础币种 |
@@ -1174,12 +1176,13 @@ if result.Success {
 - ListenKey 用于 WebSocket 连接，可以实时接收交易数据推送
 - 建议在应用启动时创建 ListenKey，并在接近过期时重新创建
 
-## V2 strategy-api 接口
+## V2 接口
 
-V2 在 `/strategy-api/.../v2/...` 下独立提供一套出入参更整洁、命名更统一的接口；V1 不受影响。下表汇总 V2 SDK 入口：
+V2 strategy-api 在 `/strategy-api/.../v2/...` 下提供独立接口，公共交易对接口位于 `/pub/v2/trading-pairs`；V1 不受影响。下表汇总 V2 SDK 入口：
 
 | 方法 | HTTP | 路径 | 用途 |
 | --- | --- | --- | --- |
+| `client.NewTradingPairsV2Service()` | GET | `/pub/v2/trading-pairs` | 查询公共交易对（`SPOT/PERP`，无分页和内部记录字段） |
 | `client.NewListExchangeApisV2Service()` | GET | `/strategy-api/user/exchange/v2/exchange-apis` | 查询绑定的交易所 API Key（V2，隐藏 `verificationMethod`/`balance`） |
 | `client.NewCreateMasterOrderV2Service()` | POST | `/strategy-api/user/trading/v2/master-orders` | 创建母单（V2，去掉 `algorithmType/strategyType`，统一 `executionDurationSeconds`、`startTimeMs`、`worstPrice`） |
 | `client.NewGetMasterOrdersV2Service()` | GET | `/strategy-api/user/trading/v2/master-orders` | 母单列表（V2 字段） |
@@ -1198,9 +1201,11 @@ V2 在 `/strategy-api/.../v2/...` 下独立提供一套出入参更整洁、命�
 - **时间**：创建母单 `startTimeMs` 为 `int64`（epoch 毫秒）；列表 / 成交列表查询用 `startTime` / `endTime` RFC3339 字符串。
 - **母单状态**：使用 `qe.MasterOrderStatusV2` 枚举（`NEW` / `WAITING` / `PROCESSING` / `PAUSED` / `CANCELLED` / `COMPLETED` / `COMPLETED_WITHTAIL` / `REJECTED` / `EXPIRED`）。
 - **可选响应字段**：`MasterOrderV2Info` 中只在部分场景返回的字段使用指针类型，例如 `MarginType`、`ReduceOnly`、`OrderNotional`、`LowTolerance`、`StrictUpBound`。字段为 `nil` 表示 wire response 未返回该字段，不等同于后端返回空字符串或 `false`。
+- **公共交易对 V2**：使用 `MarketType(trading_enums.MarketTypeSpot)` 或 `MarketType(trading_enums.MarketTypePerp)`；Bitget 币本位合约同时传 `Exchange(trading_enums.ExchangeBitget)` 和 `IsCoin(true)`。响应仅包含 `Items`，每项不含 V1 的 `Id/CreatedAt/UpdatedAt`。
 - **价格字段**：V2 只使用 `WorstPrice("...")`；`LimitPrice` / `LimitPriceString` 属于 V1 字段，V2 SDK 不再暴露或透传。
 - **POV 上限默认值**：创建 V2 母单时未传 `PovLimit`，TWAP/VWAP 默认 `"1"`，POV 默认 `"0.05"`；传入值必须在 `0-1` 范围内。
 - **Bybit 下单能力**：`trading_enums.ExchangeBybit` 可用于 V2 创建母单，支持普通下单与目标仓位模式；目标仓位模式下仍必须传 `TotalQuantity(...)`，且不可传 `OrderNotional(...)`。
+- **Bitget 下单能力**：V1/V2 创建母单均可使用 `trading_enums.ExchangeBitget`；`marginType=U/C`、`isTargetPosition`、`isMargin` 等字段沿用现有订单契约并原样传输。
 - **`pageSize` 最大 100**：超过 100 会返回错误，不再静默裁剪。
 - **请求方式**：V2 POST/PUT 走 `application/json` body，签名规则与 V1（`HMAC-SHA256(secret, "<key1>=<v1>&...timestamp=...">`）一致——SDK 内部把 JSON 顶层字段与 query 中的 `timestamp` 合并后再 `Encode()` 签名，对调用者透明。
 
@@ -1984,6 +1989,7 @@ handlers := &qe.WebSocketEventHandlers{
 | `trading_enums.ExchangeDeribit` | Deribit | Deribit |
 | `trading_enums.ExchangeHyperliquid` | Hyperliquid | Hyperliquid |
 | `trading_enums.ExchangeBybit` | Bybit | Bybit |
+| `trading_enums.ExchangeBitget` | Bitget | Bitget |
 
 **保证金类型 (MarginType)：**
 
@@ -2011,7 +2017,8 @@ handlers := &qe.WebSocketEventHandlers{
 | 枚举常量 | 枚举值 | 描述 |
 |----------|--------|------|
 | `trading_enums.TradingPairSpot` | SPOT | 现货交易对 |
-| `trading_enums.TradingPairFutures` | FUTURES | 合约交易对 |
+| `trading_enums.TradingPairPerp` | PERP | 永续合约交易对 |
+| `trading_enums.TradingPairFutures` | FUTURES | 旧版 V1 合约筛选兼容值（已弃用） |
 
 ### 5. 容忍度参数说明
 

@@ -58,17 +58,22 @@ const (
 	ExchangeDeribit     Exchange = "Deribit"     // Deribit
 	ExchangeHyperliquid Exchange = "Hyperliquid" // Hyperliquid
 	ExchangeBybit       Exchange = "Bybit"       // Bybit
+	ExchangeBitget      Exchange = "Bitget"      // Bitget
 )
 
 // 币对品种枚举（与市场类型对应）
 const (
 	CategorySpot   Category = "spot"    // 现货品种
 	CategoryPerp   Category = "perp"    // 合约品种
-	CategoryPerpCm Category = "perp_cm" // 币本位合约品种（仅币安可用）
+	CategoryPerpCm Category = "perp_cm" // 币本位合约品种（Binance、Bitget）
 )
 
-// 币对品种枚举（与市场类型对应）
+// 交易对市场类型枚举
 const (
-	TradingPairFutures TradingPairMarketType = "FUTURES" // 现货品种
-	TradingPairSpot    TradingPairMarketType = "SPOT"    // 合约品种
+	TradingPairSpot TradingPairMarketType = "SPOT" // 现货交易对
+	TradingPairPerp TradingPairMarketType = "PERP" // 永续合约交易对
+
+	// TradingPairFutures is retained for compatibility with older V1 servers.
+	// Deprecated: use TradingPairPerp for current /pub/trading-pairs requests.
+	TradingPairFutures TradingPairMarketType = "FUTURES"
 )

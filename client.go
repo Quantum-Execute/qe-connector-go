@@ -298,6 +298,12 @@ func (c *Client) NewGetTcaAnalysisService() *GetTcaAnalysisService {
 func (c *Client) NewTradingPairsService() *TradingPairsService {
 	return &TradingPairsService{c: c}
 }
+
+// NewTradingPairsV2Service creates a service for GET /pub/v2/trading-pairs.
+func (c *Client) NewTradingPairsV2Service() *TradingPairsV2Service {
+	return &TradingPairsV2Service{c: c}
+}
+
 func (c *Client) NewPingServer() *PingService {
 	return &PingService{c: c}
 }
