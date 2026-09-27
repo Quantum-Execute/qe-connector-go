@@ -110,6 +110,13 @@ func TestV2SignAlignment_CreateMasterOrder(t *testing.T) {
 			return
 		}
 		body, _ := io.ReadAll(r.Body)
+		var orderBody map[string]any
+		if err := json.Unmarshal(body, &orderBody); err != nil {
+			t.Fatalf("decode order body: %v", err)
+		}
+		if orderBody["triggerPrice"] != "65000.123456789012345678" || orderBody["maxTriggerWaitSecs"] != 300.5 {
+			t.Errorf("trigger fields = %#v / %#v", orderBody["triggerPrice"], orderBody["maxTriggerWaitSecs"])
+		}
 		expected := signLikeBackend(t, secret, r.URL.RawQuery, body)
 		got := r.URL.Query().Get("signature")
 		if got != expected {
@@ -137,6 +144,8 @@ func TestV2SignAlignment_CreateMasterOrder(t *testing.T) {
 		TotalQuantity("0.5").
 		MarginType("U").
 		WorstPrice("70000").
+		TriggerPrice("65000.123456789012345678").
+		MaxTriggerWaitSecs(300.5).
 		MustComplete(true).
 		MakerRateLimit("0.1").
 		PovLimit("0.8").

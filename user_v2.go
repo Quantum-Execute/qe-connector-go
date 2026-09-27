@@ -409,6 +409,8 @@ type CreateMasterOrderV2Service struct {
 	reduceOnly               *bool
 	isMargin                 *bool
 	worstPrice               *string
+	triggerPrice             *string
+	maxTriggerWaitSecs       *float64
 	mustComplete             *bool
 	makerRateLimit           *string
 	povLimit                 *string
@@ -508,6 +510,18 @@ func (s *CreateMasterOrderV2Service) IsMargin(isMargin bool) *CreateMasterOrderV
 // WorstPrice sets the worst acceptable price as a decimal string.
 func (s *CreateMasterOrderV2Service) WorstPrice(price string) *CreateMasterOrderV2Service {
 	s.worstPrice = &price
+	return s
+}
+
+// TriggerPrice sets the price threshold as a decimal string (0 disables it).
+func (s *CreateMasterOrderV2Service) TriggerPrice(price string) *CreateMasterOrderV2Service {
+	s.triggerPrice = &price
+	return s
+}
+
+// MaxTriggerWaitSecs sets the trigger wait limit in seconds (0 means no limit).
+func (s *CreateMasterOrderV2Service) MaxTriggerWaitSecs(seconds float64) *CreateMasterOrderV2Service {
+	s.maxTriggerWaitSecs = &seconds
 	return s
 }
 
@@ -620,6 +634,12 @@ func (s *CreateMasterOrderV2Service) Do(ctx context.Context, opts ...RequestOpti
 	}
 	if s.worstPrice != nil {
 		m["worstPrice"] = *s.worstPrice
+	}
+	if s.triggerPrice != nil {
+		m["triggerPrice"] = *s.triggerPrice
+	}
+	if s.maxTriggerWaitSecs != nil {
+		m["maxTriggerWaitSecs"] = *s.maxTriggerWaitSecs
 	}
 	if s.mustComplete != nil {
 		m["mustComplete"] = *s.mustComplete
