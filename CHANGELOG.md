@@ -2,16 +2,26 @@
 
 本文件记录 `qe-connector-go` 的用户可见变更。
 
-## Unreleased
+## 1.3.2 - 2026-09-27
 
 ### 新增
 
 - **Bitget 支持**：新增 `trading_enums.ExchangeBitget = "Bitget"`，V1/V2 母单创建和公共交易对查询均可使用该枚举，订单字段保持现有契约不变。
 - **公共交易对 V2**：新增 `client.NewTradingPairsV2Service()`，对应 `GET /pub/v2/trading-pairs`，支持 `exchange`、`marketType=SPOT/PERP`、`isCoin`，并使用无分页、无内部记录字段的 V2 响应类型。
+- **V2 下单触发参数**：`CreateMasterOrderV2Service` 新增两个可选的链式设置方法：
+  - `TriggerPrice(price string)`：设置触发价，以十进制字符串传输；`"0"` 表示不启用价格触发。
+  - `MaxTriggerWaitSecs(seconds float64)`：设置最大触发等待时间，单位秒，支持小数秒；`0` 表示不限制等待时间。
+  - 请求字段分别为 `triggerPrice`、`maxTriggerWaitSecs`；显式设置的零值也会发送，未设置的字段不发送。
+
+### 兼容性
+
+- 新增触发参数仅用于 V2 创建母单，原有下单调用和 V1 接口保持兼容。
+- 触发功能需配合支持该功能的后端和算法服务。触发价应为非负数，遵循后端 `DECIMAL(30,10)` 精度限制（最多 20 位整数、10 位有效小数）；等待时间应为有限非负数。
 
 ### 文档
 
 - `perp_cm` 和 `isCoin=true` 的说明更新为同时适用于 Binance 与 Bitget；`TradingPairPerp = "PERP"` 作为当前交易对合约筛选值，旧 `TradingPairFutures` 保留兼容。
+- 更新 README 中的 Bitget 和 V2 交易对用法，并新增 SDK 接入与维护指南 `docs/qe-connector-go-handoff.md`。
 
 ## 1.3.1 - 2026-06-17
 
