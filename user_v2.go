@@ -394,35 +394,37 @@ func (i *ExchangeApiV2Info) UnmarshalJSON(data []byte) error {
 // `orderNotional` must be set; when `isTargetPosition` is true `totalQuantity`
 // is mandatory.
 type CreateMasterOrderV2Service struct {
-	c                        *Client
-	apiKeyId                 string
-	exchange                 trading_enums.Exchange
-	marketType               trading_enums.MarketType
-	symbol                   string
-	side                     trading_enums.OrderSide
-	algorithm                trading_enums.Algorithm
-	executionDurationSeconds *int64
-	startTimeMs              *int64
-	totalQuantity            *string
-	orderNotional            *string
-	marginType               *trading_enums.MarginType
-	reduceOnly               *bool
-	isMargin                 *bool
-	worstPrice               *string
-	triggerPrice             *string
-	maxTriggerWaitSecs       *float64
-	mustComplete             *bool
-	makerRateLimit           *string
-	povLimit                 *string
-	povMinLimit              *string
-	upTolerance              *string
-	lowTolerance             *string
-	strictUpBound            *bool
-	tailOrderProtection      *bool
-	enableMake               *bool
-	isTargetPosition         *bool
-	clientOrderId            *string
-	notes                    *string
+	c                           *Client
+	apiKeyId                    string
+	exchange                    trading_enums.Exchange
+	marketType                  trading_enums.MarketType
+	symbol                      string
+	side                        trading_enums.OrderSide
+	algorithm                   trading_enums.Algorithm
+	executionDurationSeconds    *int64
+	startTimeMs                 *int64
+	totalQuantity               *string
+	orderNotional               *string
+	marginType                  *trading_enums.MarginType
+	reduceOnly                  *bool
+	isMargin                    *bool
+	worstPrice                  *string
+	triggerPrice                *string
+	triggerPrice1               *string
+	maxTriggerWaitSecs          *float64
+	maxTriggerWaitTimeoutAction *int32
+	mustComplete                *bool
+	makerRateLimit              *string
+	povLimit                    *string
+	povMinLimit                 *string
+	upTolerance                 *string
+	lowTolerance                *string
+	strictUpBound               *bool
+	tailOrderProtection         *bool
+	enableMake                  *bool
+	isTargetPosition            *bool
+	clientOrderId               *string
+	notes                       *string
 }
 
 // ApiKeyId sets the required exchange API Key binding ID.
@@ -513,15 +515,35 @@ func (s *CreateMasterOrderV2Service) WorstPrice(price string) *CreateMasterOrder
 	return s
 }
 
-// TriggerPrice sets the price threshold as a decimal string (0 disables it).
+// TriggerPrice sets a price level for starting an algorithm order as the market rises or falls.
+// Execution starts when the algorithm's trigger conditions are met.
+// Both trigger prices are optional: set either, both, or neither.
+// An unset value is omitted; an empty string or "0" disables this price.
+// Trigger prices determine when the order starts, not the final execution price.
 func (s *CreateMasterOrderV2Service) TriggerPrice(price string) *CreateMasterOrderV2Service {
 	s.triggerPrice = &price
+	return s
+}
+
+// TriggerPrice1 sets the optional second trigger price independently of TriggerPrice.
+// Use the two levels to trigger an algorithm order as the market rises or falls.
+// Set either, both, or neither. An unset value is omitted; an empty string or "0" disables this price.
+// Execution starts when the algorithm's trigger conditions are met; this is not the final execution price.
+func (s *CreateMasterOrderV2Service) TriggerPrice1(price string) *CreateMasterOrderV2Service {
+	s.triggerPrice1 = &price
 	return s
 }
 
 // MaxTriggerWaitSecs sets the trigger wait limit in seconds (0 means no limit).
 func (s *CreateMasterOrderV2Service) MaxTriggerWaitSecs(seconds float64) *CreateMasterOrderV2Service {
 	s.maxTriggerWaitSecs = &seconds
+	return s
+}
+
+// MaxTriggerWaitTimeoutAction sets the timeout action code (integer 0..10).
+// Omitted defaults to 0 (expire order). Codes 1..10 require algorithm support.
+func (s *CreateMasterOrderV2Service) MaxTriggerWaitTimeoutAction(action int32) *CreateMasterOrderV2Service {
+	s.maxTriggerWaitTimeoutAction = &action
 	return s
 }
 
@@ -638,8 +660,14 @@ func (s *CreateMasterOrderV2Service) Do(ctx context.Context, opts ...RequestOpti
 	if s.triggerPrice != nil {
 		m["triggerPrice"] = *s.triggerPrice
 	}
+	if s.triggerPrice1 != nil {
+		m["triggerPrice1"] = *s.triggerPrice1
+	}
 	if s.maxTriggerWaitSecs != nil {
 		m["maxTriggerWaitSecs"] = *s.maxTriggerWaitSecs
+	}
+	if s.maxTriggerWaitTimeoutAction != nil {
+		m["maxTriggerWaitTimeoutAction"] = *s.maxTriggerWaitTimeoutAction
 	}
 	if s.mustComplete != nil {
 		m["mustComplete"] = *s.mustComplete
@@ -694,6 +722,9 @@ func (s *CreateMasterOrderV2Service) Do(ctx context.Context, opts ...RequestOpti
 }
 
 func (s *CreateMasterOrderV2Service) validate() error {
+	if s.maxTriggerWaitTimeoutAction != nil && (*s.maxTriggerWaitTimeoutAction < 0 || *s.maxTriggerWaitTimeoutAction > 10) {
+		return errors.New("maxTriggerWaitTimeoutAction must be an integer from 0 to 10")
+	}
 	if s.apiKeyId == "" {
 		return errors.New("apiKeyId is required")
 	}
@@ -920,49 +951,53 @@ type GetMasterOrdersV2Reply struct {
 // (`apiKey`, `apiKeyName`, `ticktimeInt`, `ticktimeMs`, `submitTimeMs`,
 // `algoStartTimeMs`, ...) are intentionally absent.
 type MasterOrderV2Info struct {
-	CreatedAt                string            `json:"createdAt"`
-	UpdatedAt                string            `json:"updatedAt"`
-	MasterOrderId            string            `json:"masterOrderId"`
-	ClientOrderId            string            `json:"clientOrderId"`
-	ApiKeyId                 string            `json:"apiKeyId"`
-	ApiKeyUuid               string            `json:"-"` // Deprecated: use ApiKeyId.
-	TradingAccount           string            `json:"tradingAccount"`
-	Exchange                 string            `json:"exchange"`
-	MarketType               string            `json:"marketType"`
-	Category                 string            `json:"category"`
-	Symbol                   string            `json:"symbol"`
-	BaseCurrency             string            `json:"baseCurrency"`
-	QuoteCurrency            string            `json:"quoteCurrency"`
-	Side                     string            `json:"side"`
-	MarginType               *string           `json:"marginType,omitempty"`
-	ReduceOnly               *bool             `json:"reduceOnly,omitempty"`
-	IsMargin                 *bool             `json:"isMargin,omitempty"`
-	Algorithm                string            `json:"algorithm"`
-	TotalQuantity            *string           `json:"totalQuantity,omitempty"`
-	OrderNotional            *string           `json:"orderNotional,omitempty"`
-	StartTimeMs              *FlexInt64        `json:"startTimeMs,omitempty"`
-	ExecutionDurationSeconds *FlexInt64        `json:"executionDurationSeconds,omitempty"`
-	WorstPrice               *string           `json:"worstPrice,omitempty"`
-	MustComplete             *bool             `json:"mustComplete,omitempty"`
-	MakerRateLimit           *string           `json:"makerRateLimit,omitempty"`
-	PovLimit                 *string           `json:"povLimit,omitempty"`
-	PovMinLimit              *string           `json:"povMinLimit,omitempty"`
-	UpTolerance              *string           `json:"upTolerance,omitempty"`
-	LowTolerance             *string           `json:"lowTolerance,omitempty"`
-	StrictUpBound            *bool             `json:"strictUpBound,omitempty"`
-	TailOrderProtection      *bool             `json:"tailOrderProtection,omitempty"`
-	EnableMake               *bool             `json:"enableMake,omitempty"`
-	IsTargetPosition         *bool             `json:"isTargetPosition,omitempty"`
-	Notes                    string            `json:"notes"`
-	Status                   string            `json:"status"`
-	RejectReason             string            `json:"rejectReason"`
-	FinishedMs               *FlexInt64        `json:"finishedMs,omitempty"`
-	CumFilledQty             *string           `json:"cumFilledQty,omitempty"`
-	CumFilledNotional        *string           `json:"cumFilledNotional,omitempty"`
-	AvgFilledPrice           *string           `json:"avgFilledPrice,omitempty"`
-	MakerRate                *string           `json:"makerRate,omitempty"`
-	CompletedQuantity        *string           `json:"completedQuantity,omitempty"`
-	Commission               map[string]string `json:"commission"`
+	CreatedAt                   string            `json:"createdAt"`
+	UpdatedAt                   string            `json:"updatedAt"`
+	MasterOrderId               string            `json:"masterOrderId"`
+	ClientOrderId               string            `json:"clientOrderId"`
+	ApiKeyId                    string            `json:"apiKeyId"`
+	ApiKeyUuid                  string            `json:"-"` // Deprecated: use ApiKeyId.
+	TradingAccount              string            `json:"tradingAccount"`
+	Exchange                    string            `json:"exchange"`
+	MarketType                  string            `json:"marketType"`
+	Category                    string            `json:"category"`
+	Symbol                      string            `json:"symbol"`
+	BaseCurrency                string            `json:"baseCurrency"`
+	QuoteCurrency               string            `json:"quoteCurrency"`
+	Side                        string            `json:"side"`
+	MarginType                  *string           `json:"marginType,omitempty"`
+	ReduceOnly                  *bool             `json:"reduceOnly,omitempty"`
+	IsMargin                    *bool             `json:"isMargin,omitempty"`
+	Algorithm                   string            `json:"algorithm"`
+	TotalQuantity               *string           `json:"totalQuantity,omitempty"`
+	OrderNotional               *string           `json:"orderNotional,omitempty"`
+	StartTimeMs                 *FlexInt64        `json:"startTimeMs,omitempty"`
+	ExecutionDurationSeconds    *FlexInt64        `json:"executionDurationSeconds,omitempty"`
+	WorstPrice                  *string           `json:"worstPrice,omitempty"`
+	TriggerPrice                *string           `json:"triggerPrice,omitempty"`
+	TriggerPrice1               *string           `json:"triggerPrice1,omitempty"`
+	MaxTriggerWaitSecs          *float64          `json:"maxTriggerWaitSecs,omitempty"`
+	MaxTriggerWaitTimeoutAction *int32            `json:"maxTriggerWaitTimeoutAction,omitempty"`
+	MustComplete                *bool             `json:"mustComplete,omitempty"`
+	MakerRateLimit              *string           `json:"makerRateLimit,omitempty"`
+	PovLimit                    *string           `json:"povLimit,omitempty"`
+	PovMinLimit                 *string           `json:"povMinLimit,omitempty"`
+	UpTolerance                 *string           `json:"upTolerance,omitempty"`
+	LowTolerance                *string           `json:"lowTolerance,omitempty"`
+	StrictUpBound               *bool             `json:"strictUpBound,omitempty"`
+	TailOrderProtection         *bool             `json:"tailOrderProtection,omitempty"`
+	EnableMake                  *bool             `json:"enableMake,omitempty"`
+	IsTargetPosition            *bool             `json:"isTargetPosition,omitempty"`
+	Notes                       string            `json:"notes"`
+	Status                      string            `json:"status"`
+	RejectReason                string            `json:"rejectReason"`
+	FinishedMs                  *FlexInt64        `json:"finishedMs,omitempty"`
+	CumFilledQty                *string           `json:"cumFilledQty,omitempty"`
+	CumFilledNotional           *string           `json:"cumFilledNotional,omitempty"`
+	AvgFilledPrice              *string           `json:"avgFilledPrice,omitempty"`
+	MakerRate                   *string           `json:"makerRate,omitempty"`
+	CompletedQuantity           *string           `json:"completedQuantity,omitempty"`
+	Commission                  map[string]string `json:"commission"`
 }
 
 func (i *MasterOrderV2Info) UnmarshalJSON(data []byte) error {

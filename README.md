@@ -2076,6 +2076,20 @@ handlers := &qe.WebSocketEventHandlers{
 - 使用 goroutine 处理消息，避免阻塞主连接
 - 合理设置心跳参数，平衡实时性和资源消耗
 
+## V2 价格触发
+
+可设置市场价格上涨或下跌时的触发价位，满足条件后启动算法委托。两个触发价均为选填，可都不填、只填一个或同时填写；留空或填 0 表示禁用该项。触发价仅用于启动委托，不代表最终成交价。
+
+通过 `TriggerPrice(price string)` 和 `TriggerPrice1(price string)` 分别设置两个触发价，发送为 `triggerPrice` / `triggerPrice1`。未调用相应方法时省略该字段；传空字符串或 `"0"` 时禁用对应项。价格使用十进制字符串，精度遵循 `DECIMAL(30,10)`。两个字段不固定对应上涨或下跌方向，具体触发判断由算法执行。
+
+### 触发等待超时处理
+
+创建母单可通过 `MaxTriggerWaitTimeoutAction(action int32)` 设置 `maxTriggerWaitTimeoutAction`。未设置时不发送，后端默认为 `0`；显式设置 `0` 会发送。取值必须是 `0～10` 的整数，`0` 表示“到期终止委托”，`1～10` 预留，由算法版本定义行为。当前仅支持 `0` 对应的行为。此字段仅创建时设置，列表/详情的 `MasterOrderV2Info` 返回同名字段。
+
+该参数与 `maxTriggerWaitSecs` 搭配使用；等待时间为 `0` 时不限等待。它不会自动启用价格触发。后端须先执行新增列 SQL 再升级；SDK 的 V1 方法不受影响。
+
+用法：在 `NewCreateMasterOrderV2Service()` 的创建链中设置 `.MaxTriggerWaitSecs(300).MaxTriggerWaitTimeoutAction(0)`。
+
 ## 贡献指南
 
 欢迎提交 Issue 和 Pull Request！

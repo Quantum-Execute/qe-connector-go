@@ -117,6 +117,9 @@ func TestV2SignAlignment_CreateMasterOrder(t *testing.T) {
 		if orderBody["triggerPrice"] != "65000.123456789012345678" || orderBody["maxTriggerWaitSecs"] != 300.5 {
 			t.Errorf("trigger fields = %#v / %#v", orderBody["triggerPrice"], orderBody["maxTriggerWaitSecs"])
 		}
+		if orderBody["triggerPrice1"] != "99999999999999999999.1234567891" {
+			t.Errorf("second trigger price = %#v", orderBody["triggerPrice1"])
+		}
 		expected := signLikeBackend(t, secret, r.URL.RawQuery, body)
 		got := r.URL.Query().Get("signature")
 		if got != expected {
@@ -145,6 +148,7 @@ func TestV2SignAlignment_CreateMasterOrder(t *testing.T) {
 		MarginType("U").
 		WorstPrice("70000").
 		TriggerPrice("65000.123456789012345678").
+		TriggerPrice1("99999999999999999999.1234567891").
 		MaxTriggerWaitSecs(300.5).
 		MustComplete(true).
 		MakerRateLimit("0.1").
@@ -162,6 +166,56 @@ func TestV2SignAlignment_CreateMasterOrder(t *testing.T) {
 	}
 	if reply.MasterOrderId != "mo_xxx" || reply.Status != "NEW" || reply.ClientOrderId != "cli_1" {
 		t.Fatalf("unexpected reply: %#v", reply)
+	}
+}
+
+func TestV2CreateTriggerPricesAreIndependent(t *testing.T) {
+	for _, tc := range []struct{ price, price1 string }{
+		{"", ""}, {"82000", ""}, {"", "86000"}, {"86000", "82000"}, {"", "0"},
+	} {
+		t.Run(tc.price+"/"+tc.price1, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				var body map[string]any
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+					t.Error(err)
+				}
+				for field, want := range map[string]string{"triggerPrice": tc.price, "triggerPrice1": tc.price1} {
+					got, present := body[field]
+					if present != (want != "") || (present && got != want) {
+						t.Errorf("%s = %#v (present=%v), want %q", field, got, present, want)
+					}
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"code":200,"message":{"masterOrderId":"mo_trigger","status":"NEW"}}`))
+			}))
+			defer srv.Close()
+			service := NewClient("test-key", "test-secret", srv.URL).NewCreateMasterOrderV2Service().
+				ApiKeyId("binding-id").Exchange("OKX").MarketType("SPOT").Symbol("BTCUSDT").
+				Side("buy").Algorithm("TWAP").ExecutionDurationSeconds(60).TotalQuantity("1")
+			if tc.price != "" {
+				service.TriggerPrice(tc.price)
+			}
+			if tc.price1 != "" {
+				service.TriggerPrice1(tc.price1)
+			}
+			if _, err := service.Do(context.Background()); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestMasterOrderV2InfoDecodesTriggerPrices(t *testing.T) {
+	var order MasterOrderV2Info
+	if err := json.Unmarshal([]byte(`{"triggerPrice":"0","triggerPrice1":"99999999999999999999.1234567891","maxTriggerWaitSecs":300.5}`), &order); err != nil {
+		t.Fatal(err)
+	}
+	if order.TriggerPrice == nil || *order.TriggerPrice != "0" || order.TriggerPrice1 == nil || *order.TriggerPrice1 != "99999999999999999999.1234567891" || order.MaxTriggerWaitSecs == nil || *order.MaxTriggerWaitSecs != 300.5 {
+		t.Fatalf("trigger response lost: %+v", order)
+	}
+	var legacy MasterOrderV2Info
+	if err := json.Unmarshal([]byte(`{}`), &legacy); err != nil || legacy.TriggerPrice1 != nil {
+		t.Fatalf("legacy response must leave second price absent: %+v / %v", legacy, err)
 	}
 }
 
