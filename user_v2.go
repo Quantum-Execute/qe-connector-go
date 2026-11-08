@@ -392,7 +392,8 @@ func (i *ExchangeApiV2Info) UnmarshalJSON(data []byte) error {
 // `apiKeyId`, `exchange`, `marketType`, `symbol`, `side`, `algorithm`, and
 // `executionDurationSeconds` (> 10). Exactly one of `totalQuantity` or
 // `orderNotional` must be set; when `isTargetPosition` is true `totalQuantity`
-// is mandatory.
+// is mandatory. OPTION accepts base-asset quantity only, requires a positive
+// premium WorstPrice, and defaults omitted/zero duration to 1800 seconds.
 type CreateMasterOrderV2Service struct {
 	c                           *Client
 	apiKeyId                    string
@@ -423,6 +424,7 @@ type CreateMasterOrderV2Service struct {
 	tailOrderProtection         *bool
 	enableMake                  *bool
 	isTargetPosition            *bool
+	expectedExecutionSide       *trading_enums.OrderSide
 	clientOrderId               *string
 	notes                       *string
 }
@@ -607,6 +609,13 @@ func (s *CreateMasterOrderV2Service) IsTargetPosition(isTarget bool) *CreateMast
 	return s
 }
 
+// ExpectedExecutionSide sets the previewed buy/sell delta direction for an
+// OPTION target-position order. This is not the requested target side.
+func (s *CreateMasterOrderV2Service) ExpectedExecutionSide(side trading_enums.OrderSide) *CreateMasterOrderV2Service {
+	s.expectedExecutionSide = &side
+	return s
+}
+
 // ClientOrderId sets the user-defined order ID (for idempotency / tracking).
 func (s *CreateMasterOrderV2Service) ClientOrderId(clientOrderId string) *CreateMasterOrderV2Service {
 	s.clientOrderId = &clientOrderId
@@ -703,6 +712,9 @@ func (s *CreateMasterOrderV2Service) Do(ctx context.Context, opts ...RequestOpti
 	if s.isTargetPosition != nil {
 		m["isTargetPosition"] = *s.isTargetPosition
 	}
+	if s.expectedExecutionSide != nil {
+		m["expectedExecutionSide"] = string(*s.expectedExecutionSide)
+	}
 	if s.clientOrderId != nil {
 		m["clientOrderId"] = *s.clientOrderId
 	}
@@ -743,6 +755,10 @@ func (s *CreateMasterOrderV2Service) validate() error {
 	if s.algorithm == "" {
 		return errors.New("algorithm is required")
 	}
+	if s.marketType == trading_enums.MarketTypeOption && (s.executionDurationSeconds == nil || *s.executionDurationSeconds == 0) {
+		duration := int64(1800)
+		s.executionDurationSeconds = &duration
+	}
 	if s.executionDurationSeconds == nil {
 		return errors.New("executionDurationSeconds is required (must be > 10)")
 	}
@@ -765,6 +781,11 @@ func (s *CreateMasterOrderV2Service) validate() error {
 		}
 		if hasNotional {
 			return errors.New("orderNotional is not allowed when isTargetPosition is true")
+		}
+	}
+	if s.marketType == trading_enums.MarketTypeOption {
+		if err := s.validateOption(); err != nil {
+			return err
 		}
 	}
 	// Same Deribit / Binance perp_cm guards as the V1 service.
@@ -951,6 +972,7 @@ type GetMasterOrdersV2Reply struct {
 // (`apiKey`, `apiKeyName`, `ticktimeInt`, `ticktimeMs`, `submitTimeMs`,
 // `algoStartTimeMs`, ...) are intentionally absent.
 type MasterOrderV2Info struct {
+	OptionMetadata              *OptionMetadata   `json:"optionMetadata,omitempty"`
 	CreatedAt                   string            `json:"createdAt"`
 	UpdatedAt                   string            `json:"updatedAt"`
 	MasterOrderId               string            `json:"masterOrderId"`
@@ -1229,6 +1251,7 @@ type GetOrderFillsV2Reply struct {
 // 兼容历史/异常返回 number 的情况，这里统一使用 FlexDecimalString —— 它会接受
 // JSON string 或 JSON number，对外统一成 string。
 type OrderFillV2Info struct {
+	OptionMetadata   *OptionMetadata   `json:"optionMetadata,omitempty"`
 	Id               string            `json:"id"`
 	OrderCreatedTime string            `json:"orderCreatedTime"`
 	MasterOrderId    string            `json:"masterOrderId"`

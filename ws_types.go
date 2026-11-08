@@ -104,6 +104,7 @@ type WebSocketHandler func(data []byte) error
 // WsMasterOrderDetail 服务端通过 WS 推送的 V2 母单详情（master_data）。
 // 字段与 V2 API 契约一致，使用 lowerCamelCase JSON tag。
 type WsMasterOrderDetail struct {
+	OptionMetadata           *OptionMetadata   `json:"optionMetadata,omitempty"`
 	CreatedAt                string            `json:"createdAt"`
 	UpdatedAt                string            `json:"updatedAt"`
 	MasterOrderID            string            `json:"masterOrderId"`
@@ -151,6 +152,7 @@ type WsMasterOrderDetail struct {
 // WsOrderFillDetail 服务端通过 WS 推送的 V2 子单/成交详情（order_data）。
 // 字段与 V2 API 契约一致，使用 lowerCamelCase JSON tag。
 type WsOrderFillDetail struct {
+	OptionMetadata   *OptionMetadata   `json:"optionMetadata,omitempty"`
 	ID               string            `json:"id"`
 	OrderCreatedTime string            `json:"orderCreatedTime"`
 	MasterOrderID    string            `json:"masterOrderId"`

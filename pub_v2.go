@@ -11,13 +11,14 @@ import (
 const tradingPairsV2Endpoint = "/pub/v2/trading-pairs"
 
 // TradingPairsV2Service lists public trading pairs using the V2 contract.
-// V2 uses SPOT/PERP market types and returns the complete result without V1
+// V2 uses SPOT/PERP/OPTION market types and returns the complete result without V1
 // pagination or internal record metadata.
 type TradingPairsV2Service struct {
 	c          *Client
 	exchange   *trading_enums.Exchange
 	marketType *trading_enums.MarketType
 	isCoin     *bool
+	symbol     *string
 }
 
 // Exchange filters trading pairs by exchange.
@@ -26,7 +27,7 @@ func (s *TradingPairsV2Service) Exchange(exchange trading_enums.Exchange) *Tradi
 	return s
 }
 
-// MarketType filters trading pairs by SPOT or PERP.
+// MarketType filters trading pairs by SPOT, PERP, or OPTION (Deribit).
 func (s *TradingPairsV2Service) MarketType(marketType trading_enums.MarketType) *TradingPairsV2Service {
 	s.marketType = &marketType
 	return s
@@ -35,6 +36,13 @@ func (s *TradingPairsV2Service) MarketType(marketType trading_enums.MarketType) 
 // IsCoin selects coin-margined contracts when querying PERP pairs.
 func (s *TradingPairsV2Service) IsCoin(isCoin bool) *TradingPairsV2Service {
 	s.isCoin = &isCoin
+	return s
+}
+
+// Symbol selects an exact published instrument. For an active option this also
+// resolves price tiers; check RulesReady before using the returned rules.
+func (s *TradingPairsV2Service) Symbol(symbol string) *TradingPairsV2Service {
+	s.symbol = &symbol
 	return s
 }
 
@@ -54,6 +62,9 @@ func (s *TradingPairsV2Service) Do(ctx context.Context, opts ...RequestOption) (
 	}
 	if s.isCoin != nil {
 		m["isCoin"] = *s.isCoin
+	}
+	if s.symbol != nil {
+		m["symbol"] = *s.symbol
 	}
 	r.setParams(m)
 
@@ -77,12 +88,22 @@ type TradingPairsV2Reply struct {
 // DeliveryDate are optional and may be absent when the uploaded product data
 // does not provide them, including for perpetual contracts.
 type TradingPairV2 struct {
-	Exchange     string     `json:"exchange"`
-	Symbol       string     `json:"symbol"`
-	BaseAsset    string     `json:"baseAsset"`
-	QuoteAsset   string     `json:"quoteAsset"`
-	Status       string     `json:"status"`
-	MarketType   string     `json:"marketType"`
-	ContractType *string    `json:"contractType,omitempty"`
-	DeliveryDate *FlexInt64 `json:"deliveryDate,omitempty"`
+	ContractSize        string            `json:"contractSize,omitempty"`
+	Strike              string            `json:"strike,omitempty"`
+	OptionType          string            `json:"optionType,omitempty"`
+	ExpirationTimestamp *FlexInt64        `json:"expirationTimestamp,omitempty"`
+	UnderlyingIndex     string            `json:"underlyingIndex,omitempty"`
+	TickSize            string            `json:"tickSize,omitempty"`
+	MinOrderQty         string            `json:"minOrderQty,omitempty"`
+	StepSize            string            `json:"stepSize,omitempty"`
+	TickSizeSteps       []OptionPriceStep `json:"tickSizeSteps,omitempty"`
+	RulesReady          bool              `json:"rulesReady,omitempty"`
+	Exchange            string            `json:"exchange"`
+	Symbol              string            `json:"symbol"`
+	BaseAsset           string            `json:"baseAsset"`
+	QuoteAsset          string            `json:"quoteAsset"`
+	Status              string            `json:"status"`
+	MarketType          string            `json:"marketType"`
+	ContractType        *string           `json:"contractType,omitempty"`
+	DeliveryDate        *FlexInt64        `json:"deliveryDate,omitempty"`
 }

@@ -34,8 +34,9 @@ const (
 
 // 市场类型枚举
 const (
-	MarketTypeSpot MarketType = "SPOT" // 现货市场
-	MarketTypePerp MarketType = "PERP" // 合约市场
+	MarketTypeSpot   MarketType = "SPOT"   // 现货市场
+	MarketTypePerp   MarketType = "PERP"   // 合约市场
+	MarketTypeOption MarketType = "OPTION" // Deribit 期权（V2）
 )
 
 // 订单方向枚举
@@ -63,6 +64,7 @@ const (
 
 // 币对品种枚举（与市场类型对应）
 const (
+	CategoryOption Category = "option"  // 期权品种
 	CategorySpot   Category = "spot"    // 现货品种
 	CategoryPerp   Category = "perp"    // 合约品种
 	CategoryPerpCm Category = "perp_cm" // 币本位合约品种（Binance、Bitget）
@@ -70,8 +72,9 @@ const (
 
 // 交易对市场类型枚举
 const (
-	TradingPairSpot TradingPairMarketType = "SPOT" // 现货交易对
-	TradingPairPerp TradingPairMarketType = "PERP" // 永续合约交易对
+	TradingPairOption TradingPairMarketType = "OPTION" // Deribit 期权
+	TradingPairSpot   TradingPairMarketType = "SPOT"   // 现货交易对
+	TradingPairPerp   TradingPairMarketType = "PERP"   // 永续合约交易对
 
 	// TradingPairFutures is retained for compatibility with older V1 servers.
 	// Deprecated: use TradingPairPerp for current /pub/trading-pairs requests.

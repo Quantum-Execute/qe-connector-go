@@ -1178,11 +1178,13 @@ if result.Success {
 
 ## V2 接口
 
+**Deribit 期权**：使用 V2 `marketType=OPTION`，支持 USDC 与 BTC/ETH 币本位。接入规则、目标仓位、必填权利金限价及可运行示例见 [期权接入指南](docs/options-v2.md)。需使用包含本次期权支持的源码或后续发行版，旧版 1.3.3 不具备完整支持。
+
 V2 strategy-api 在 `/strategy-api/.../v2/...` 下提供独立接口，公共交易对接口位于 `/pub/v2/trading-pairs`；V1 不受影响。下表汇总 V2 SDK 入口：
 
 | 方法 | HTTP | 路径 | 用途 |
 | --- | --- | --- | --- |
-| `client.NewTradingPairsV2Service()` | GET | `/pub/v2/trading-pairs` | 查询公共交易对（`SPOT/PERP`，无分页和内部记录字段） |
+| `client.NewTradingPairsV2Service()` | GET | `/pub/v2/trading-pairs` | 查询公共交易对（`SPOT/PERP/OPTION`，支持完整 `Symbol(...)` 筛选） |
 | `client.NewListExchangeApisV2Service()` | GET | `/strategy-api/user/exchange/v2/exchange-apis` | 查询绑定的交易所 API Key（V2，隐藏 `verificationMethod`/`balance`） |
 | `client.NewCreateMasterOrderV2Service()` | POST | `/strategy-api/user/trading/v2/master-orders` | 创建母单（V2，去掉 `algorithmType/strategyType`，统一 `executionDurationSeconds`、`startTimeMs`、`worstPrice`） |
 | `client.NewGetMasterOrdersV2Service()` | GET | `/strategy-api/user/trading/v2/master-orders` | 母单列表（V2 字段） |
