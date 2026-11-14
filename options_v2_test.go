@@ -27,6 +27,10 @@ func TestOptionCreateSignsDirectionAndPreservesUnits(t *testing.T) {
 		{"SOL_USDC-25DEC26-100-C", "10", " 0.125 "},
 		{"BTC-25DEC26-100000-P", "0.1", "0.0005"},
 		{"ETH-25DEC26-3000-C", "0.1", "0.0001"},
+		{"SOL_USDC-25DEC26-100-C", "10", "-1"},
+		{"SOL_USDC-25DEC26-100-C", "10", " -1 "},
+		{"BTC-25DEC26-100000-P", "0.1", "-1"},
+		{"ETH-25DEC26-3000-C", "0.1", "-1"},
 	} {
 		t.Run(tc.symbol, func(t *testing.T) {
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -65,20 +69,78 @@ func TestOptionCreateSignsDirectionAndPreservesUnits(t *testing.T) {
 	}
 }
 
+func TestOptionAutomaticPremiumCreateAndAmend(t *testing.T) {
+	for _, side := range []trading_enums.OrderSide{trading_enums.OrderSideBuy, trading_enums.OrderSideSell} {
+		t.Run(string(side), func(t *testing.T) {
+			var prices []string
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				raw, err := io.ReadAll(r.Body)
+				if err != nil {
+					t.Error(err)
+				}
+				var body map[string]interface{}
+				if err := json.Unmarshal(raw, &body); err != nil {
+					t.Error(err)
+				}
+				if r.URL.Query().Get("signature") != signLikeBackend(t, "secret", r.URL.RawQuery, raw) {
+					t.Error("signature mismatch")
+				}
+				prices = append(prices, body["worstPrice"].(string))
+				if len(prices) == 1 {
+					if r.Method != "POST" || r.URL.Path != v2MasterOrdersEndpoint || body["side"] != string(side) || body["marketType"] != "OPTION" {
+						t.Errorf("incorrect option creation: %s %s %s", r.Method, r.URL.Path, raw)
+					}
+					io.WriteString(w, `{"code":200,"message":{"masterOrderId":"option-order","status":"NEW"}}`)
+					return
+				}
+				if r.Method != "PUT" || r.URL.Path != v2MasterOrdersEndpoint+"/option-order/update" {
+					t.Errorf("incorrect amendment endpoint: %s %s", r.Method, r.URL.Path)
+				}
+				io.WriteString(w, `{"code":200,"message":{"success":true}}`)
+			}))
+			defer srv.Close()
+			client := NewClient("key", "secret")
+			client.BaseURL = srv.URL
+			created, err := optionService(client).Side(side).WorstPrice("-1").Do(context.Background())
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, price := range []string{"0.125", "-1"} {
+				if _, err := client.NewUpdateMasterOrderParamsV2Service().MasterOrderId(created.MasterOrderId).WorstPrice(price).Do(context.Background()); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if strings.Join(prices, ",") != "-1,0.125,-1" {
+				t.Fatalf("protection prices changed: %v", prices)
+			}
+		})
+	}
+}
+
 func TestInvalidOptionsDoNotReachHTTP(t *testing.T) {
 	for name, change := range map[string]func(*CreateMasterOrderV2Service){
-		"exchange":            func(s *CreateMasterOrderV2Service) { s.Exchange(trading_enums.ExchangeBinance) },
-		"notional":            func(s *CreateMasterOrderV2Service) { s.totalQuantity = nil; s.OrderNotional("10") },
-		"margin":              func(s *CreateMasterOrderV2Service) { s.IsMargin(true) },
-		"missing premium":     func(s *CreateMasterOrderV2Service) { s.worstPrice = nil },
-		"zero premium":        func(s *CreateMasterOrderV2Service) { s.WorstPrice("0") },
-		"unlimited premium":   func(s *CreateMasterOrderV2Service) { s.WorstPrice("-1") },
-		"nan premium":         func(s *CreateMasterOrderV2Service) { s.WorstPrice("NaN") },
-		"zero quantity":       func(s *CreateMasterOrderV2Service) { s.TotalQuantity("0") },
-		"target preview":      func(s *CreateMasterOrderV2Service) { s.IsTargetPosition(true) },
-		"target side":         func(s *CreateMasterOrderV2Service) { s.IsTargetPosition(true).ExpectedExecutionSide("long") },
-		"trigger wait":        func(s *CreateMasterOrderV2Service) { s.TriggerPrice("0.1") },
-		"second trigger wait": func(s *CreateMasterOrderV2Service) { s.TriggerPrice1("0.1").MaxTriggerWaitSecs(0) },
+		"exchange":                            func(s *CreateMasterOrderV2Service) { s.Exchange(trading_enums.ExchangeBinance) },
+		"notional":                            func(s *CreateMasterOrderV2Service) { s.totalQuantity = nil; s.OrderNotional("10") },
+		"margin":                              func(s *CreateMasterOrderV2Service) { s.IsMargin(true) },
+		"missing premium":                     func(s *CreateMasterOrderV2Service) { s.worstPrice = nil },
+		"zero premium":                        func(s *CreateMasterOrderV2Service) { s.WorstPrice("0") },
+		"negative premium":                    func(s *CreateMasterOrderV2Service) { s.WorstPrice("-2") },
+		"fractional negative premium":         func(s *CreateMasterOrderV2Service) { s.WorstPrice("-0.5") },
+		"noncanonical marker":                 func(s *CreateMasterOrderV2Service) { s.WorstPrice("-1.0") },
+		"empty premium":                       func(s *CreateMasterOrderV2Service) { s.WorstPrice("") },
+		"infinite premium":                    func(s *CreateMasterOrderV2Service) { s.WorstPrice("Inf") },
+		"nan premium":                         func(s *CreateMasterOrderV2Service) { s.WorstPrice("NaN") },
+		"zero quantity":                       func(s *CreateMasterOrderV2Service) { s.TotalQuantity("0") },
+		"target preview":                      func(s *CreateMasterOrderV2Service) { s.IsTargetPosition(true) },
+		"target side":                         func(s *CreateMasterOrderV2Service) { s.IsTargetPosition(true).ExpectedExecutionSide("long") },
+		"trigger wait":                        func(s *CreateMasterOrderV2Service) { s.TriggerPrice("0.1") },
+		"second trigger wait":                 func(s *CreateMasterOrderV2Service) { s.TriggerPrice1("0.1").MaxTriggerWaitSecs(0) },
+		"automatic premium negative quantity": func(s *CreateMasterOrderV2Service) { s.WorstPrice("-1").TotalQuantity("-1") },
+		"automatic premium negative target": func(s *CreateMasterOrderV2Service) {
+			s.WorstPrice("-1").TotalQuantity("-1").IsTargetPosition(true).ExpectedExecutionSide(trading_enums.OrderSideSell)
+		},
+		"automatic premium target preview": func(s *CreateMasterOrderV2Service) { s.WorstPrice("-1").IsTargetPosition(true) },
+		"automatic premium trigger wait":   func(s *CreateMasterOrderV2Service) { s.WorstPrice("-1").TriggerPrice("0.1") },
 	} {
 		t.Run(name, func(t *testing.T) {
 			client := NewClient("key", "secret")

@@ -392,8 +392,9 @@ func (i *ExchangeApiV2Info) UnmarshalJSON(data []byte) error {
 // `apiKeyId`, `exchange`, `marketType`, `symbol`, `side`, `algorithm`, and
 // `executionDurationSeconds` (> 10). Exactly one of `totalQuantity` or
 // `orderNotional` must be set; when `isTargetPosition` is true `totalQuantity`
-// is mandatory. OPTION accepts base-asset quantity only, requires a positive
-// premium WorstPrice, and defaults omitted/zero duration to 1800 seconds.
+// is mandatory. OPTION accepts base-asset quantity only and requires WorstPrice:
+// a positive premium or "-1" for algorithm selection of the fifth opposing price
+// level (last available if fewer than five). Omitted/zero duration defaults to 1800 seconds.
 type CreateMasterOrderV2Service struct {
 	c                           *Client
 	apiKeyId                    string
@@ -512,6 +513,8 @@ func (s *CreateMasterOrderV2Service) IsMargin(isMargin bool) *CreateMasterOrderV
 }
 
 // WorstPrice sets the worst acceptable price as a decimal string.
+// For OPTION, "-1" delegates protection-price selection to the algorithm:
+// ask level five for buys, bid level five for sells, or the last available level.
 func (s *CreateMasterOrderV2Service) WorstPrice(price string) *CreateMasterOrderV2Service {
 	s.worstPrice = &price
 	return s
@@ -1616,6 +1619,8 @@ func (s *UpdateMasterOrderParamsV2Service) PovMinLimit(rate string) *UpdateMaste
 }
 
 // WorstPrice updates the worst acceptable price (decimal string).
+// For OPTION, "-1" delegates protection-price selection to the algorithm:
+// ask level five for buys, bid level five for sells, or the last available level.
 func (s *UpdateMasterOrderParamsV2Service) WorstPrice(price string) *UpdateMasterOrderParamsV2Service {
 	s.worstPrice = &price
 	return s

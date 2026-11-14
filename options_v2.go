@@ -87,8 +87,8 @@ func (s *CreateMasterOrderV2Service) validateOption() error {
 	if s.totalQuantity == nil || !validOptionDecimal(*s.totalQuantity, target) {
 		return errors.New("OPTION requires a positive base-asset totalQuantity (zero is allowed for a target)")
 	}
-	if s.worstPrice == nil || !validOptionDecimal(*s.worstPrice, false) {
-		return errors.New("OPTION requires a positive premium worstPrice")
+	if s.worstPrice == nil || (strings.TrimSpace(*s.worstPrice) != "-1" && !validOptionDecimal(*s.worstPrice, false)) {
+		return errors.New("OPTION worstPrice must be -1 (algorithm selects the fifth opposing price level) or a positive premium")
 	}
 	if target && (s.expectedExecutionSide == nil || (*s.expectedExecutionSide != trading_enums.OrderSideBuy && *s.expectedExecutionSide != trading_enums.OrderSideSell)) {
 		return errors.New("OPTION targets require expectedExecutionSide=buy or sell from the position preview")

@@ -33,7 +33,8 @@
 | --- | --- |
 | module | `github.com/Quantum-Execute/qe-connector-go` |
 | Go 版本 | `go 1.24` |
-| SDK 版本 | `consts.go` 中 `Version = "1.3.1"` |
+| SDK 源码版本 | `consts.go` 中 `Version = "1.4.1"` |
+| 期权价格兼容性 | 1.4.0 创建仅支持正数；1.4.1 起支持算法选价标记 `"-1"` |
 | 主要依赖 | `github.com/gorilla/websocket`、`github.com/bitly/go-simplejson` |
 
 本地验证：
@@ -321,11 +322,11 @@ Go SDK 没有构建产物需要提交，核心是源码、README/CHANGELOG 和 g
 推荐流程：
 
 1. 更新 `consts.go` 的 `Version`。
-2. 更新 `CHANGELOG.md`，把 `Unreleased` 内容归档到新版本。
+2. 更新 `CHANGELOG.md` 的目标版本和发布日期，并同步 README 与 `docs/options-v2.md` 的版本说明。
 3. 如外部调用方式变化，同步 README 示例和 QE-API-Key 文档站示例。
 4. 跑 `go test ./...`。
 5. 确认 `git diff --check` 无空白错误。
-6. 合并后打 tag，例如 `v1.3.2`，让 Go module 生态可拉取。
+6. 合并后为本次 1.4.1 打新 tag `v1.4.1`，让 Go module 生态可拉取；不要移动已发布的 `v1.4.0`。
 
 发布前必须确认：
 

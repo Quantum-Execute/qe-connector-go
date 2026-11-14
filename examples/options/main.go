@@ -17,7 +17,7 @@ import (
 func main() {
 	symbol := flag.String("symbol", "", "full name from the published OPTION list")
 	quantity := flag.String("quantity", "", "base-asset quantity, not contracts")
-	premium := flag.String("premium-limit", "", "premium per base asset, in USDC/BTC/ETH")
+	premium := flag.String("premium-limit", "", "positive premium per base asset (USDC/BTC/ETH), or -1 for algorithm selection of the fifth opposing price level")
 	side := flag.String("side", "buy", "buy or sell")
 	submit := flag.Bool("submit", false, "place a real order using QE_API_KEY/QE_API_SECRET/QE_EXCHANGE_API_KEY_ID")
 	flag.Parse()
